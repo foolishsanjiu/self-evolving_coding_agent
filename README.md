@@ -14,6 +14,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 
 - **Task 1：Project Initialization**
 - **Task 2：ReAct Loop + Native Tool Calling**
+- **Task 3：Simplified Agent Harness**
 
 现有能力：
 
@@ -26,7 +27,10 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 可替换 `ToolProvider` 与 `NoOpEventSink`；
 - `list_files`、`read_file`、`search_code` 三个只读 Native Tool；
 - workspace 路径边界、结构化 ToolResult 和错误归一化；
-- `fixtures/simple_read` 开发 Fixture 与 FakeLLM 测试。
+- `AgentState` 统一任务生命周期和 Working Memory；
+- `ContextManager` 基于字符预算确定性保留/压缩上下文；
+- 仅针对只读、幂等工具瞬时错误的受限 Retry；
+- 项目级 `FakeLLM` 与 `fixtures/simple_read` 开发 Fixture。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
@@ -88,6 +92,10 @@ python -m ruff check .
 - 直接回答、连续工具调用、同轮多工具调用和 Max Steps；
 - Tool Failure 返回模型继续修正；
 - EventSink Hook。
+- AgentState 的文件、Patch、测试和错误状态更新；
+- 上下文超预算后的确定性裁剪和旧 Observation 元数据压缩；
+- 只读幂等 Retry、非幂等禁止 Retry、Tool/LLM Exception 状态化；
+- FakeLLM 的确定性请求记录和错误路径。
 
 配置好密钥后，可执行一次真实模型调用：
 

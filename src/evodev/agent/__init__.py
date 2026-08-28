@@ -1,5 +1,6 @@
-"""EvoDev ReAct agent."""
+"""EvoDev ReAct agent and task-local state."""
 
-from evodev.agent.react_agent import AgentRunResult, AgentStatus, ReActAgent
+from evodev.agent.react_agent import AgentRunResult, ReActAgent
+from evodev.agent.state import AgentState, AgentStatus
 
-__all__ = ["AgentRunResult", "AgentStatus", "ReActAgent"]
+__all__ = ["AgentRunResult", "AgentState", "AgentStatus", "ReActAgent"]
