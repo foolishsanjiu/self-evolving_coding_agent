@@ -33,13 +33,17 @@ def test_update_state_tracks_files_patch_tests_and_last_error() -> None:
     update_state(state, _result("read_file", path="src/app.py"))
     update_state(state, _result("apply_patch", patch="diff --git a/app.py b/app.py"))
     update_state(state, _result("run_tests", exit_code=0, passed_count=3))
+    update_state(state, _result("run_tests", success=False, timed_out=True))
     update_state(state, _result("read_file", success=False))
 
     assert state.files_inspected == {"src/app.py"}
     assert state.current_patch == "diff --git a/app.py b/app.py"
-    assert state.test_results == [{"exit_code": 0, "passed_count": 3}]
+    assert state.test_results == [
+        {"exit_code": 0, "passed_count": 3},
+        {"timed_out": True},
+    ]
     assert state.last_error == "FAILURE"
-    assert len(state.tool_history) == 4
+    assert len(state.tool_history) == 5
 
 
 def test_should_retry_requires_transient_read_only_idempotent_failure() -> None:

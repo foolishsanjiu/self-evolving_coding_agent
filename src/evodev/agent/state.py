@@ -48,6 +48,8 @@ TRANSIENT_TOOL_ERRORS = frozenset(
 def update_state(state: AgentState, result: ToolResult) -> None:
     """Apply one final tool result to the current task state."""
     state.tool_history.append(result)
+    if result.tool_name == "run_tests" and result.data:
+        state.test_results.append(result.data)
     if not result.success:
         state.last_error = result.error_type or result.content
         return
@@ -57,8 +59,6 @@ def update_state(state: AgentState, result: ToolResult) -> None:
     elif result.tool_name == "apply_patch":
         patch = result.data.get("patch") or result.data.get("diff")
         state.current_patch = str(patch or result.content)
-    elif result.tool_name == "run_tests":
-        state.test_results.append(result.data)
 
 
 def should_retry(

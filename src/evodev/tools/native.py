@@ -1,4 +1,4 @@
-"""In-process provider for the initial read-only coding tools."""
+"""In-process provider for the built-in development tools."""
 
 from __future__ import annotations
 
@@ -8,7 +8,13 @@ import time
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from evodev.tools.contracts import ToolCall, ToolResult, ToolSpec
-from evodev.tools.devtools import DevToolsService, PathOutsideWorkspaceError
+from evodev.tools.devtools import (
+    DevToolsService,
+    GitOperationError,
+    InvalidTestSelectionError,
+    PatchApplyError,
+    PathOutsideWorkspaceError,
+)
 from evodev.tools.provider import ToolProvider
 
 
@@ -41,6 +47,23 @@ class SearchCodeArguments(BaseModel):
     max_results: int = Field(default=50, ge=1, le=100)
 
 
+class ApplyPatchArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    patch: str = Field(min_length=1)
+
+
+class GitDiffArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class RunTestsArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    test_path: str | None = None
+    test_selector: str | None = None
+
+
 class NativeToolProvider(ToolProvider):
     """Validate and execute DevToolsService calls in the current process."""
 
@@ -48,6 +71,9 @@ class NativeToolProvider(ToolProvider):
         "list_files": ListFilesArguments,
         "read_file": ReadFileArguments,
         "search_code": SearchCodeArguments,
+        "apply_patch": ApplyPatchArguments,
+        "git_diff": GitDiffArguments,
+        "run_tests": RunTestsArguments,
     }
 
     def __init__(self, service: DevToolsService) -> None:
@@ -80,6 +106,33 @@ class NativeToolProvider(ToolProvider):
                 destructive=False,
                 idempotent=True,
             ),
+            ToolSpec(
+                name="apply_patch",
+                description="Apply a workspace-contained unified Git patch.",
+                input_schema=ApplyPatchArguments.model_json_schema(),
+                source="native",
+                read_only=False,
+                destructive=True,
+                idempotent=False,
+            ),
+            ToolSpec(
+                name="git_diff",
+                description="Return the current workspace Git diff and summary.",
+                input_schema=GitDiffArguments.model_json_schema(),
+                source="native",
+                read_only=True,
+                destructive=False,
+                idempotent=True,
+            ),
+            ToolSpec(
+                name="run_tests",
+                description="Run pytest with an optional controlled path and selector.",
+                input_schema=RunTestsArguments.model_json_schema(),
+                source="native",
+                read_only=False,
+                destructive=False,
+                idempotent=False,
+            ),
         ]
 
     def list_tools(self) -> list[ToolSpec]:
@@ -91,12 +144,14 @@ class NativeToolProvider(ToolProvider):
         error_type: str,
         message: str,
         started: float,
+        data: dict[str, object] | None = None,
     ) -> ToolResult:
         return ToolResult(
             call_id=tool_call.call_id,
             tool_name=tool_call.name,
             success=False,
             content=message,
+            data=data or {},
             error_type=error_type,
             duration_ms=round((time.perf_counter() - started) * 1000),
         )
@@ -117,6 +172,12 @@ class NativeToolProvider(ToolProvider):
             return self._failure(tool_call, "INVALID_TOOL_ARGUMENTS", str(exc), started)
         except PathOutsideWorkspaceError as exc:
             return self._failure(tool_call, "PATH_OUTSIDE_WORKSPACE", str(exc), started)
+        except InvalidTestSelectionError as exc:
+            return self._failure(tool_call, "INVALID_TOOL_ARGUMENTS", str(exc), started)
+        except PatchApplyError as exc:
+            return self._failure(tool_call, "PATCH_APPLY_FAILED", str(exc), started)
+        except GitOperationError as exc:
+            return self._failure(tool_call, "GIT_ERROR", str(exc), started)
         except FileNotFoundError as exc:
             return self._failure(tool_call, "FILE_NOT_FOUND", str(exc), started)
         except NotADirectoryError as exc:
@@ -125,6 +186,11 @@ class NativeToolProvider(ToolProvider):
             return self._failure(tool_call, "PERMISSION_DENIED", str(exc), started)
         except Exception as exc:
             return self._failure(tool_call, "TOOL_EXECUTION_ERROR", str(exc), started)
+
+        if tool_call.name == "run_tests" and data["timed_out"]:
+            return self._failure(tool_call, "TEST_TIMEOUT", "Test run timed out", started, data)
+        if tool_call.name == "run_tests" and data["exit_code"] != 0:
+            return self._failure(tool_call, "TEST_FAILED", "Test run failed", started, data)
 
         content = json.dumps(data, ensure_ascii=False)
         return ToolResult(

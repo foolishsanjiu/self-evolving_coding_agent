@@ -43,11 +43,21 @@ def test_search_code_returns_structured_matches() -> None:
     assert "def add" in data["matches"][0]["small_context"]
 
 
-def test_provider_discovers_three_read_only_tools() -> None:
+def test_provider_discovers_six_tools_with_risk_metadata() -> None:
     tools = _provider().list_tools()
 
-    assert [tool.name for tool in tools] == ["list_files", "read_file", "search_code"]
-    assert all(tool.read_only and tool.idempotent and not tool.destructive for tool in tools)
+    assert [tool.name for tool in tools] == [
+        "list_files",
+        "read_file",
+        "search_code",
+        "apply_patch",
+        "git_diff",
+        "run_tests",
+    ]
+    by_name = {tool.name: tool for tool in tools}
+    assert by_name["git_diff"].read_only and by_name["git_diff"].idempotent
+    assert by_name["apply_patch"].destructive and not by_name["apply_patch"].idempotent
+    assert not by_name["run_tests"].read_only and not by_name["run_tests"].destructive
 
 
 def test_provider_rejects_invalid_arguments_before_execution() -> None:

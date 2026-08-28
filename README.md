@@ -15,6 +15,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 1：Project Initialization**
 - **Task 2：ReAct Loop + Native Tool Calling**
 - **Task 3：Simplified Agent Harness**
+- **Task 4：DevTools MCP Server**
 
 现有能力：
 
@@ -25,8 +26,12 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 基础日志与真实模型 smoke 命令；
 - 显式单 ReAct Tool Calling Loop；
 - 可替换 `ToolProvider` 与 `NoOpEventSink`；
-- `list_files`、`read_file`、`search_code` 三个只读 Native Tool；
+- `list_files`、`read_file`、`search_code`、`apply_patch`、`git_diff`、
+  `run_tests` 六个 Native Tool；
 - workspace 路径边界、结构化 ToolResult 和错误归一化；
+- 基于官方 MCP Python SDK 2.x 的 DevTools stdio Server；
+- Unified Diff 应用、Git Diff 获取和受控 pytest 路径/selector 执行；
+- `fixtures/simple_bug` 的失败测试、补丁、diff、测试通过闭环；
 - `AgentState` 统一任务生命周期和 Working Memory；
 - `ContextManager` 基于字符预算确定性保留/压缩上下文；
 - 仅针对只读、幂等工具瞬时错误的受限 Retry；
@@ -34,8 +39,8 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-尚未实现写操作工具、Patch/Test 闭环、MCP、Docker Sandbox、持久化 Trajectory、
-Benchmark、Evaluation、Experience 或 Policy Evolution。
+尚未实现 MCP Client 抽象、Docker Sandbox、持久化 Trajectory、Benchmark、Evaluation、
+Experience 或 Policy Evolution。
 
 ## 环境
 
@@ -51,6 +56,26 @@ python -m pip install -e .
 ```
 
 已有环境只需执行后两条 pip 命令。
+
+主要运行时依赖包括 OpenAI-compatible SDK、Pydantic、PyYAML、python-dotenv 和
+`mcp>=2.1,<3`；完整版本约束以 `requirements.txt` 为准。
+
+## DevTools MCP Server
+
+从项目根目录启动 stdio Server，并将工具限制在指定 workspace：
+
+```powershell
+python -m mcp_servers.devtools.server --workspace D:\path\to\workspace
+```
+
+Server 暴露六个结构化工具：
+
+- 只读：`list_files`、`read_file`、`search_code`、`git_diff`；
+- 写入：`apply_patch`，仅接受 workspace 内的 Unified Git Diff；
+- 执行：`run_tests`，仅接受测试路径与受限 pytest selector，不接受 Shell 命令。
+
+当前 `run_tests` 在宿主 Conda 环境内运行，并具有超时与输出截断；它尚不等同于安全
+沙箱。容器化隔离将在 Task 6 实现。
 
 ## 配置
 
@@ -96,6 +121,9 @@ python -m ruff check .
 - 上下文超预算后的确定性裁剪和旧 Observation 元数据压缩；
 - 只读幂等 Retry、非幂等禁止 Retry、Tool/LLM Exception 状态化；
 - FakeLLM 的确定性请求记录和错误路径。
+- 六个 DevTools 的风险元数据、参数校验和归一化错误；
+- Patch → Git Diff → pytest 的成功/失败/超时路径；
+- MCP 进程内组件调用与真实 stdio 子进程传输。
 
 配置好密钥后，可执行一次真实模型调用：
 
