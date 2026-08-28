@@ -16,6 +16,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 2：ReAct Loop + Native Tool Calling**
 - **Task 3：Simplified Agent Harness**
 - **Task 4：DevTools MCP Server**
+- **Task 5：MCP Client + Dynamic Tool Discovery**
 
 现有能力：
 
@@ -32,6 +33,9 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 基于官方 MCP Python SDK 2.x 的 DevTools stdio Server；
 - Unified Diff 应用、Git Diff 获取和受控 pytest 路径/selector 执行；
 - `fixtures/simple_bug` 的失败测试、补丁、diff、测试通过闭环；
+- 可连接、断开和手动刷新的 `MCPToolProvider`；
+- 支持分页发现与缓存的 Canonical `ToolSpec` Catalog；
+- MCP Result 到 Canonical `ToolResult` 的归一化及分层错误统计；
 - `AgentState` 统一任务生命周期和 Working Memory；
 - `ContextManager` 基于字符预算确定性保留/压缩上下文；
 - 仅针对只读、幂等工具瞬时错误的受限 Retry；
@@ -39,8 +43,8 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-尚未实现 MCP Client 抽象、Docker Sandbox、持久化 Trajectory、Benchmark、Evaluation、
-Experience 或 Policy Evolution。
+尚未实现 Docker Sandbox、持久化 Trajectory、Benchmark、Evaluation、Experience 或
+Policy Evolution。
 
 ## 环境
 
@@ -76,6 +80,28 @@ Server 暴露六个结构化工具：
 
 当前 `run_tests` 在宿主 Conda 环境内运行，并具有超时与输出截断；它尚不等同于安全
 沙箱。容器化隔离将在 Task 6 实现。
+
+Agent 侧使用 `MCPToolProvider` 连接 Server；首次连接会分页发现工具并缓存，ReAct 每步
+读取缓存，`refresh_tools()` 可显式刷新：
+
+```python
+from mcp import StdioServerParameters
+
+from evodev.agent import ReActAgent
+from evodev.tools import MCPToolProvider
+
+server = StdioServerParameters(
+    command="python",
+    args=["-m", "mcp_servers.devtools.server", "--workspace", str(workspace_path)],
+)
+with MCPToolProvider(server) as tools:
+    agent = ReActAgent(llm=llm, tool_provider=tools)
+    result = agent.run(task)
+```
+
+`MCPToolProvider` 和 `NativeToolProvider` 实现同一个同步 `ToolProvider` 接口；MCP SDK
+对象不会进入 ReAct 主循环。连接、超时、协议和 Server 退出错误与工具执行错误分别
+计数，避免后续 Evaluation 把基础设施故障误判为 Agent 策略失败。
 
 ## 配置
 
@@ -124,6 +150,9 @@ python -m ruff check .
 - 六个 DevTools 的风险元数据、参数校验和归一化错误；
 - Patch → Git Diff → pytest 的成功/失败/超时路径；
 - MCP 进程内组件调用与真实 stdio 子进程传输。
+- MCP Client connect/disconnect、分页终止、Catalog 缓存与手动刷新；
+- Native/MCP Provider 语义一致性与 ReAct Agent 零修改替换；
+- MCP Transport Error 与 Tool Execution Error 分层归一化和统计。
 
 配置好密钥后，可执行一次真实模型调用：
 
