@@ -62,9 +62,14 @@ def load_settings(config_dir: Path, env_file: Path | None = None) -> AppSettings
     """Load optional environment variables and validate both YAML files."""
     if env_file is not None:
         load_dotenv(dotenv_path=env_file, override=False)
+    model_data = _read_yaml(config_dir / "model.yaml")
+    if model := os.getenv("LLM_MODEL"):
+        model_data["model"] = model
+    if base_url := os.getenv("LLM_BASE_URL"):
+        model_data["base_url"] = base_url
     return AppSettings.model_validate(
         {
-            "model": _read_yaml(config_dir / "model.yaml"),
+            "model": model_data,
             "agent": _read_yaml(config_dir / "agent.yaml"),
         }
     )

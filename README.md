@@ -18,7 +18,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - OpenAI-compatible `LLMClient`，默认配置为 DeepSeek；
 - 基础日志、单元测试与真实模型 smoke 命令。
 
-真实模型 smoke call 需要本地 `DEEPSEEK_API_KEY`，未配置密钥时不会自动调用或产生费用。
+真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
 尚未实现 ReAct Loop、Coding Tools、MCP、Docker Sandbox、Trajectory、Benchmark、
 Evaluation、Experience 或 Policy Evolution。
@@ -54,10 +54,13 @@ Copy-Item .env.example .env
 随后填写：
 
 ```text
-DEEPSEEK_API_KEY=your-key
+LLM_API_KEY=your-key
+LLM_BASE_URL=https://api.deepseek.com
+LLM_MODEL=deepseek-chat
 ```
 
-`.env` 已被 Git 忽略。配置对象只保存环境变量名，不保存密钥值。
+`.env` 已被 Git 忽略。`LLM_MODEL` 与 `LLM_BASE_URL` 会覆盖 YAML 默认值；配置对象只保存
+密钥环境变量名，不保存密钥值。
 
 ## 验证
 

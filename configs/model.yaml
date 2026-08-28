@@ -2,4 +2,4 @@ provider: deepseek
 model: deepseek-chat
 temperature: 0.1
 base_url: https://api.deepseek.com
-api_key_env: DEEPSEEK_API_KEY
+api_key_env: LLM_API_KEY
