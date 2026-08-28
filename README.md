@@ -10,18 +10,28 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 
 ## 当前状态
 
-当前已完成 **Task 1：Project Initialization** 的代码与离线验证：
+当前已完成：
+
+- **Task 1：Project Initialization**
+- **Task 2：ReAct Loop + Native Tool Calling**
+
+现有能力：
 
 - `src/` 可安装 Python 包骨架；
 - YAML 与环境变量配置加载；
 - `TaskSpec`、`ModelTurn` 等基础 Schema；
 - OpenAI-compatible `LLMClient`，默认配置为 DeepSeek；
-- 基础日志、单元测试与真实模型 smoke 命令。
+- 基础日志与真实模型 smoke 命令；
+- 显式单 ReAct Tool Calling Loop；
+- 可替换 `ToolProvider` 与 `NoOpEventSink`；
+- `list_files`、`read_file`、`search_code` 三个只读 Native Tool；
+- workspace 路径边界、结构化 ToolResult 和错误归一化；
+- `fixtures/simple_read` 开发 Fixture 与 FakeLLM 测试。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-尚未实现 ReAct Loop、Coding Tools、MCP、Docker Sandbox、Trajectory、Benchmark、
-Evaluation、Experience 或 Policy Evolution。
+尚未实现写操作工具、Patch/Test 闭环、MCP、Docker Sandbox、持久化 Trajectory、
+Benchmark、Evaluation、Experience 或 Policy Evolution。
 
 ## 环境
 
@@ -68,6 +78,16 @@ LLM_MODEL=deepseek-chat
 python -m pytest
 python -m ruff check .
 ```
+
+当前离线测试覆盖：
+
+- 配置与 Canonical Schema；
+- LLM Provider Adapter；
+- Native Tool 发现、调用和错误结果；
+- 文件列表、分段读取、代码搜索和 workspace 逃逸防护；
+- 直接回答、连续工具调用、同轮多工具调用和 Max Steps；
+- Tool Failure 返回模型继续修正；
+- EventSink Hook。
 
 配置好密钥后，可执行一次真实模型调用：
 
