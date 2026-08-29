@@ -1,0 +1,9 @@
+image: evodev-python:3.11
+test_timeout_seconds: 60
+memory_limit: 1g
+cpus: 1.0
+pids_limit: 128
+network: none
+read_only_rootfs: true
+no_new_privileges: true
+max_output_chars: 20000

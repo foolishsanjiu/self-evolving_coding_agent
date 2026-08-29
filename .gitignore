@@ -9,6 +9,7 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .test_runtime/
+runs/
 .mypy_cache/
 .ruff_cache/
 .coverage

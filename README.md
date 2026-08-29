@@ -17,6 +17,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 3：Simplified Agent Harness**
 - **Task 4：DevTools MCP Server**
 - **Task 5：MCP Client + Dynamic Tool Discovery**
+- **Task 6：Docker Sandbox + 完整 Coding Loop**
 
 现有能力：
 
@@ -43,14 +44,14 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-尚未实现 Docker Sandbox、持久化 Trajectory、Benchmark、Evaluation、Experience 或
-Policy Evolution。
+尚未实现持久化 Trajectory、Benchmark、Evaluation、Experience 或 Policy Evolution。
 
 ## 环境
 
 - Python 3.11
 - Conda 管理基础环境
 - pip 管理项目依赖
+- Docker Desktop 或等价 Docker Engine（Task 6 起需要）
 
 ```powershell
 conda env create -f environment.yml
@@ -64,6 +65,43 @@ python -m pip install -e .
 主要运行时依赖包括 OpenAI-compatible SDK、Pydantic、PyYAML、python-dotenv 和
 `mcp>=2.1,<3`；完整版本约束以 `requirements.txt` 为准。
 
+Task 6 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
+
+```powershell
+docker version
+```
+
+首次使用前，在项目根目录构建无运行时联网需求的测试镜像：
+
+```powershell
+docker pull python:3.11-slim
+docker build -f docker/sandbox/Dockerfile -t evodev-python:3.11 .
+```
+
+镜像构建属于 Repository Preparation，可能需要联网拉取基础镜像和 pytest；Agent
+执行测试时使用 `--pull never` 和 `--network none`，不会自由下载依赖。
+
+## Disposable Workspace 与 Docker Sandbox
+
+`WorkspaceManager` 将 Original Repository 复制到 `runs/run_<id>/workspace`，初始化独立
+Git baseline，并支持：
+
+- `create()`：创建当前 Run 独占的 workspace 与 artifacts 目录；
+- `reset()`：恢复 baseline 并清除 workspace 内新增文件；
+- `cleanup()`：先保存 `artifacts/final.diff`，再只删除 disposable workspace。
+
+每次 `run_tests` 都启动一个具名的一次性容器。固定边界包括：
+
+- 只挂载当前 disposable workspace 到 `/workspace`；
+- `--network none`、`--pull never`、`--cap-drop ALL`；
+- `no-new-privileges`、只读 rootfs，不挂载 Docker Socket；
+- CPU 1、Memory 1 GiB、PID 128、默认超时 60 秒；
+- 完整 stdout/stderr 写入 Run Artifact，模型侧只返回 20,000 字符以内的 head/tail。
+
+超时后 runner 使用容器名执行强制删除并通过 `docker inspect` 复查。Sandbox 默认配置在
+`configs/sandbox.yaml`。基础镜像只预装 pytest；其他 Benchmark 依赖应在准备阶段写入
+镜像，运行阶段不允许自由 `pip install`、`curl` 或 `wget`。
+
 ## DevTools MCP Server
 
 从项目根目录启动 stdio Server，并将工具限制在指定 workspace：
@@ -71,6 +109,9 @@ python -m pip install -e .
 ```powershell
 python -m mcp_servers.devtools.server --workspace D:\path\to\workspace
 ```
+
+该命令从 Task 6 起默认让 `run_tests` 进入 Docker。仅限本地开发、明确不需要隔离时可加
+`--local-tests`；它不属于正式 Coding Run。
 
 Server 暴露六个结构化工具：
 
@@ -153,6 +194,15 @@ python -m ruff check .
 - MCP Client connect/disconnect、分页终止、Catalog 缓存与手动刷新；
 - Native/MCP Provider 语义一致性与 ReAct Agent 零修改替换；
 - MCP Transport Error 与 Tool Execution Error 分层归一化和统计。
+- Disposable Workspace create/reset/cleanup 与 Original Repository 不变性；
+- Docker 参数边界、Artifact、输出截断、失败和超时清理语义；
+- Simple Bug、Patch Failure、Test Failure、Infinite Test 四类多轮 Coding Loop。
+
+Docker 可用且镜像构建完成后，真实隔离验收为：
+
+```powershell
+python -m pytest tests/test_docker_integration.py -v
+```
 
 配置好密钥后，可执行一次真实模型调用：
 

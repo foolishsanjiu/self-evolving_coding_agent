@@ -7,6 +7,7 @@ import time
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
+from evodev.sandbox.docker import SandboxCleanupError, SandboxUnavailableError
 from evodev.tools.contracts import ToolCall, ToolResult, ToolSpec
 from evodev.tools.devtools import (
     DevToolsService,
@@ -178,6 +179,10 @@ class NativeToolProvider(ToolProvider):
             return self._failure(tool_call, "PATCH_APPLY_FAILED", str(exc), started)
         except GitOperationError as exc:
             return self._failure(tool_call, "GIT_ERROR", str(exc), started)
+        except SandboxUnavailableError as exc:
+            return self._failure(tool_call, "SANDBOX_UNAVAILABLE", str(exc), started)
+        except SandboxCleanupError as exc:
+            return self._failure(tool_call, "SANDBOX_CLEANUP_FAILED", str(exc), started)
         except FileNotFoundError as exc:
             return self._failure(tool_call, "FILE_NOT_FOUND", str(exc), started)
         except NotADirectoryError as exc:

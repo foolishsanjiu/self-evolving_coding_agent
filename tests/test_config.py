@@ -3,7 +3,12 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from evodev.config import ModelSettings, load_settings
+from evodev.config import (
+    ModelSettings,
+    SandboxSettings,
+    load_sandbox_settings,
+    load_settings,
+)
 
 
 def test_load_settings_and_resolve_key(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -16,6 +21,8 @@ def test_load_settings_and_resolve_key(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.model.model == "test-model"
     assert settings.model.base_url == "https://example.test/v1"
     assert settings.agent.max_steps == 15
+    assert settings.sandbox.network == "none"
+    assert settings.sandbox.pids_limit == 128
     assert settings.model.resolve_api_key() == "secret-value"
     assert "secret-value" not in settings.model.model_dump_json()
 
@@ -35,3 +42,17 @@ def test_missing_api_key_has_clear_error(monkeypatch: pytest.MonkeyPatch) -> Non
 
     with pytest.raises(ValueError, match="LLM_API_KEY"):
         load_settings(Path("configs")).model.resolve_api_key()
+
+
+def test_sandbox_cannot_disable_required_isolation() -> None:
+    with pytest.raises(ValidationError):
+        SandboxSettings(network="bridge")
+    with pytest.raises(ValidationError):
+        SandboxSettings(read_only_rootfs=False)
+
+
+def test_load_sandbox_settings_independently() -> None:
+    settings = load_sandbox_settings(Path("configs/sandbox.yaml"))
+
+    assert settings.image == "evodev-python:3.11"
+    assert settings.max_output_chars == 20_000

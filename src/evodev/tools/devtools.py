@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 
 class PathOutsideWorkspaceError(ValueError):
@@ -27,6 +27,17 @@ class InvalidTestSelectionError(ValueError):
     """Raised when a test path or selector is outside the controlled pytest grammar."""
 
 
+class TestRunner(Protocol):
+    """Replaceable execution boundary for controlled tests."""
+
+    def run_tests(
+        self,
+        workspace_path: Path,
+        test_path: str | None = None,
+        test_selector: str | None = None,
+    ) -> dict[str, Any]: ...
+
+
 class DevToolsService:
     """Development tools constrained to one workspace root."""
 
@@ -36,6 +47,7 @@ class DevToolsService:
         test_timeout_seconds: float = 60,
         max_output_chars: int = 20_000,
         max_diff_chars: int = 20_000,
+        test_runner: TestRunner | None = None,
     ) -> None:
         self.workspace_path = workspace_path.resolve(strict=True)
         if not self.workspace_path.is_dir():
@@ -45,6 +57,7 @@ class DevToolsService:
         self.test_timeout_seconds = test_timeout_seconds
         self.max_output_chars = max_output_chars
         self.max_diff_chars = max_diff_chars
+        self.test_runner = test_runner
 
     def _resolve_path(self, requested_path: str) -> Path:
         path = Path(requested_path)
@@ -215,6 +228,13 @@ class DevToolsService:
             raise InvalidTestSelectionError("test_selector requires test_path")
         if test_selector and not re.fullmatch(r"[A-Za-z0-9_:.\[\]-]+", test_selector):
             raise InvalidTestSelectionError("test_selector contains unsupported characters")
+
+        if self.test_runner is not None:
+            return self.test_runner.run_tests(
+                self.workspace_path,
+                test_path=test_path,
+                test_selector=test_selector,
+            )
 
         command = [
             sys.executable,

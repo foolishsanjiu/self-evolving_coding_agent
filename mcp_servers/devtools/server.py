@@ -10,8 +10,10 @@ from mcp.server.mcpserver import MCPServer
 from mcp.types import ToolAnnotations
 from pydantic import BaseModel, ConfigDict, Field
 
+from evodev.config import load_sandbox_settings
+from evodev.sandbox import DockerTestRunner
 from evodev.tools import ToolCall
-from evodev.tools.devtools import DevToolsService
+from evodev.tools.devtools import DevToolsService, TestRunner
 from evodev.tools.native import NativeToolProvider
 
 
@@ -47,10 +49,18 @@ RUN_TESTS = ToolAnnotations(
 )
 
 
-def build_server(workspace_path: Path, test_timeout_seconds: float = 60) -> MCPServer:
+def build_server(
+    workspace_path: Path,
+    test_timeout_seconds: float = 60,
+    test_runner: TestRunner | None = None,
+) -> MCPServer:
     """Build a DevTools server bound to one workspace root."""
     provider = NativeToolProvider(
-        DevToolsService(workspace_path, test_timeout_seconds=test_timeout_seconds)
+        DevToolsService(
+            workspace_path,
+            test_timeout_seconds=test_timeout_seconds,
+            test_runner=test_runner,
+        )
     )
     server = MCPServer(
         name="evodev-devtools",
@@ -121,9 +131,27 @@ def build_server(workspace_path: Path, test_timeout_seconds: float = 60) -> MCPS
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the EvoDev DevTools MCP server.")
     parser.add_argument("--workspace", required=True, type=Path)
-    parser.add_argument("--test-timeout", type=float, default=60)
+    parser.add_argument("--artifacts", type=Path)
+    parser.add_argument(
+        "--sandbox-config",
+        type=Path,
+        default=Path(__file__).resolve().parents[2] / "configs/sandbox.yaml",
+    )
+    parser.add_argument("--test-timeout", type=float)
+    parser.add_argument("--local-tests", action="store_true")
     arguments = parser.parse_args()
-    build_server(arguments.workspace, arguments.test_timeout).run(transport="stdio")
+    timeout = arguments.test_timeout or 60
+    test_runner = None
+    if not arguments.local_tests:
+        sandbox = load_sandbox_settings(arguments.sandbox_config)
+        if arguments.test_timeout is not None:
+            sandbox = sandbox.model_copy(
+                update={"test_timeout_seconds": arguments.test_timeout}
+            )
+        artifacts = arguments.artifacts or arguments.workspace.resolve().parent / "artifacts"
+        test_runner = DockerTestRunner(sandbox, artifacts)
+        timeout = sandbox.test_timeout_seconds
+    build_server(arguments.workspace, timeout, test_runner).run(transport="stdio")
 
 
 if __name__ == "__main__":
