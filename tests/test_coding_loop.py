@@ -119,7 +119,7 @@ def test_demo_a_simple_bug_search_read_patch_test_pass(runs_root: Path) -> None:
     assert runner.calls == 1
     assert result.tool_results[3].success is True
     assert "return left * right" in result.tool_results[4].data["diff"]
-    assert "return left * right" in (run.artifacts_path / "final.diff").read_text(
+    assert "return left * right" in (run.run_path / "final.diff").read_text(
         encoding="utf-8"
     )
     assert (FIXTURE / "src/calculator.py").read_text(encoding="utf-8") == original

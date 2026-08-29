@@ -29,7 +29,9 @@ class WorkspaceRun(BaseModel):
 class WorkspaceManager:
     """Copy source repositories into isolated, resettable Git workspaces."""
 
-    _ignored_names = frozenset({".git", "__pycache__", ".pytest_cache", ".test_runtime"})
+    _ignored_names = frozenset(
+        {".env", ".git", "__pycache__", ".pytest_cache", ".test_runtime"}
+    )
 
     def __init__(self, runs_root: Path) -> None:
         self.runs_root = runs_root.resolve()
@@ -124,9 +126,15 @@ class WorkspaceManager:
         self._git(run.workspace_path, ["reset", "--hard", "HEAD"])
         self._git(run.workspace_path, ["clean", "-fdx"])
 
-    def cleanup(self, run: WorkspaceRun) -> None:
+    def cleanup(
+        self,
+        run: WorkspaceRun,
+        redact: Callable[[str], str] | None = None,
+    ) -> None:
         """Remove only the disposable workspace, preserving run artifacts."""
         self._validate_run(run)
         final_diff = self._git(run.workspace_path, ["diff", "--no-ext-diff", "--"])
-        (run.artifacts_path / "final.diff").write_text(final_diff, encoding="utf-8")
+        persisted_diff = redact(final_diff) if redact is not None else final_diff
+        (run.run_path / "final.patch").write_text(persisted_diff, encoding="utf-8")
+        (run.run_path / "final.diff").write_text(persisted_diff, encoding="utf-8")
         self._remove_tree(run.workspace_path)

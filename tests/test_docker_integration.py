@@ -92,7 +92,7 @@ def test_real_docker_patch_test_cycle(runs_root: Path) -> None:
     assert applied.success
     assert passing.success
     assert failing.data["container_removed"] and passing.data["container_removed"]
-    assert "return left * right" in (run.artifacts_path / "final.diff").read_text(
+    assert "return left * right" in (run.run_path / "final.diff").read_text(
         encoding="utf-8"
     )
 

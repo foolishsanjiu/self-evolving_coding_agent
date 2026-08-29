@@ -51,7 +51,8 @@ def test_create_reset_and_cleanup_preserve_original(runs_root: Path) -> None:
 
     assert not run.workspace_path.exists()
     assert run.artifacts_path.is_dir()
-    assert (run.artifacts_path / "final.diff").is_file()
+    assert (run.run_path / "final.patch").is_file()
+    assert (run.run_path / "final.diff").is_file()
 
 
 def test_each_create_uses_an_independent_workspace(runs_root: Path) -> None:
@@ -85,9 +86,13 @@ def test_runs_directory_inside_source_is_not_recursively_copied(runs_root: Path)
     source = runs_root / "source"
     source.mkdir()
     (source / "value.txt").write_text("value", encoding="utf-8")
+    (source / ".env").write_text("SECRET=not-copied", encoding="utf-8")
+    (source / ".env.example").write_text("SECRET=example", encoding="utf-8")
     manager = WorkspaceManager(source / "runs")
 
     run = manager.create(source, run_id="nested")
 
     assert (run.workspace_path / "value.txt").is_file()
     assert not (run.workspace_path / "runs").exists()
+    assert not (run.workspace_path / ".env").exists()
+    assert (run.workspace_path / ".env.example").is_file()

@@ -133,7 +133,11 @@ class ReActAgent:
 
                 if not turn.tool_calls:
                     state.status = AgentStatus.SUCCESS
-                    self._emit("FINAL_ANSWER", step_count=step_count)
+                    self._emit(
+                        "FINAL_ANSWER",
+                        step_count=step_count,
+                        content=turn.content or "",
+                    )
                     self._emit("RUN_FINISHED", status=state.status.value)
                     return AgentRunResult(state=state, final_answer=turn.content or "")
 

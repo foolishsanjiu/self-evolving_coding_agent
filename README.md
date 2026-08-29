@@ -18,6 +18,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 4：DevTools MCP Server**
 - **Task 5：MCP Client + Dynamic Tool Discovery**
 - **Task 6：Docker Sandbox + 完整 Coding Loop**
+- **Task 7：Lightweight Trajectory Logging + Trace Analyzer**
 
 现有能力：
 
@@ -40,11 +41,13 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - `AgentState` 统一任务生命周期和 Working Memory；
 - `ContextManager` 基于字符预算确定性保留/压缩上下文；
 - 仅针对只读、幂等工具瞬时错误的受限 Retry；
-- 项目级 `FakeLLM` 与 `fixtures/simple_read` 开发 Fixture。
+- 项目级 `FakeLLM` 与 `fixtures/simple_read` 开发 Fixture；
+- 版本化 Run Metadata、追加式事件日志、Artifact 引用与崩溃恢复；
+- 落盘前密钥脱敏，以及五项可复算 Trace Feature。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-尚未实现持久化 Trajectory、Benchmark、Evaluation、Experience 或 Policy Evolution。
+尚未实现 Benchmark、Independent Evaluation、Experience 或 Policy Evolution。
 
 ## 环境
 
@@ -88,7 +91,7 @@ Git baseline，并支持：
 
 - `create()`：创建当前 Run 独占的 workspace 与 artifacts 目录；
 - `reset()`：恢复 baseline 并清除 workspace 内新增文件；
-- `cleanup()`：先保存 `artifacts/final.diff`，再只删除 disposable workspace。
+- `cleanup()`：先在 Run 根目录保存 `final.patch` 与 `final.diff`，再只删除 disposable workspace。
 
 每次 `run_tests` 都启动一个具名的一次性容器。固定边界包括：
 
@@ -119,8 +122,8 @@ Server 暴露六个结构化工具：
 - 写入：`apply_patch`，仅接受 workspace 内的 Unified Git Diff；
 - 执行：`run_tests`，仅接受测试路径与受限 pytest selector，不接受 Shell 命令。
 
-当前 `run_tests` 在宿主 Conda 环境内运行，并具有超时与输出截断；它尚不等同于安全
-沙箱。容器化隔离将在 Task 6 实现。
+当前 `run_tests` 通过 Task 6 的 Docker Sandbox 执行，并具有资源限制、超时、输出截断
+与容器清理保证；`--local-tests` 仅用于明确选择的本地开发场景。
 
 Agent 侧使用 `MCPToolProvider` 连接 Server；首次连接会分页发现工具并缓存，ReAct 每步
 读取缓存，`refresh_tools()` 可显式刷新：
@@ -143,6 +146,40 @@ with MCPToolProvider(server) as tools:
 `MCPToolProvider` 和 `NativeToolProvider` 实现同一个同步 `ToolProvider` 接口；MCP SDK
 对象不会进入 ReAct 主循环。连接、超时、协议和 Server 退出错误与工具执行错误分别
 计数，避免后续 Evaluation 把基础设施故障误判为 Agent 策略失败。
+
+## Trajectory 与 Observability
+
+每次运行使用独立的 `runs/run_<id>/` 目录，包含：
+
+```text
+run.json
+events.jsonl
+final.patch
+final.diff
+trace_features.json
+artifacts/
+```
+
+`TrajectoryRecorder` 应在创建 `ReActAgent` 前初始化并作为 `event_sink` 注入。`run.json`
+记录 Agent、Policy、Experience、模型、Prompt、工具目录、Benchmark 与 Sandbox 的版本或
+哈希；工具目录哈希与工具发现顺序无关。`events.jsonl` 只持久化以下七类公开事件：
+
+- `RUN_STARTED`、`MODEL_TURN`、`TOOL_CALL`、`TOOL_RESULT`；
+- `FINAL_ANSWER`、`RUN_FINISHED`、`RUN_ERROR`。
+
+`TOOL_CALL` 与 `TOOL_RESULT` 通过 `call_id` 关联。大输出写入 `artifacts/`，事件只保留
+`artifact_ref`、`sha256`、`chars` 和 `truncated_for_llm`。Recorder 在落盘前过滤已知
+API Key、Authorization Header、`.env` 密钥和值及常见 token/key 模式；disposable
+workspace 也不会复制 `.env`。清理 workspace 时可传入相同过滤器：
+
+```python
+manager.cleanup(run, redact=recorder.redactor.redact_text)
+```
+
+事件采用 append、flush 与 `fsync`；重启时会截去尾部不完整 JSON 行并从下一序号继续。
+`TraceAnalyzer` 仅从公开事件复算 `searched_before_edit`、`inspected_tests_before_edit`、
+`unique_files_read`、`patch_attempts` 和 `test_runs`。轨迹格式版本为 `1.0`，不记录模型的
+私有思维链。
 
 ## 配置
 
@@ -196,7 +233,9 @@ python -m ruff check .
 - MCP Transport Error 与 Tool Execution Error 分层归一化和统计。
 - Disposable Workspace create/reset/cleanup 与 Original Repository 不变性；
 - Docker 参数边界、Artifact、输出截断、失败和超时清理语义；
-- Simple Bug、Patch Failure、Test Failure、Infinite Test 四类多轮 Coding Loop。
+- Simple Bug、Patch Failure、Test Failure、Infinite Test 四类多轮 Coding Loop；
+- Run Metadata、事件顺序与 `call_id` 关联、Artifact 完整性和落盘脱敏；
+- JSONL 尾部崩溃恢复、最终 Patch/Diff 脱敏及五项 Trace Feature 复算。
 
 Docker 可用且镜像构建完成后，真实隔离验收为：
 
