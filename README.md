@@ -271,6 +271,35 @@ Regression、Timeout 或 Environment Failure。可审计冻结快照位于
 evodev-baseline --experiment-id exp-baseline-v1-new
 ```
 
+## Reflection 与 Experience Store
+
+Task 10 只对可归因于 Agent 策略的失败生成经验。`TARGET_TEST_FAILED`、
+`REGRESSION_FAILED`、`AGENT_MAX_STEPS`、`PATCH_APPLY_FAILED` 与重复无效工具策略可进入
+Reflection；Environment、Docker、MCP 连接和 API 故障不会污染 Experience Store。
+
+每次反思调用只接收任务描述、评估失败类型、Patch 摘要、相关测试失败、五项行为特征和
+至多 12 个重要事件。一次结构化模型调用同时返回两个独立校验的对象：解释本次失败的
+`Reflection`，以及可跨任务复用的 `ExperienceCandidate`。Evidence 必须引用允许的
+Trajectory Event、Behavioral Feature 或 Evaluator Result；具体任务答案、Gold Patch、
+隐藏断言和精确常量修复会被拒绝。
+
+SQLite Store 使用 `reflections`、`experiences`、`experience_sources` 三张表，支持
+`candidate`、`active`、`deprecated` 生命周期，并保留 Experience → Reflection → Run →
+Trajectory/Evaluation 的 Provenance。只有 Train 可写，Validation 与 Test 为只读。
+
+从已完成的 Baseline 生成 Train Experience 会产生 API 费用。以下命令只处理
+`task_002`；重复执行会跳过已经反思过的 Run：
+
+```powershell
+evodev-reflect --experiment-id exp-baseline-v1 --task-id task_002
+```
+
+默认数据库为被 Git 忽略的 `data/experience.sqlite`。Task 10 没有新增第三方依赖，SQLite
+使用 Python 3.11 标准库。首次 Task 10 运行已对 `run_task_002_r01` 完成一次结构化调用：
+输入 2,579 tokens、输出 2,389 tokens，落盘 1 条 Reflection、1 条 candidate Experience 和
+1 条 Source Provenance。五个 Evidence Reference 均可在压缩上下文中解析，未检出具体
+任务答案、期望异常文本、Gold Patch 或精确边界常量泄漏。
+
 ## 配置
 
 普通配置位于 `configs/`：
@@ -329,7 +358,9 @@ python -m ruff check .
 - Benchmark 固定规模与类别、Manifest 完整性和近重复 split 防泄漏；
 - Agent Workspace 私有资产隔离及 12 题 Before-Fail / After-Gold-Pass QA；
 - Gold、Empty、Invalid、Syntax 与 Regression Break 五类独立评估路径；
-- Fresh Evaluation Workspace、分层 Grade、实验汇总与冻结 Baseline 一致性。
+- Fresh Evaluation Workspace、分层 Grade、实验汇总与冻结 Baseline 一致性；
+- Reflection Eligibility、压缩 Evidence Context 与一次调用双对象校验；
+- Train-only Experience Store、相似经验合并、生命周期与 Provenance。
 
 Docker 可用且镜像构建完成后，真实隔离验收为：
 
