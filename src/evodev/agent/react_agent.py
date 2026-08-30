@@ -11,6 +11,7 @@ from evodev.agent.context import ContextManager
 from evodev.agent.events import AgentEvent, EventSink, NoOpEventSink
 from evodev.agent.state import AgentState, AgentStatus, should_retry, update_state
 from evodev.llm.schemas import ModelTurn
+from evodev.policy import AgentPolicy, InspectTestsMode
 from evodev.schemas import TaskSpec
 from evodev.tools import ToolCall, ToolProvider, ToolResult, ToolSpec
 
@@ -62,6 +63,7 @@ class ReActAgent:
         max_context_chars: int = 60_000,
         event_sink: EventSink | None = None,
         experience_section: str = "",
+        policy: AgentPolicy | None = None,
     ) -> None:
         if max_steps < 1:
             raise ValueError("max_steps must be at least 1")
@@ -71,11 +73,12 @@ class ReActAgent:
             raise ValueError("max_context_chars must be at least 1")
         self.llm = llm
         self.tool_provider = tool_provider
-        self.max_steps = max_steps
+        self.max_steps = policy.max_react_steps if policy is not None else max_steps
         self.max_tool_retries = max_tool_retries
         self.max_context_chars = max_context_chars
         self.event_sink = event_sink or NoOpEventSink()
         self.experience_section = experience_section
+        self.policy = policy
 
     def _emit(self, event_type: str, **data: Any) -> None:
         self.event_sink.emit(AgentEvent(type=event_type, data=data))
@@ -111,6 +114,40 @@ class ReActAgent:
                 error_type=result.error_type,
             )
 
+    def _policy_guard(
+        self, tool_call: ToolCall, state: AgentState
+    ) -> ToolResult | None:
+        if not (
+            self.policy
+            and self.policy.inspect_tests_before_edit == InspectTestsMode.REQUIRE
+            and tool_call.name == "apply_patch"
+            and not state.tests_inspected_before_edit
+        ):
+            return None
+        return ToolResult(
+            call_id=tool_call.call_id,
+            tool_name=tool_call.name,
+            success=False,
+            content=(
+                "Policy requires inspecting relevant tests before apply_patch. "
+                "Use read_file or search_code on the test suite, then retry the edit."
+            ),
+            error_type="POLICY_PRECONDITION_NOT_MET",
+            data={"required_action": "inspect_relevant_tests_before_edit"},
+            duration_ms=0,
+        )
+
+    def _policy_tool_guidance(self, tools: list[ToolSpec]) -> list[ToolSpec]:
+        if not (self.policy and self.policy.prefer_search_before_read):
+            return tools
+        guidance = " Policy guidance: prefer search_code before broad read_file exploration."
+        return [
+            tool.model_copy(update={"description": tool.description + guidance})
+            if tool.name in {"search_code", "read_file"}
+            else tool
+            for tool in tools
+        ]
+
     def run(self, task: TaskSpec) -> AgentRunResult:
         state = AgentState(task=task)
         context = ContextManager(
@@ -118,11 +155,12 @@ class ReActAgent:
             task=task,
             max_context_chars=self.max_context_chars,
             experience_section=self.experience_section,
+            policy_section=self.policy.guidance() if self.policy else "",
         )
         self._emit("RUN_STARTED", task_id=task.task_id)
 
         try:
-            tools = self.tool_provider.list_tools()
+            tools = self._policy_tool_guidance(self.tool_provider.list_tools())
             tools_by_name = {tool.name: tool for tool in tools}
             for step_count in range(1, self.max_steps + 1):
                 state.step_count = step_count
@@ -151,7 +189,9 @@ class ReActAgent:
                     self._emit(
                         "TOOL_CALL", step_count=step_count, tool_call=tool_call.model_dump()
                     )
-                    result = self._call_tool(tool_call, tools_by_name.get(tool_call.name))
+                    result = self._policy_guard(tool_call, state) or self._call_tool(
+                        tool_call, tools_by_name.get(tool_call.name)
+                    )
                     update_state(state, result)
                     exchange_results.append(result)
                     self._emit(

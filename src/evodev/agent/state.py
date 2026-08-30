@@ -28,6 +28,7 @@ class AgentState(BaseModel):
     status: AgentStatus = AgentStatus.RUNNING
     step_count: int = Field(default=0, ge=0)
     files_inspected: set[str] = Field(default_factory=set)
+    tests_inspected_before_edit: bool = False
     tool_history: list[ToolResult] = Field(default_factory=list)
     current_patch: str | None = None
     test_results: list[dict[str, Any]] = Field(default_factory=list)
@@ -55,10 +56,25 @@ def update_state(state: AgentState, result: ToolResult) -> None:
         return
 
     if result.tool_name == "read_file" and (path := result.data.get("path")):
-        state.files_inspected.add(str(path))
+        path = str(path)
+        state.files_inspected.add(path)
+        if state.current_patch is None and _is_test_path(path):
+            state.tests_inspected_before_edit = True
+    elif result.tool_name == "search_code" and state.current_patch is None:
+        paths = [str(result.data.get("path", ""))]
+        paths.extend(str(match.get("file", "")) for match in result.data.get("matches", []))
+        if any(_is_test_path(path) for path in paths):
+            state.tests_inspected_before_edit = True
     elif result.tool_name == "apply_patch":
         patch = result.data.get("patch") or result.data.get("diff")
         state.current_patch = str(patch or result.content)
+
+
+def _is_test_path(path: str) -> bool:
+    normalized = path.replace("\\", "/").strip("/").lower()
+    parts = normalized.split("/")
+    filename = parts[-1] if parts else ""
+    return "tests" in parts or filename.startswith("test_") or filename.endswith("_test.py")
 
 
 def should_retry(

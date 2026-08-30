@@ -80,3 +80,23 @@ def test_experience_is_an_independent_optional_section() -> None:
 
     assert [message["role"] for message in messages] == ["system", "user", "system"]
     assert messages[2]["content"].startswith("Relevant Past Experience:")
+
+
+def test_policy_guidance_is_an_independent_optional_section() -> None:
+    task = _task()
+    manager = ContextManager(
+        "system-instructions",
+        task,
+        policy_section="Policy Guidance:\n- Prefer search_code before read_file.",
+        experience_section="Relevant Past Experience:\nA prior lesson.",
+    )
+
+    messages = manager.build_messages(AgentState(task=task))
+
+    assert [message["role"] for message in messages] == [
+        "system",
+        "system",
+        "user",
+        "system",
+    ]
+    assert messages[1]["content"].startswith("Policy Guidance:")

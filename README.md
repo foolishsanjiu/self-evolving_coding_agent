@@ -23,6 +23,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 9：Independent Evaluator + Fixed-Policy Baseline**
 - **Task 10：Reflection + Experience Extraction**
 - **Task 11：Experience Retrieval + Controlled Experiment**
+- **Task 12：Constrained Policy Space + File Versioning**
 
 现有能力：
 
@@ -54,10 +55,14 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 受控实验 Manifest、指标汇总，以及冻结的 `exp-baseline-v1`；
 - Train-only Experience Store、`experience-v001` 冻结快照与受限 Top-K 检索；
 - Relevant/Random Validation 对照实验与 Retrieval/Utilization 指标。
+- 仅含三个可演化字段的强类型 `AgentPolicy` 与代码层 Frozen Invariants；
+- Soft Guidance、PreToolCall Hard Guard 和 Policy 驱动的 ReAct Step Limit；
+- Train-only Failure Pattern Aggregation、单字段 Mutation 与可校验文件版本链。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-尚未实现 Policy Evolution；Task 12 将进入受约束 Policy Space。
+Task 12 已建立 Policy 演化边界与运行时 Hook；尚未实现 Task 13 的 Proposal LLM、
+Validation Gate、自动晋升或自动回滚。
 
 ## 环境
 
@@ -78,7 +83,7 @@ python -m pip install -e .
 主要运行时依赖包括 OpenAI-compatible SDK、Pydantic、PyYAML、python-dotenv 和
 `mcp>=2.1,<3`；完整版本约束以 `requirements.txt` 为准。
 
-Task 6–11 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
+Task 6–12 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
 
 ```powershell
 docker version
@@ -342,6 +347,36 @@ evodev-experience-experiment --mode relevant --experiment-id exp-experience-v1
 evodev-experience-experiment --mode random --experiment-id exp-experience-random-v1
 ```
 
+## Constrained Policy Space 与 Versioning
+
+Task 12 将可演化范围固定为三个字段：
+
+```yaml
+inspect_tests_before_edit: off  # off | prefer | require
+prefer_search_before_read: false
+max_react_steps: 15             # 10 | 15 | 20
+```
+
+`off` 保持原行为；`prefer` 通过独立 Policy Guidance 提示模型；`require` 在首次
+`apply_patch` 前检查 Agent 是否已读取或搜索测试。条件不满足时 Harness 返回
+`POLICY_PRECONDITION_NOT_MET`，并要求模型自行检查测试后重试，不会替模型隐藏执行。
+`prefer_search_before_read` 接入 Tool Guidance，`max_react_steps` 直接接入 ReAct Loop。
+
+Workspace Boundary、Docker Requirement、无任意 Shell、默认断网、Hidden Test 隔离、
+Split 规则、Secret Redaction、Evaluator Logic、Original Repository Protection、Docker
+Security Limits 与 MCP Permission Boundary 全部位于独立且冻结的 Schema，不能进入
+Mutation。Context Budget 继续由固定 Agent Config 管理。
+
+`PolicyMutation` 只接受 Train Evidence，并保存 Evidence、Hypothesis、Expected Effect 与
+Risk；一个 Candidate 只改变一个字段。`aggregate_failure_patterns()` 仅聚合可归因于
+Agent 策略的 Train Failure，不吸收 Environment、Timeout 或已解决运行。
+
+版本仓库位于 `policies/`。每个 YAML 快照保存 parent、status、mutation、validation
+result、canonical SHA-256 hash 与创建时间；`index.json` 只指向 champion 和 previous
+champion。当前 `policy-v001` 冻结为 Task 12 前的默认行为。Repository 能保存
+accepted、rejected 和显式 rolled-back 状态，但 Task 12 不自行做 Validation 决策；
+自动 Proposal、Pairwise Validation Gate、Promotion 与 Rollback 属于 Task 13。
+
 ## 配置
 
 普通配置位于 `configs/`：
@@ -407,6 +442,10 @@ python -m ruff check .
 - Frozen Experience Snapshot、Metadata/Keyword Retrieval 与 same-task 排除；
 - 独立 Experience Prompt Section、Relevant/Random 消融和受控 Manifest；
 - Retrieval Hit Rate 与相对 Baseline 的 Experience Utilization Rate。
+- 三字段 Policy Schema、冻结安全边界、严格取值与 Canonical Hash；
+- Policy Guidance、测试前编辑 Hard Guard 和 Policy Step Limit；
+- Train-only Mutation Evidence 与重复 Failure Pattern Aggregation；
+- Candidate 单字段变更、Accepted/Rejected 保存、Parent Chain 与显式 Rollback。
 
 Docker 可用且镜像构建完成后，真实隔离验收为：
 

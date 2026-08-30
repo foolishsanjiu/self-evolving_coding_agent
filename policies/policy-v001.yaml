@@ -1,0 +1,15 @@
+policy_id: policy-v001
+parent_id: null
+status: accepted
+mutation_id: null
+mutation: null
+validation_result:
+  decision: accepted
+  report_path: null
+  reason: Initial policy matching the pre-evolution agent behavior.
+policy:
+  inspect_tests_before_edit: 'off'
+  prefer_search_before_read: false
+  max_react_steps: 15
+content_hash: fc3df9ac90a3b19bd0f7600e307057101b1b0e71345318bcf1ddb5328fa99d4c
+created_at: '2026-08-30T14:29:52.1900590Z'

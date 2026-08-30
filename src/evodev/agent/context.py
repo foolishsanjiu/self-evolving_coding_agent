@@ -28,6 +28,7 @@ class ContextManager:
         max_context_chars: int = 60_000,
         recent_tool_results: int = 6,
         experience_section: str = "",
+        policy_section: str = "",
     ) -> None:
         if max_context_chars < 1:
             raise ValueError("max_context_chars must be at least 1")
@@ -38,6 +39,7 @@ class ContextManager:
         self.max_context_chars = max_context_chars
         self.recent_tool_results = recent_tool_results
         self.experience_section = experience_section
+        self.policy_section = policy_section
         self._exchanges: list[ContextExchange] = []
 
     def add_exchange(self, turn: ModelTurn, results: list[ToolResult]) -> None:
@@ -50,8 +52,10 @@ class ContextManager:
     def _base_messages(self, state: AgentState) -> list[dict[str, Any]]:
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": self.task.instruction},
         ]
+        if self.policy_section:
+            messages.append({"role": "system", "content": self.policy_section})
+        messages.append({"role": "user", "content": self.task.instruction})
         if self.experience_section:
             messages.append({"role": "system", "content": self.experience_section})
         state_lines = []

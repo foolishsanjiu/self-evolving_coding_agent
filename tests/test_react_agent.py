@@ -5,6 +5,7 @@ import pytest
 from evodev.agent import AgentStatus, ReActAgent
 from evodev.agent.events import AgentEvent
 from evodev.llm import FakeLLM, ModelTurn
+from evodev.policy import AgentPolicy, InspectTestsMode
 from evodev.schemas import TaskSpec
 from evodev.tools import ToolCall, ToolProvider, ToolResult, ToolSpec
 from evodev.tools.devtools import DevToolsService
@@ -45,6 +46,40 @@ class RecordingEventSink:
 
     def emit(self, event: AgentEvent) -> None:
         self.events.append(event)
+
+
+class PolicyToolProvider(ToolProvider):
+    def __init__(self) -> None:
+        self.calls: list[ToolCall] = []
+        self.specs = [
+            ToolSpec(
+                name=name,
+                description=f"Use {name}.",
+                input_schema={"type": "object"},
+                source="fake",
+                read_only=name != "apply_patch",
+                destructive=name == "apply_patch",
+                idempotent=name != "apply_patch",
+            )
+            for name in ["read_file", "search_code", "apply_patch"]
+        ]
+
+    def list_tools(self) -> list[ToolSpec]:
+        return self.specs
+
+    def call_tool(self, tool_call: ToolCall) -> ToolResult:
+        self.calls.append(tool_call)
+        data = dict(tool_call.arguments)
+        if tool_call.name == "apply_patch":
+            data = {"patch": tool_call.arguments["patch"]}
+        return ToolResult(
+            call_id=tool_call.call_id,
+            tool_name=tool_call.name,
+            success=True,
+            content=f"completed {tool_call.name}",
+            data=data,
+            duration_ms=0,
+        )
 
 
 def _task() -> TaskSpec:
@@ -167,6 +202,80 @@ def test_agent_stops_at_max_steps() -> None:
     assert result.status == AgentStatus.MAX_STEPS
     assert result.final_answer is None
     assert result.step_count == 2
+
+
+def test_policy_max_steps_overrides_static_agent_limit() -> None:
+    provider = RecordingProvider()
+    turns = [_tool_turn(f"call-{index}") for index in range(10)]
+
+    result = ReActAgent(
+        FakeLLM(turns),
+        provider,
+        max_steps=20,
+        policy=AgentPolicy(max_react_steps=10),
+    ).run(_task())
+
+    assert result.status == AgentStatus.MAX_STEPS
+    assert result.step_count == 10
+    assert len(provider.calls) == 10
+
+
+def test_policy_require_blocks_edit_until_tests_are_inspected() -> None:
+    first_edit = ToolCall(
+        call_id="edit-blocked",
+        name="apply_patch",
+        arguments={"patch": "first patch"},
+    )
+    inspect_tests = ToolCall(
+        call_id="read-tests",
+        name="read_file",
+        arguments={"path": "tests/test_app.py"},
+    )
+    second_edit = ToolCall(
+        call_id="edit-allowed",
+        name="apply_patch",
+        arguments={"patch": "second patch"},
+    )
+    llm = FakeLLM(
+        [
+            ModelTurn(tool_calls=[first_edit]),
+            ModelTurn(tool_calls=[inspect_tests]),
+            ModelTurn(tool_calls=[second_edit]),
+            ModelTurn(content="done"),
+        ]
+    )
+    provider = PolicyToolProvider()
+
+    result = ReActAgent(
+        llm,
+        provider,
+        policy=AgentPolicy(inspect_tests_before_edit=InspectTestsMode.REQUIRE),
+    ).run(_task())
+
+    assert result.status == AgentStatus.SUCCESS
+    assert result.tool_results[0].error_type == "POLICY_PRECONDITION_NOT_MET"
+    assert [call.call_id for call in provider.calls] == ["read-tests", "edit-allowed"]
+    assert result.state.tests_inspected_before_edit is True
+    assert llm.requests[1][0][-1]["content"].startswith("Policy requires inspecting")
+
+
+def test_prefer_policy_is_visible_guidance_without_hard_block() -> None:
+    llm = FakeLLM([ModelTurn(content="done")])
+    policy = AgentPolicy(
+        inspect_tests_before_edit=InspectTestsMode.PREFER,
+        prefer_search_before_read=True,
+    )
+
+    result = ReActAgent(llm, PolicyToolProvider(), policy=policy).run(_task())
+
+    assert result.status == AgentStatus.SUCCESS
+    contents = [message["content"] for message in llm.requests[0][0]]
+    assert any("Prefer inspecting relevant tests" in content for content in contents)
+    assert any("Prefer search_code" in content for content in contents)
+    guided_tools = {
+        tool.name: tool.description for tool in llm.requests[0][1] if tool.name != "apply_patch"
+    }
+    assert all("Policy guidance: prefer search_code" in text for text in guided_tools.values())
 
 
 def test_agent_emits_events_through_replaceable_sink() -> None:

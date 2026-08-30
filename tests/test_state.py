@@ -71,3 +71,28 @@ def test_should_retry_requires_transient_read_only_idempotent_failure() -> None:
     assert should_retry(safe_tool, transient, retries_used=0, max_tool_retries=1)
     assert not should_retry(safe_tool, transient, retries_used=1, max_tool_retries=1)
     assert not should_retry(unsafe_tool, transient, retries_used=0, max_tool_retries=1)
+
+
+def test_update_state_tracks_test_inspection_before_first_edit() -> None:
+    state = _state()
+
+    update_state(
+        state,
+        _result(
+            "search_code",
+            path=".",
+            matches=[{"file": "tests/test_app.py"}],
+        ),
+    )
+    update_state(state, _result("apply_patch", patch="a patch"))
+    update_state(state, _result("read_file", path="tests/test_late.py"))
+
+    assert state.tests_inspected_before_edit is True
+
+
+def test_source_inspection_does_not_count_as_test_inspection() -> None:
+    state = _state()
+
+    update_state(state, _result("read_file", path="src/app.py"))
+
+    assert state.tests_inspected_before_edit is False
