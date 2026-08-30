@@ -469,8 +469,17 @@ Candidate 虽将 Search-before-edit 从 0.4444 提高到 0.8889、Test-inspectio
 因此 Gate 按“效率不能覆盖解决率下降”的规则拒绝它。`task_007` 仍有 1/3 成功，所以不满足
 从 Champion 至少 2/3 降为 0/3 的 Catastrophic Regression 定义。最终 Gate 与独立 Pairwise
 报告冻结在 `evolution/evolution-v1/candidate-001/`；Candidate 保留为 rejected，Champion
-仍为 `policy-v001`。Task 13 所要求的“因解决率下降而拒绝”案例已经获得；Accepted Mutation
-案例尚未获得，继续搜索仍需新的明确付费授权。
+仍为 `policy-v001`。Task 13 所要求的“因解决率下降而拒绝”案例已经获得。
+
+第三次授权的 Proposal 使用 435 Input Tokens、923 Output Tokens，提出新的唯一 Transition
+`inspect_tests_before_edit: off → require`，并生成 `candidate-002` / `mutation-002`；其 Policy
+Hash 为 `013e5b7cc0f7ab6dda80a5a753ef3b978c76edaa133454264a6bb9e7cbeb92c3`。8 项
+Schema/Safety 检查全部通过，Smoke Gate 以 4 Steps、3 Tool Calls 通过；其中记录到 1 次
+Policy Precondition Failure，随后 Agent 完成了所需的测试检查并成功结束。Proposal Attempt 与
+Pre-Validation Gate 分别冻结在 `evolution/evolution-v1/proposal-attempt-003.json` 和
+`evolution/evolution-v1/candidate-002/gates-pre-validation.json`。Candidate 保持 pending，
+Champion 仍为 `policy-v001`；本代 2 个 Candidate 的搜索额度已用完。验证其能否成为 Task 13
+所需的 Accepted Mutation，需要另行授权 Champion/Candidate 各 9 次的 Pairwise Validation。
 
 ## 配置
 

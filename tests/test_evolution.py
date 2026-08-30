@@ -558,6 +558,34 @@ def test_candidate_001_rejected_case_study_is_preserved() -> None:
     assert gates.pairwise_gate.catastrophic_regressions == []
 
 
+def test_third_paid_proposal_and_candidate_002_are_preserved() -> None:
+    proposal = ProposalAttemptReport.model_validate_json(
+        Path("evolution/evolution-v1/proposal-attempt-003.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    candidate = PolicyRepository(Path("policies")).load("candidate-002")
+    gates = CandidateGateBundle.model_validate_json(
+        Path(
+            "evolution/evolution-v1/candidate-002/gates-pre-validation.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert proposal.status == "accepted"
+    assert proposal.input_tokens == 435
+    assert proposal.output_tokens == 923
+    assert proposal.draft is not None
+    assert proposal.draft.new_value == "require"
+    assert candidate.parent_id == "policy-v001"
+    assert candidate.status == "candidate"
+    assert candidate.policy.inspect_tests_before_edit == "require"
+    assert gates.schema_gate.passed is True
+    assert gates.smoke_gate is not None
+    assert gates.smoke_gate.passed is True
+    assert gates.smoke_gate.policy_precondition_failures == 1
+    assert gates.pairwise_gate is None
+
+
 def _evaluation(task_id: str, run_id: str) -> EvaluationResult:
     return EvaluationResult(
         task_id=task_id,
