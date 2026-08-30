@@ -31,9 +31,11 @@ from evodev.evolution.models import (
     EvolutionProgress,
     GateDecision,
     PolicyArmMetrics,
+    ProposalAttemptReport,
     SchemaGateReport,
     SmokeGateReport,
 )
+from evodev.evolution.proposal import PROPOSAL_SYSTEM_PROMPT, ProposalRejectedError
 from evodev.evolution.validation import controlled_policy_conditions_match
 from evodev.llm import FakeLLM, ModelTurn
 from evodev.policy.models import (
@@ -133,13 +135,14 @@ def test_proposal_binds_trusted_parent_old_value_and_train_evidence(
 ) -> None:
     model = FakeLLM([ModelTurn(content=_draft())])
 
-    mutation = propose_mutation(
+    proposal = propose_mutation(
         model,
         policy_repository.champion(),
         [_pattern()],
         mutation_id="mutation-001",
         evidence_reference="failure-patterns/train-v001.json",
     )
+    mutation = proposal.mutation
 
     assert mutation.parent_policy_id == "policy-v001"
     assert mutation.old_value == "off"
@@ -147,6 +150,7 @@ def test_proposal_binds_trusted_parent_old_value_and_train_evidence(
     assert all(item.split == "train" for item in mutation.evidence)
     assert '"split"' not in model.requests[0][0][1]["content"]
     assert model.requests[0][1] == []
+    assert '"off", "prefer", or "require"' in PROPOSAL_SYSTEM_PROMPT
 
 
 def test_proposal_requires_repeated_pattern_and_rejects_duplicate_transition(
@@ -174,6 +178,28 @@ def test_proposal_requires_repeated_pattern_and_rejects_duplicate_transition(
                 ("inspect_tests_before_edit", "off", "require")
             },
         )
+
+
+def test_invalid_proposal_is_auditable_rejection(
+    policy_repository: PolicyRepository,
+) -> None:
+    turn = ModelTurn(
+        content=_draft(new_value="enabled"),
+        input_tokens=100,
+        output_tokens=20,
+    )
+
+    with pytest.raises(ProposalRejectedError) as captured:
+        propose_mutation(
+            FakeLLM([turn]),
+            policy_repository.champion(),
+            [_pattern()],
+            mutation_id="mutation-001",
+            evidence_reference="train.json",
+        )
+
+    assert captured.value.draft.new_value == "enabled"
+    assert captured.value.turn.input_tokens == 100
 
 
 def test_schema_and_smoke_gates_enforce_candidate_boundary(
@@ -471,6 +497,19 @@ def test_paid_cli_stages_require_explicit_confirmation() -> None:
     with pytest.raises(PermissionError, match="--confirm-paid"):
         _require_paid_confirmation(False, "Pairwise Validation")
     _require_paid_confirmation(True, "Pairwise Validation")
+
+
+def test_first_paid_proposal_rejection_is_preserved() -> None:
+    report = ProposalAttemptReport.model_validate_json(
+        Path("evolution/evolution-v1/proposal-attempt-001.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert report.status == "rejected"
+    assert report.observed_field == "inspect_tests_before_edit"
+    assert report.candidate_id is None
+    assert report.draft is None
 
 
 def _evaluation(task_id: str, run_id: str) -> EvaluationResult:

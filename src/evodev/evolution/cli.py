@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -17,8 +18,12 @@ from evodev.evolution.evidence import (
     write_failure_pattern_report,
 )
 from evodev.evolution.gates import run_smoke_gate, validate_policy_schema
-from evodev.evolution.models import CandidateGateBundle, FailurePatternReport
-from evodev.evolution.proposal import propose_mutation
+from evodev.evolution.models import (
+    CandidateGateBundle,
+    FailurePatternReport,
+    ProposalAttemptReport,
+)
+from evodev.evolution.proposal import ProposalRejectedError, propose_mutation
 from evodev.evolution.validation import PolicyExperimentRunner, run_pairwise_validation
 from evodev.llm import LLMClient
 from evodev.policy.versioning import PolicyRepository
@@ -39,6 +44,23 @@ def _bundle_path(project_root: Path, evolution_id: str, candidate_id: str) -> Pa
         / candidate_id
         / "gates.json"
     )
+
+
+def _next_proposal_attempt_path(project_root: Path, evolution_id: str) -> Path:
+    numbers = []
+    for root in [
+        project_root / "evolution" / evolution_id,
+        project_root / "evolution_runs" / evolution_id,
+    ]:
+        for path in root.glob("proposal-attempt-*.json"):
+            numbers.append(int(path.stem.removeprefix("proposal-attempt-")))
+    attempt_id = f"proposal-attempt-{max(numbers, default=0) + 1:03d}"
+    return project_root / "evolution_runs" / evolution_id / f"{attempt_id}.json"
+
+
+def _write_proposal_attempt(report: ProposalAttemptReport, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
 
 
 def _aggregate(arguments: argparse.Namespace) -> None:
@@ -78,15 +100,54 @@ def _propose(arguments: argparse.Namespace) -> None:
     repository = PolicyRepository(arguments.project_root / "policies")
     champion = repository.champion()
     settings = load_settings(arguments.project_root / "configs", arguments.project_root / ".env")
-    mutation = propose_mutation(
-        LLMClient(settings.model),
-        champion,
-        report.patterns,
-        mutation_id=repository.next_mutation_id(),
-        evidence_reference=report_path.relative_to(arguments.project_root).as_posix(),
-        attempted_mutations=repository.attempted_mutations(),
+    relative_report_path = report_path.relative_to(arguments.project_root).as_posix()
+    report_hash = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    attempt_path = _next_proposal_attempt_path(
+        arguments.project_root, arguments.evolution_id
     )
-    candidate = repository.save_candidate(mutation)
+    try:
+        proposal = propose_mutation(
+            LLMClient(settings.model),
+            champion,
+            report.patterns,
+            mutation_id=repository.next_mutation_id(),
+            evidence_reference=relative_report_path,
+            attempted_mutations=repository.attempted_mutations(),
+        )
+    except ProposalRejectedError as exc:
+        rejected = ProposalAttemptReport(
+            attempt_id=attempt_path.stem,
+            status="rejected",
+            model=settings.model.model,
+            parent_policy_id=champion.policy_id,
+            pattern_report_path=relative_report_path,
+            pattern_report_hash=report_hash,
+            draft=exc.draft,
+            observed_field=exc.draft.field,
+            input_tokens=exc.turn.input_tokens,
+            output_tokens=exc.turn.output_tokens,
+            rejection_reason=str(exc),
+        )
+        _write_proposal_attempt(rejected, attempt_path)
+        print(rejected.model_dump_json(indent=2))
+        return
+    candidate = repository.save_candidate(proposal.mutation)
+    _write_proposal_attempt(
+        ProposalAttemptReport(
+            attempt_id=attempt_path.stem,
+            status="accepted",
+            model=settings.model.model,
+            parent_policy_id=champion.policy_id,
+            pattern_report_path=relative_report_path,
+            pattern_report_hash=report_hash,
+            draft=proposal.draft,
+            observed_field=proposal.draft.field,
+            input_tokens=proposal.input_tokens,
+            output_tokens=proposal.output_tokens,
+            candidate_id=candidate.policy_id,
+        ),
+        attempt_path,
+    )
     schema = validate_policy_schema(champion, candidate)
     smoke = run_smoke_gate(candidate, arguments.project_root) if schema.passed else None
     bundle = CandidateGateBundle(

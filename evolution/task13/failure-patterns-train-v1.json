@@ -1,0 +1,30 @@
+{
+  "report_id": "failure-patterns-train-v1",
+  "split": "train",
+  "source_experiment_ids": [
+    "exp-baseline-v1",
+    "exp-policy-train-v1"
+  ],
+  "patterns": [
+    {
+      "failure_type": "AGENT_MAX_STEPS",
+      "failed_runs": 1,
+      "edited_before_tests": 0,
+      "avg_patch_attempts": 11.0,
+      "run_ids": [
+        "exp-policy-train-v1/run_task_004_r01"
+      ]
+    },
+    {
+      "failure_type": "TARGET_TEST_FAILED",
+      "failed_runs": 2,
+      "edited_before_tests": 0,
+      "avg_patch_attempts": 4.5,
+      "run_ids": [
+        "exp-baseline-v1/run_task_002_r01",
+        "exp-policy-train-v1/run_task_002_r02"
+      ]
+    }
+  ],
+  "created_at": "2026-08-30T15:08:33.976914+00:00"
+}

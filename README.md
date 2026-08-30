@@ -430,6 +430,18 @@ evodev-evolve validate --candidate-id candidate-001 `
 真实 Case Study、Policy 晋升和最终 Champion 冻结尚未执行；它们需要明确的付费授权，
 不能由下一任务名称或 README 命令视为授权。
 
+Task 13 已额外完成 6 个 Train Tasks × 2 Runs：12/12 均为有效评估，10/12 Resolved，
+合计约 473,047 Tokens。与 Baseline 合并后，`task_002` 的 `TARGET_TEST_FAILED` 达到 2 次，
+形成首个可用于 Proposal 的重复模式；冻结报告位于
+`evolution/task13/failure-patterns-train-v1.json`。
+
+首次付费 Proposal 选择了 `inspect_tests_before_edit`，但返回值不属于
+`off/prefer/require`，因此 Schema 在创建 Candidate 前拒绝了它，Champion 未变化。该次旧
+CLI 尚未保存原始响应，所以 Attempt 记录明确将未知 Draft/Token 留空，不进行推测；记录位于
+`evolution/evolution-v1/proposal-attempt-001.json`。随后 Prompt 已补充每个字段的精确 JSON
+类型与 Allowed Set，CLI 也会持久化后续 Proposal 的 Draft、Token Usage、Candidate ID 或
+Reject Reason。再次 Proposal 属于新的付费调用，仍需单独授权。
+
 ## 配置
 
 普通配置位于 `configs/`：

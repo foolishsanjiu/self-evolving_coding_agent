@@ -1,0 +1,16 @@
+{
+  "attempt_id": "proposal-attempt-001",
+  "status": "rejected",
+  "paid_call": true,
+  "model": "deepseek-v4-flash",
+  "parent_policy_id": "policy-v001",
+  "pattern_report_path": "evolution/task13/failure-patterns-train-v1.json",
+  "pattern_report_hash": "632c086e50fcec49a95665384260cab7cb9c7cbebf77e9e400029df1414c5e1a",
+  "draft": null,
+  "observed_field": "inspect_tests_before_edit",
+  "input_tokens": null,
+  "output_tokens": null,
+  "candidate_id": null,
+  "rejection_reason": "Proposal returned a value outside the allowed off/prefer/require set; the original response was not persisted by the first CLI implementation.",
+  "created_at": "2026-08-30T15:12:09.2358639Z"
+}

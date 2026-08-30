@@ -8,7 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from evodev.evaluation.models import EvaluationResult, ExperimentManifest, ExperimentSummary
-from evodev.policy.models import FailurePattern
+from evodev.policy.models import FailurePattern, PolicyMutation
 from evodev.policy.runtime import AgentPolicy
 from evodev.trajectory.models import utc_now
 
@@ -27,6 +27,34 @@ class MutationProposalDraft(BaseModel):
     hypothesis: str = Field(min_length=1)
     expected_effect: str = Field(min_length=1)
     possible_risk: str = Field(min_length=1)
+
+
+class ProposalResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mutation: PolicyMutation
+    draft: MutationProposalDraft
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+
+
+class ProposalAttemptReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    attempt_id: str = Field(pattern=r"^proposal-attempt-[0-9]{3}$")
+    status: Literal["accepted", "rejected"]
+    paid_call: Literal[True] = True
+    model: str = Field(min_length=1)
+    parent_policy_id: str
+    pattern_report_path: str
+    pattern_report_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    draft: MutationProposalDraft | None = None
+    observed_field: str | None = None
+    input_tokens: int | None = Field(default=None, ge=0)
+    output_tokens: int | None = Field(default=None, ge=0)
+    candidate_id: str | None = None
+    rejection_reason: str | None = None
+    created_at: str = Field(default_factory=utc_now)
 
 
 class FailurePatternReport(BaseModel):
