@@ -537,6 +537,27 @@ def test_second_paid_proposal_and_pre_validation_gates_are_preserved() -> None:
     assert gate_data["pairwise_gate"] is None
 
 
+def test_candidate_001_rejected_case_study_is_preserved() -> None:
+    candidate = PolicyRepository(Path("policies")).load("candidate-001")
+    gates = CandidateGateBundle.model_validate_json(
+        Path("evolution/evolution-v1/candidate-001/gates-final.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert candidate.status == "rejected"
+    assert candidate.validation_result.decision == "rejected"
+    assert candidate.validation_result.report_path == (
+        "evolution/evolution-v1/candidate-001/gates-final.json"
+    )
+    assert gates.pairwise_gate is not None
+    assert gates.pairwise_gate.decision == GateDecision.REJECT
+    assert gates.pairwise_gate.controlled_conditions_match is True
+    assert gates.pairwise_gate.champion.resolved_attempts == 6
+    assert gates.pairwise_gate.candidate.resolved_attempts == 4
+    assert gates.pairwise_gate.catastrophic_regressions == []
+
+
 def _evaluation(task_id: str, run_id: str) -> EvaluationResult:
     return EvaluationResult(
         task_id=task_id,

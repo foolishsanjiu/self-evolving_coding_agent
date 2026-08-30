@@ -1,6 +1,6 @@
 policy_id: candidate-001
 parent_id: policy-v001
-status: candidate
+status: rejected
 mutation_id: mutation-001
 mutation:
   mutation_id: mutation-001
@@ -24,9 +24,9 @@ mutation:
     progress when tests cannot be accessed.
   created_at: '2026-08-30T15:19:03.111700+00:00'
 validation_result:
-  decision: pending
-  report_path: null
-  reason: Awaiting an external validation decision.
+  decision: rejected
+  report_path: evolution/evolution-v1/candidate-001/gates-final.json
+  reason: Candidate resolution declined; efficiency cannot override resolution.
 policy:
   inspect_tests_before_edit: prefer
   prefer_search_before_read: false

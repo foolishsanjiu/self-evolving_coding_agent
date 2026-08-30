@@ -427,8 +427,8 @@ evodev-evolve validate --candidate-id candidate-001 `
   --evolution-id evolution-v1 --confirm-paid
 ```
 
-真实 Case Study、Policy 晋升和最终 Champion 冻结尚未执行；它们需要明确的付费授权，
-不能由下一任务名称或 README 命令视为授权。
+真实 Case Study、Policy 晋升和最终 Champion 冻结均以独立付费阶段执行；下一任务名称或
+README 命令不能视为授权。
 
 Task 13 已额外完成 6 个 Train Tasks × 2 Runs：12/12 均为有效评估，10/12 Resolved，
 合计约 473,047 Tokens。与 Baseline 合并后，`task_002` 的 `TARGET_TEST_FAILED` 达到 2 次，
@@ -448,8 +448,29 @@ Reject Reason。再次 Proposal 属于新的付费调用，仍需单独授权。
 `b1c094b6c299811e59e4a746aca8f13fc924070e607450b680f56b1ddb586df9`。8 项 Schema/Safety
 检查和 `fixtures/simple_read` Smoke Gate 均通过。Proposal Attempt 与 Pre-Validation Gate
 分别冻结在 `evolution/evolution-v1/proposal-attempt-002.json` 和
-`evolution/evolution-v1/candidate-001/gates-pre-validation.json`。Candidate 仍为 pending，
-Champion 仍为 `policy-v001`；Pairwise Validation 尚未授权或执行。
+`evolution/evolution-v1/candidate-001/gates-pre-validation.json`。
+
+`candidate-001` 的 Pairwise Validation 已完成 Champion/Candidate 各 9 次、共 18 次有效运行，
+控制条件一致。结果如下：
+
+| 指标 | Champion `policy-v001` | `candidate-001` |
+| --- | ---: | ---: |
+| Resolved | 6/9 | 4/9 |
+| `task_007` | 3/3 | 1/3 |
+| `task_008` | 0/3 | 0/3 |
+| `task_009` | 3/3 | 3/3 |
+| 平均 Tokens | 38,206.2222 | 40,356.8889 |
+| 平均 ReAct Steps | 9.7778 | 12.0000 |
+| 平均 Tool Calls | 10.5556 | 13.3333 |
+| 平均 Latency (ms) | 30,176.2222 | 29,633.2222 |
+
+Candidate 虽将 Search-before-edit 从 0.4444 提高到 0.8889、Test-inspection 从 0.7778
+提高到 1.0000，但平均 Patch Attempts 也从 3.8889 增至 5.2222，且 Resolution 明显下降，
+因此 Gate 按“效率不能覆盖解决率下降”的规则拒绝它。`task_007` 仍有 1/3 成功，所以不满足
+从 Champion 至少 2/3 降为 0/3 的 Catastrophic Regression 定义。最终 Gate 与独立 Pairwise
+报告冻结在 `evolution/evolution-v1/candidate-001/`；Candidate 保留为 rejected，Champion
+仍为 `policy-v001`。Task 13 所要求的“因解决率下降而拒绝”案例已经获得；Accepted Mutation
+案例尚未获得，继续搜索仍需新的明确付费授权。
 
 ## 配置
 
