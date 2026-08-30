@@ -218,6 +218,12 @@ def arm_metrics(output: PolicyExperimentOutput) -> PolicyArmMetrics:
     )
 
 
+def pairwise_experiment_ids(evolution_id: str, candidate_id: str) -> tuple[str, str]:
+    """Return collision-free Champion and Candidate experiment IDs."""
+    candidate_experiment_id = f"{evolution_id}-{candidate_id}"
+    return f"{candidate_experiment_id}-champion", candidate_experiment_id
+
+
 def run_pairwise_validation(
     project_root: Path,
     settings: AppSettings,
@@ -228,11 +234,14 @@ def run_pairwise_validation(
 ) -> PairwiseGateReport:
     """Run the required nine attempts per arm, then persist a deterministic report."""
     repetitions = settings.evolution.validation_repetitions
+    champion_experiment_id, candidate_experiment_id = pairwise_experiment_ids(
+        evolution_id, candidate.policy_id
+    )
     champion_output = PolicyExperimentRunner(
         project_root,
         settings,
         champion,
-        experiment_id=f"{evolution_id}-champion",
+        experiment_id=champion_experiment_id,
         split="validation",
         repetitions=repetitions,
     ).run()
@@ -240,7 +249,7 @@ def run_pairwise_validation(
         project_root,
         settings,
         candidate,
-        experiment_id=f"{evolution_id}-{candidate.policy_id}",
+        experiment_id=candidate_experiment_id,
         split="validation",
         repetitions=repetitions,
     ).run()

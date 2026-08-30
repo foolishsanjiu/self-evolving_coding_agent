@@ -1,6 +1,6 @@
 policy_id: candidate-002
 parent_id: policy-v001
-status: candidate
+status: rejected
 mutation_id: mutation-002
 mutation:
   mutation_id: mutation-002
@@ -28,9 +28,9 @@ mutation:
     edge cases.
   created_at: '2026-08-30T15:42:20.690287+00:00'
 validation_result:
-  decision: pending
-  report_path: null
-  reason: Awaiting an external validation decision.
+  decision: rejected
+  report_path: evolution/evolution-v1/candidate-002/gates-final.json
+  reason: Candidate resolution declined; efficiency cannot override resolution.
 policy:
   inspect_tests_before_edit: require
   prefer_search_before_read: false

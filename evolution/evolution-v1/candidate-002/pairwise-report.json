@@ -1,0 +1,41 @@
+{
+  "candidate_id": "candidate-002",
+  "decision": "rejected",
+  "reason": "Candidate resolution declined; efficiency cannot override resolution.",
+  "champion": {
+    "policy_id": "policy-v001",
+    "total_attempts": 9,
+    "valid_attempts": 9,
+    "resolved_attempts": 6,
+    "resolution_rate": 0.6667,
+    "average_tokens": 34740.7778,
+    "average_react_steps": 10.1111,
+    "average_tool_calls": 12.2222,
+    "average_latency_ms": 24129.5556,
+    "task_resolutions": {
+      "task_007": 3,
+      "task_009": 3,
+      "task_008": 0
+    }
+  },
+  "candidate": {
+    "policy_id": "candidate-002",
+    "total_attempts": 9,
+    "valid_attempts": 9,
+    "resolved_attempts": 5,
+    "resolution_rate": 0.5556,
+    "average_tokens": 33957.5556,
+    "average_react_steps": 9.7778,
+    "average_tool_calls": 12.3333,
+    "average_latency_ms": 27970.1111,
+    "task_resolutions": {
+      "task_007": 3,
+      "task_009": 2,
+      "task_008": 0
+    }
+  },
+  "controlled_conditions_match": true,
+  "catastrophic_regressions": [],
+  "significant_cost_reduction": 0.1,
+  "created_at": "2026-08-30T15:58:14.646963+00:00"
+}

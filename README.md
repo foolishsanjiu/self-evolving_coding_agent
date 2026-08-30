@@ -400,7 +400,9 @@ Resolution 完全相同时，只有 Tokens 至少下降 10%，且 Steps/Tool Cal
 
 搜索边界位于 `configs/evolution.yaml`：最多 5 Generations、每代 2 Candidates、连续 2 代
 无提升停止，Validation 重复次数固定为 3。已尝试的单字段 Transition 不会重复 Proposal。
-旧 Champion 和 Rejected Candidate 永不覆盖；Rollback 只恢复 previous champion 指针。
+每组 Pairwise 实验 ID 同时包含 Evolution ID 与 Candidate ID，确保多个 Candidate 的 Champion
+重跑和 Candidate 运行互不覆盖。旧 Champion 和 Rejected Candidate 永不覆盖；Rollback 只恢复
+previous champion 指针。
 
 零费用聚合已有 Train 历史：
 
@@ -477,9 +479,29 @@ Hash 为 `013e5b7cc0f7ab6dda80a5a753ef3b978c76edaa133454264a6bb9e7cbeb92c3`。8 
 Schema/Safety 检查全部通过，Smoke Gate 以 4 Steps、3 Tool Calls 通过；其中记录到 1 次
 Policy Precondition Failure，随后 Agent 完成了所需的测试检查并成功结束。Proposal Attempt 与
 Pre-Validation Gate 分别冻结在 `evolution/evolution-v1/proposal-attempt-003.json` 和
-`evolution/evolution-v1/candidate-002/gates-pre-validation.json`。Candidate 保持 pending，
-Champion 仍为 `policy-v001`；本代 2 个 Candidate 的搜索额度已用完。验证其能否成为 Task 13
-所需的 Accepted Mutation，需要另行授权 Champion/Candidate 各 9 次的 Pairwise Validation。
+`evolution/evolution-v1/candidate-002/gates-pre-validation.json`。
+
+首次启动 `candidate-002` Pairwise 时，在任何 Agent/模型调用前发现旧 Champion Workspace
+冲突。原因是 Champion 实验 ID 未包含 Candidate ID；实现已改为按
+`Evolution ID + Candidate ID + Arm` 隔离，旧案例没有删除或覆盖。修复通过定向与完整回归后，
+重新执行了 Champion/Candidate 各 9 次、共 18 次有效运行：
+
+| 指标 | Champion `policy-v001` | `candidate-002` |
+| --- | ---: | ---: |
+| Resolved | 6/9 | 5/9 |
+| `task_007` | 3/3 | 3/3 |
+| `task_008` | 0/3 | 0/3 |
+| `task_009` | 3/3 | 2/3 |
+| 平均 Tokens | 34,740.7778 | 33,957.5556 |
+| 平均 ReAct Steps | 10.1111 | 9.7778 |
+| 平均 Tool Calls | 12.2222 | 12.3333 |
+| 平均 Latency (ms) | 24,129.5556 | 27,970.1111 |
+
+强制测试检查将 Test-inspection 从 0.8889 提高到 1.0000，Search-before-edit 从 0.6667
+提高到 0.8889；但 `task_009` 少解决 1 次，总 Resolution 下降，因此 Gate 仍按优先规则拒绝。
+Candidate 没有触发 Catastrophic Regression，保留为 rejected；最终报告冻结在
+`evolution/evolution-v1/candidate-002/`，Champion 仍为 `policy-v001`。本代 2 个 Candidate
+的搜索额度已经用完，并且两者都未晋升；Task 13 的 Accepted Mutation 验收项仍未满足。
 
 ## 配置
 

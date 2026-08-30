@@ -36,7 +36,10 @@ from evodev.evolution.models import (
     SmokeGateReport,
 )
 from evodev.evolution.proposal import PROPOSAL_SYSTEM_PROMPT, ProposalRejectedError
-from evodev.evolution.validation import controlled_policy_conditions_match
+from evodev.evolution.validation import (
+    controlled_policy_conditions_match,
+    pairwise_experiment_ids,
+)
 from evodev.llm import FakeLLM, ModelTurn
 from evodev.policy.models import (
     FailurePattern,
@@ -493,6 +496,17 @@ def test_controlled_conditions_allow_only_policy_fields() -> None:
     assert not controlled_policy_conditions_match(champion, changed_model)
 
 
+def test_pairwise_experiment_ids_are_isolated_per_candidate() -> None:
+    candidate_one = set(pairwise_experiment_ids("evolution-v1", "candidate-001"))
+    candidate_two = pairwise_experiment_ids("evolution-v1", "candidate-002")
+
+    assert candidate_one.isdisjoint(candidate_two)
+    assert candidate_two == (
+        "evolution-v1-candidate-002-champion",
+        "evolution-v1-candidate-002",
+    )
+
+
 def test_paid_cli_stages_require_explicit_confirmation() -> None:
     with pytest.raises(PermissionError, match="--confirm-paid"):
         _require_paid_confirmation(False, "Pairwise Validation")
@@ -577,13 +591,36 @@ def test_third_paid_proposal_and_candidate_002_are_preserved() -> None:
     assert proposal.draft is not None
     assert proposal.draft.new_value == "require"
     assert candidate.parent_id == "policy-v001"
-    assert candidate.status == "candidate"
     assert candidate.policy.inspect_tests_before_edit == "require"
     assert gates.schema_gate.passed is True
     assert gates.smoke_gate is not None
     assert gates.smoke_gate.passed is True
     assert gates.smoke_gate.policy_precondition_failures == 1
     assert gates.pairwise_gate is None
+
+
+def test_candidate_002_rejected_case_study_is_preserved() -> None:
+    repository = PolicyRepository(Path("policies"))
+    candidate = repository.load("candidate-002")
+    gates = CandidateGateBundle.model_validate_json(
+        Path("evolution/evolution-v1/candidate-002/gates-final.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert repository.champion().policy_id == "policy-v001"
+    assert candidate.status == "rejected"
+    assert candidate.validation_result.decision == "rejected"
+    assert candidate.validation_result.report_path == (
+        "evolution/evolution-v1/candidate-002/gates-final.json"
+    )
+    assert gates.pairwise_gate is not None
+    assert gates.pairwise_gate.decision == GateDecision.REJECT
+    assert gates.pairwise_gate.controlled_conditions_match is True
+    assert gates.pairwise_gate.champion.resolved_attempts == 6
+    assert gates.pairwise_gate.candidate.resolved_attempts == 5
+    assert gates.pairwise_gate.candidate.task_resolutions["task_009"] == 2
+    assert gates.pairwise_gate.catastrophic_regressions == []
 
 
 def _evaluation(task_id: str, run_id: str) -> EvaluationResult:
