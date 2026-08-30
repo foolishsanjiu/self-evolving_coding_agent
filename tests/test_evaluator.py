@@ -265,3 +265,19 @@ def test_frozen_baseline_snapshot_is_consistent() -> None:
     assert len(rows) == summary["total_attempts"] == 12
     assert sum(row["resolved"] == "True" for row in rows) == summary["resolved_attempts"] == 9
     assert summary["resolution_rate"] == 0.75
+
+
+def test_frozen_validation_baseline_is_consistent() -> None:
+    baseline = Path("baselines/exp-baseline-validation-v1")
+    manifest = ExperimentManifest.model_validate_json(
+        (baseline / "manifest.json").read_text(encoding="utf-8")
+    )
+    summary = json.loads((baseline / "summary.json").read_text(encoding="utf-8"))
+    with (baseline / "summary.csv").open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.DictReader(stream))
+
+    assert manifest.benchmark_splits == ["validation"]
+    assert manifest.experience_mode == "disabled"
+    assert len(rows) == summary["total_attempts"] == 3
+    assert summary["resolved_attempts"] == 2
+    assert summary["resolution_rate"] == 0.6667

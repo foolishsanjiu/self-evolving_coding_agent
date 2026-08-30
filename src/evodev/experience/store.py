@@ -11,6 +11,7 @@ from uuid import uuid4
 from evodev.experience.eligibility import can_write_experience
 from evodev.experience.models import (
     ExperienceCandidate,
+    ExperienceSource,
     ExperienceStatus,
     Reflection,
     StoredExperience,
@@ -23,14 +24,21 @@ def _tokens(value: str) -> set[str]:
 
 
 class ExperienceStore:
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, *, read_only: bool = False) -> None:
         self.path = path.resolve()
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.connection = sqlite3.connect(self.path)
+        self.read_only = read_only
+        if read_only:
+            if not self.path.is_file():
+                raise FileNotFoundError(f"Experience Store does not exist: {self.path}")
+            self.connection = sqlite3.connect(f"file:{self.path.as_posix()}?mode=ro", uri=True)
+        else:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.connection = sqlite3.connect(self.path)
         self.connection.row_factory = sqlite3.Row
         self.connection.execute("PRAGMA foreign_keys = ON")
-        self.connection.executescript(
-            """
+        if not read_only:
+            self.connection.executescript(
+                """
             CREATE TABLE IF NOT EXISTS reflections (
                 reflection_id TEXT PRIMARY KEY, task_id TEXT NOT NULL, run_id TEXT NOT NULL,
                 payload TEXT NOT NULL, created_at TEXT NOT NULL, UNIQUE(task_id, run_id)
@@ -49,7 +57,7 @@ class ExperienceStore:
                 FOREIGN KEY (reflection_id) REFERENCES reflections(reflection_id)
             );
             """
-        )
+            )
 
     def close(self) -> None:
         self.connection.close()
@@ -86,6 +94,8 @@ class ExperienceStore:
     ) -> str:
         if not can_write_experience(split):
             raise PermissionError(f"Experience Store is read-only for split: {split}")
+        if self.read_only:
+            raise PermissionError("Experience Store was opened read-only")
         now = utc_now()
         with self.connection:
             self.connection.execute(
@@ -158,7 +168,19 @@ class ExperienceStore:
         ).fetchone()
         return int(row["count"])
 
+    def list_sources(self) -> list[ExperienceSource]:
+        query = (
+            "SELECT s.experience_id, s.reflection_id, r.task_id, s.run_id, "
+            "s.trajectory_path, s.evaluation_report_path "
+            "FROM experience_sources AS s "
+            "JOIN reflections AS r ON r.reflection_id = s.reflection_id "
+            "ORDER BY s.experience_id, s.reflection_id"
+        )
+        return [ExperienceSource(**dict(row)) for row in self.connection.execute(query)]
+
     def set_status(self, experience_id: str, status: ExperienceStatus) -> None:
+        if self.read_only:
+            raise PermissionError("Experience Store was opened read-only")
         with self.connection:
             self.connection.execute(
                 "UPDATE experiences SET status = ?, updated_at = ? WHERE experience_id = ?",

@@ -1,0 +1,49 @@
+{
+  "experiment_version": "task11-validation-v1",
+  "development_run": true,
+  "runs_per_task_per_arm": 1,
+  "validation_tasks": [
+    "task_007",
+    "task_008",
+    "task_009"
+  ],
+  "experience_version": "experience-v001",
+  "experience_hash": "d0002d9293eecb6030e7bc624efe8afb4c263db67dc352c065bdc8cdb59ba121",
+  "controlled_conditions_verified": true,
+  "arms": {
+    "baseline": {
+      "resolved": 2,
+      "attempts": 3,
+      "resolution_rate": 0.6667,
+      "total_model_turns": 23,
+      "total_tokens": 58435,
+      "retrieval_hit_rate": 0.0,
+      "experience_utilization_rate": 0.0
+    },
+    "relevant": {
+      "resolved": 2,
+      "attempts": 3,
+      "resolution_rate": 0.6667,
+      "resolution_delta_vs_baseline": 0.0,
+      "total_model_turns": 32,
+      "total_tokens": 127848,
+      "retrieval_hit_rate": 0.3333,
+      "experience_utilization_rate": 0.0
+    },
+    "random": {
+      "resolved": 2,
+      "attempts": 3,
+      "resolution_rate": 0.6667,
+      "resolution_delta_vs_baseline": 0.0,
+      "total_model_turns": 34,
+      "total_tokens": 171652,
+      "retrieval_hit_rate": 0.3333,
+      "experience_utilization_rate": 0.0
+    }
+  },
+  "interpretation": {
+    "resolution_uplift_demonstrated": false,
+    "relevance_advantage_demonstrated": false,
+    "note": "One development run per task is sufficient for pipeline validation but not for a statistical improvement claim. The measurable target behavior was already present in the baseline trace."
+  }
+}

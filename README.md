@@ -21,6 +21,8 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 7：Lightweight Trajectory Logging + Trace Analyzer**
 - **Task 8：Benchmark v1.0（12 Tasks）**
 - **Task 9：Independent Evaluator + Fixed-Policy Baseline**
+- **Task 10：Reflection + Experience Extraction**
+- **Task 11：Experience Retrieval + Controlled Experiment**
 
 现有能力：
 
@@ -49,11 +51,13 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 12 题受控 Python Coding Benchmark、严格 Loader 与 Agent 可见性隔离；
 - Before-Fail / After-Gold-Pass QA、Task Checksum 与 Manifest Hash；
 - Fresh Workspace + Docker 的独立分层 Evaluator 与失败分类；
-- 受控实验 Manifest、指标汇总，以及冻结的 `exp-baseline-v1`。
+- 受控实验 Manifest、指标汇总，以及冻结的 `exp-baseline-v1`；
+- Train-only Experience Store、`experience-v001` 冻结快照与受限 Top-K 检索；
+- Relevant/Random Validation 对照实验与 Retrieval/Utilization 指标。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-尚未实现 Experience 或 Policy Evolution。
+尚未实现 Policy Evolution；Task 12 将进入受约束 Policy Space。
 
 ## 环境
 
@@ -74,7 +78,7 @@ python -m pip install -e .
 主要运行时依赖包括 OpenAI-compatible SDK、Pydantic、PyYAML、python-dotenv 和
 `mcp>=2.1,<3`；完整版本约束以 `requirements.txt` 为准。
 
-Task 6–9 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
+Task 6–11 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
 
 ```powershell
 docker version
@@ -300,12 +304,51 @@ evodev-reflect --experiment-id exp-baseline-v1 --task-id task_002
 1 条 Source Provenance。五个 Evidence Reference 均可在压缩上下文中解析，未检出具体
 任务答案、期望异常文本、Gold Patch 或精确边界常量泄漏。
 
+## Experience Retrieval 与 Validation 对照实验
+
+Task 11 将已审计 Experience 晋升为 `active`，并冻结为
+`experiences/experience-v001.json`。快照包含 Structured Tags、相对 Provenance 和
+Canonical Content Hash；正式 Validation 只读取该 JSON 快照，不打开可写 SQLite Store。
+
+`RetrievalQuery` 仅由任务描述、任务类型、公开关键词和 Repository 文件上下文构造。
+Retriever 在 Python 中计算 task-type match、keyword overlap、trigger match 与 confidence，
+排除 same-task 来源，只注入实际相关的 Top-3，且总长度不超过 2,500 字符。Random 模式使用
+固定 Seed 做消融；关闭 Experience 时不产生任何额外 Prompt Section。
+
+开发阶段采用一次固定运行，对 Validation 三题比较 Baseline、Relevant 和 Random：
+
+| Arm | Resolved | Resolution Rate | Model Turns | Tokens | Hit Rate | Utilization |
+|---|---:|---:|---:|---:|---:|---:|
+| Baseline | 2 / 3 | 66.67% | 23 | 58,435 | 0% | 0% |
+| Relevant | 2 / 3 | 66.67% | 32 | 127,848 | 33.33% | 0% |
+| Random | 2 / 3 | 66.67% | 34 | 171,652 | 33.33% | 0% |
+
+Relevant 仅向 `task_008` 注入经验，三个 Arm 均在该题得到 `TARGET_TEST_FAILED`。因此本次
+开发实验验证了检索、注入、只读冻结和独立评估链路，但没有证明 Resolution Uplift 或
+Relevant 相对 Random 的优势。Utilization 要求 Treatment 行为相对 Baseline 从 false 变为
+true；目标行为在 Baseline 已存在，所以不能归因给 Experience。单次运行不作统计显著性
+声明。完整冻结产物位于 `experiments/task11-validation-v1/`。
+
+可无费用重新派生 Validation Baseline：
+
+```powershell
+evodev-prepare-validation-baseline
+```
+
+以下两个实验命令会重新产生 API 费用：
+
+```powershell
+evodev-experience-experiment --mode relevant --experiment-id exp-experience-v1
+evodev-experience-experiment --mode random --experiment-id exp-experience-random-v1
+```
+
 ## 配置
 
 普通配置位于 `configs/`：
 
 - `configs/model.yaml`：模型提供方、模型名、温度和 API 地址；
-- `configs/agent.yaml`：Agent 步数、工具重试和字符上下文预算。
+- `configs/agent.yaml`：Agent 步数、工具重试和字符上下文预算；
+- `configs/experience.yaml`：Experience 开关、Top-K 和字符预算。
 
 密钥只从环境变量或本地 `.env` 读取：
 
@@ -360,7 +403,10 @@ python -m ruff check .
 - Gold、Empty、Invalid、Syntax 与 Regression Break 五类独立评估路径；
 - Fresh Evaluation Workspace、分层 Grade、实验汇总与冻结 Baseline 一致性；
 - Reflection Eligibility、压缩 Evidence Context 与一次调用双对象校验；
-- Train-only Experience Store、相似经验合并、生命周期与 Provenance。
+- Train-only Experience Store、相似经验合并、生命周期与 Provenance；
+- Frozen Experience Snapshot、Metadata/Keyword Retrieval 与 same-task 排除；
+- 独立 Experience Prompt Section、Relevant/Random 消融和受控 Manifest；
+- Retrieval Hit Rate 与相对 Baseline 的 Experience Utilization Rate。
 
 Docker 可用且镜像构建完成后，真实隔离验收为：
 

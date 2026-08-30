@@ -66,3 +66,17 @@ def test_context_without_history_contains_system_and_task() -> None:
         {"role": "system", "content": "system-instructions"},
         {"role": "user", "content": task.instruction},
     ]
+
+
+def test_experience_is_an_independent_optional_section() -> None:
+    task = _task()
+    manager = ContextManager(
+        "system-instructions",
+        task,
+        experience_section="Relevant Past Experience:\nPrefer: inspect tests first.",
+    )
+
+    messages = manager.build_messages(AgentState(task=task))
+
+    assert [message["role"] for message in messages] == ["system", "user", "system"]
+    assert messages[2]["content"].startswith("Relevant Past Experience:")

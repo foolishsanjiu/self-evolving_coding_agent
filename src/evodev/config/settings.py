@@ -40,6 +40,16 @@ class AgentSettings(BaseModel):
     max_context_chars: int = Field(default=60_000, gt=0)
 
 
+class ExperienceSettings(BaseModel):
+    """Bounded retrieval settings for optional experience injection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    top_k: int = Field(default=3, ge=2, le=3)
+    max_chars: int = Field(default=2_500, ge=2_000, le=3_000)
+
+
 class SandboxSettings(BaseModel):
     """Mandatory isolation and resource limits for test containers."""
 
@@ -63,6 +73,7 @@ class AppSettings(BaseModel):
 
     model: ModelSettings
     agent: AgentSettings
+    experience: ExperienceSettings
     sandbox: SandboxSettings
 
 
@@ -88,6 +99,7 @@ def load_settings(config_dir: Path, env_file: Path | None = None) -> AppSettings
         {
             "model": model_data,
             "agent": _read_yaml(config_dir / "agent.yaml"),
+            "experience": _read_yaml(config_dir / "experience.yaml"),
             "sandbox": _read_yaml(config_dir / "sandbox.yaml"),
         }
     )

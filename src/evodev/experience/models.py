@@ -118,4 +118,57 @@ class StoredExperience(BaseModel):
     updated_at: str
 
 
+class ExperienceSource(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    experience_id: str
+    reflection_id: str
+    task_id: str
+    run_id: str
+    trajectory_path: str
+    evaluation_report_path: str
+
+
+class RetrievalQuery(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    task_id: str
+    task_description: str
+    task_type: TaskCategory
+    keywords: list[str]
+    repository_context: str
+
+
+class ScoredExperience(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    experience: StoredExperience
+    task_type_match: float = Field(ge=0, le=1)
+    keyword_overlap: float = Field(ge=0, le=1)
+    trigger_match: float = Field(ge=0, le=1)
+    confidence_weight: float = Field(ge=0, le=1)
+    score: float = Field(ge=0)
+    behavior_targets: list[str] = Field(default_factory=list)
+
+
+class RetrievalResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: RetrievalQuery
+    mode: Literal["disabled", "relevant", "random"]
+    selected: list[ScoredExperience]
+    prompt_section: str
+    prompt_chars: int = Field(ge=0)
+    hit: bool
+
+
+class ExperienceSnapshot(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    version: str = Field(pattern=r"^experience-v[0-9]{3}$")
+    experiences: list[StoredExperience]
+    sources: list[ExperienceSource]
+    content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 MemorySplit = Literal["train", "validation", "test"]

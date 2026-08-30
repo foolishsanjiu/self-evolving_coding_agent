@@ -1,0 +1,4 @@
+task_id,agent_run_id,resolved,valid_evaluation,failure_type,react_steps,tool_calls,tokens,latency_ms,searched_before_edit,inspected_tests_before_edit,patch_attempts
+task_007,run_task_007_r01,True,True,RESOLVED,5,6,8943,8222,True,True,1
+task_008,run_task_008_r01,False,True,TARGET_TEST_FAILED,15,21,100387,64374,True,True,8
+task_009,run_task_009_r01,True,True,RESOLVED,14,19,62322,32380,True,True,5

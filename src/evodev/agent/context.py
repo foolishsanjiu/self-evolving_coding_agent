@@ -27,6 +27,7 @@ class ContextManager:
         task: TaskSpec,
         max_context_chars: int = 60_000,
         recent_tool_results: int = 6,
+        experience_section: str = "",
     ) -> None:
         if max_context_chars < 1:
             raise ValueError("max_context_chars must be at least 1")
@@ -36,6 +37,7 @@ class ContextManager:
         self.task = task
         self.max_context_chars = max_context_chars
         self.recent_tool_results = recent_tool_results
+        self.experience_section = experience_section
         self._exchanges: list[ContextExchange] = []
 
     def add_exchange(self, turn: ModelTurn, results: list[ToolResult]) -> None:
@@ -50,6 +52,8 @@ class ContextManager:
             {"role": "system", "content": self.system_prompt},
             {"role": "user", "content": self.task.instruction},
         ]
+        if self.experience_section:
+            messages.append({"role": "system", "content": self.experience_section})
         state_lines = []
         if state.current_patch:
             state_lines.append(f"Current patch:\n{state.current_patch}")

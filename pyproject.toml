@@ -27,6 +27,8 @@ dev = [
 evodev-smoke-llm = "evodev.smoke_llm:main"
 evodev-baseline = "evodev.evaluation.baseline:main"
 evodev-reflect = "evodev.experience.generate:main"
+evodev-experience-experiment = "evodev.evaluation.experience_experiment:main"
+evodev-prepare-validation-baseline = "evodev.evaluation.experience_experiment:prepare_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

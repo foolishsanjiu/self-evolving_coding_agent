@@ -61,6 +61,7 @@ class ReActAgent:
         max_tool_retries: int = 1,
         max_context_chars: int = 60_000,
         event_sink: EventSink | None = None,
+        experience_section: str = "",
     ) -> None:
         if max_steps < 1:
             raise ValueError("max_steps must be at least 1")
@@ -74,6 +75,7 @@ class ReActAgent:
         self.max_tool_retries = max_tool_retries
         self.max_context_chars = max_context_chars
         self.event_sink = event_sink or NoOpEventSink()
+        self.experience_section = experience_section
 
     def _emit(self, event_type: str, **data: Any) -> None:
         self.event_sink.emit(AgentEvent(type=event_type, data=data))
@@ -115,6 +117,7 @@ class ReActAgent:
             system_prompt=SYSTEM_PROMPT,
             task=task,
             max_context_chars=self.max_context_chars,
+            experience_section=self.experience_section,
         )
         self._emit("RUN_STARTED", task_id=task.task_id)
 

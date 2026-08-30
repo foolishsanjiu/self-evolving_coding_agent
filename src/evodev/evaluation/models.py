@@ -89,6 +89,10 @@ class ExperimentManifest(BaseModel):
     policy_hash: str = Field(min_length=1)
     experience_version: str = Field(min_length=1)
     experience_hash: str = Field(min_length=1)
+    experience_mode: Literal["disabled", "relevant", "random"] = "disabled"
+    experience_top_k: int = Field(default=0, ge=0, le=3)
+    experience_max_chars: int = Field(default=0, ge=0, le=3_000)
+    experience_random_seed: int = 0
     model: str = Field(min_length=1)
     temperature: float = Field(ge=0, le=2)
     prompt_version: str = Field(min_length=1)
@@ -100,6 +104,9 @@ class ExperimentManifest(BaseModel):
     sandbox_digest: str = Field(min_length=1)
     benchmark_version: str = Field(min_length=1)
     benchmark_hash: str = Field(min_length=1)
+    benchmark_splits: list[Literal["train", "validation", "test"]] = Field(
+        default_factory=lambda: ["train", "validation", "test"]
+    )
     evaluator_version: Literal["1.0"] = EVALUATOR_VERSION
     created_at: str = Field(default_factory=utc_now)
 

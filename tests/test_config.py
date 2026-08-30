@@ -21,6 +21,9 @@ def test_load_settings_and_resolve_key(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.model.model == "test-model"
     assert settings.model.base_url == "https://example.test/v1"
     assert settings.agent.max_steps == 15
+    assert settings.experience.enabled is True
+    assert settings.experience.top_k == 3
+    assert settings.experience.max_chars == 2_500
     assert settings.sandbox.network == "none"
     assert settings.sandbox.pids_limit == 128
     assert settings.model.resolve_api_key() == "secret-value"

@@ -1,0 +1,18 @@
+{
+  "experiment_id": "exp-experience-random-v1",
+  "total_attempts": 3,
+  "valid_evaluated_attempts": 3,
+  "resolved_attempts": 2,
+  "resolution_rate": 0.6667,
+  "average_react_steps": 11.3333,
+  "average_tool_calls": 15.3333,
+  "average_tokens": 57217.3333,
+  "average_latency_ms": 34992.0,
+  "search_before_edit_rate": 1.0,
+  "test_inspection_before_edit_rate": 1.0,
+  "average_patch_attempts": 4.6667,
+  "failure_distribution": {
+    "RESOLVED": 2,
+    "TARGET_TEST_FAILED": 1
+  }
+}

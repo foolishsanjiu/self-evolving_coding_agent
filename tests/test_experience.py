@@ -234,6 +234,20 @@ def test_train_store_merges_similar_experience_and_preserves_provenance(
     assert store.list_experiences()[0].status == ExperienceStatus.DEPRECATED
     store.close()
 
+    read_only = ExperienceStore(experience_root / "experience.sqlite", read_only=True)
+    assert len(read_only.list_sources()) == 2
+    with pytest.raises(PermissionError, match="opened read-only"):
+        read_only.set_status(first_id, ExperienceStatus.ACTIVE)
+    with pytest.raises(PermissionError, match="opened read-only"):
+        read_only.add_or_merge(
+            second.experience_candidate,
+            second.reflection,
+            split="train",
+            trajectory_path=Path("runs/run_2"),
+            evaluation_report_path=Path("evaluation/report_2.json"),
+        )
+    read_only.close()
+
 
 @pytest.mark.parametrize("split", ["validation", "test"])
 def test_non_train_splits_cannot_write(experience_root: Path, split: str) -> None:
