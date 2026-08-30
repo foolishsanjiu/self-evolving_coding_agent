@@ -404,6 +404,13 @@ Resolution 完全相同时，只有 Tokens 至少下降 10%，且 Steps/Tool Cal
 重跑和 Candidate 运行互不覆盖。旧 Champion 和 Rejected Candidate 永不覆盖；Rollback 只恢复
 previous champion 指针。
 
+Generation、当前 Candidate、连续无提升次数和已尝试 Transition 持久化在
+`evolution/<evolution-id>/progress.json`。状态可由不可变 Candidate/Gate 快照免费重建；Proposal
+会先检查该状态，再要求 `--confirm-paid`，因此 Candidate 尚未验证、代内额度耗尽、Patience
+耗尽或搜索空间耗尽时，不会误发模型请求。Accept 会开始下一代并将 Patience 清零；一代达到
+2 个 Candidate 且均未提升时，也会开始下一代并将 Patience 加一。显式 Rollback 必须通过
+`--evolution-id` 绑定对应状态，且当前代没有 Candidate，才能同步恢复 Champion 指针。
+
 零费用聚合已有 Train 历史：
 
 ```powershell
@@ -416,12 +423,16 @@ evodev-evolve aggregate --experiment-ids exp-baseline-v1 `
 均会产生模型 API 费用，并且缺少 `--confirm-paid` 时会拒绝执行：
 
 ```powershell
+# 免费重建/检查 Generation、Patience 与剩余 Mutation
+evodev-evolve status --evolution-id evolution-v1 `
+  --pattern-report evolution/task13/failure-patterns-train-v1.json
+
 # 额外收集 Train 历史；默认 6 tasks × 2 runs
 evodev-evolve collect-train --experiment-id exp-policy-train-v1 `
   --repetitions 2 --confirm-paid
 
 # 一次 Proposal LLM 调用并运行离线 Schema/Smoke Gate
-evodev-evolve propose --pattern-report evolution_runs/task13/failure-patterns-v1.json `
+evodev-evolve propose --pattern-report evolution/task13/failure-patterns-train-v1.json `
   --evolution-id evolution-v1 --confirm-paid
 
 # Champion/Candidate 各 9 个 Agent Runs
@@ -502,6 +513,12 @@ Pre-Validation Gate 分别冻结在 `evolution/evolution-v1/proposal-attempt-003
 Candidate 没有触发 Catastrophic Regression，保留为 rejected；最终报告冻结在
 `evolution/evolution-v1/candidate-002/`，Champion 仍为 `policy-v001`。本代 2 个 Candidate
 的搜索额度已经用完，并且两者都未晋升；Task 13 的 Accepted Mutation 验收项仍未满足。
+
+免费状态重建已将上述结果固化为 Generation 1 `no_improvement`，当前进入 Generation 2：
+代内 Candidate 为 0/2、连续无提升为 1/2，Proposal Stop Condition 为 false。相对当前
+Champion，未尝试的 Transition 只剩 `prefer_search_before_read: false → true`、
+`max_react_steps: 15 → 10` 和 `15 → 20`。该状态只表示下一次 Proposal 在预算内，不构成
+付费授权。
 
 ## 配置
 

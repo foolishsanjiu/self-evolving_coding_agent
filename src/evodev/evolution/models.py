@@ -161,6 +161,62 @@ class EvolutionProgress(BaseModel):
     api_budget_exhausted: bool = False
 
 
+class EvolutionGenerationRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    generation: int = Field(ge=1)
+    champion_id: str = Field(pattern=r"^policy-v[0-9]{3}$")
+    candidate_ids: list[str] = Field(min_length=1, max_length=2)
+    outcome: Literal["improved", "no_improvement"]
+    accepted_candidate_id: str | None = Field(
+        default=None, pattern=r"^candidate-[0-9]{3}$"
+    )
+    completed_at: str
+
+    @model_validator(mode="after")
+    def validate_outcome(self) -> EvolutionGenerationRecord:
+        if self.outcome == "improved":
+            if self.accepted_candidate_id not in self.candidate_ids:
+                raise ValueError("Improved generation requires its accepted Candidate")
+        elif self.accepted_candidate_id is not None:
+            raise ValueError("No-improvement generation cannot have an accepted Candidate")
+        return self
+
+
+class EvolutionState(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    evolution_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    champion_id: str = Field(pattern=r"^policy-v[0-9]{3}$")
+    progress: EvolutionProgress
+    current_candidate_ids: list[str] = Field(default_factory=list, max_length=2)
+    pending_candidate_id: str | None = Field(
+        default=None, pattern=r"^candidate-[0-9]{3}$"
+    )
+    completed_generations: list[EvolutionGenerationRecord] = Field(default_factory=list)
+    created_at: str = Field(default_factory=utc_now)
+    updated_at: str = Field(default_factory=utc_now)
+
+    @model_validator(mode="after")
+    def validate_state(self) -> EvolutionState:
+        if len(set(self.current_candidate_ids)) != len(self.current_candidate_ids):
+            raise ValueError("Current generation Candidate IDs must be unique")
+        if self.progress.candidates_in_generation != len(self.current_candidate_ids):
+            raise ValueError("Candidate count does not match current generation IDs")
+        if (
+            self.pending_candidate_id is not None
+            and self.pending_candidate_id not in self.current_candidate_ids
+        ):
+            raise ValueError("Pending Candidate must belong to the current generation")
+        expected_generations = list(range(1, len(self.completed_generations) + 1))
+        actual_generations = [item.generation for item in self.completed_generations]
+        if actual_generations != expected_generations:
+            raise ValueError("Completed generations must be contiguous")
+        if self.progress.generation != len(self.completed_generations) + 1:
+            raise ValueError("Current generation does not follow completed history")
+        return self
+
+
 class EvolutionStop(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

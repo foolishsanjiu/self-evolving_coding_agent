@@ -29,6 +29,7 @@ from evodev.evolution.evidence import aggregate_train_failure_report
 from evodev.evolution.models import (
     CandidateGateBundle,
     EvolutionProgress,
+    EvolutionState,
     GateDecision,
     PolicyArmMetrics,
     ProposalAttemptReport,
@@ -36,6 +37,15 @@ from evodev.evolution.models import (
     SmokeGateReport,
 )
 from evodev.evolution.proposal import PROPOSAL_SYSTEM_PROMPT, ProposalRejectedError
+from evodev.evolution.state import (
+    load_evolution_state,
+    proposal_stop_condition,
+    rebuild_evolution_state,
+    record_candidate_decision,
+    record_champion_rollback,
+    register_candidate,
+    remaining_single_field_mutations,
+)
 from evodev.evolution.validation import (
     controlled_policy_conditions_match,
     pairwise_experiment_ids,
@@ -363,6 +373,162 @@ def test_evolution_continues_within_all_budgets() -> None:
 
     assert result.should_stop is False
     assert result.reason is None
+
+
+def test_generation_rolls_over_after_two_rejected_candidates(
+    policy_repository: PolicyRepository,
+) -> None:
+    settings = EvolutionSettings()
+    state = EvolutionState(
+        evolution_id="evolution-test",
+        champion_id="policy-v001",
+        progress=EvolutionProgress(),
+    )
+    first = _candidate(policy_repository, new_value="prefer")
+    state = register_candidate(state, first, settings)
+    state = record_candidate_decision(
+        state,
+        first,
+        "rejected",
+        settings,
+        champion_id="policy-v001",
+        completed_at="2026-08-30T00:00:00+00:00",
+    )
+
+    assert state.progress.generation == 1
+    assert state.progress.candidates_in_generation == 1
+    assert state.progress.generations_without_improvement == 0
+    assert state.pending_candidate_id is None
+
+    second = _candidate(policy_repository, new_value="require")
+    state = register_candidate(state, second, settings)
+    state = record_candidate_decision(
+        state,
+        second,
+        "rejected",
+        settings,
+        champion_id="policy-v001",
+        completed_at="2026-08-30T01:00:00+00:00",
+    )
+
+    assert state.progress.generation == 2
+    assert state.progress.candidates_in_generation == 0
+    assert state.progress.generations_without_improvement == 1
+    assert state.current_candidate_ids == []
+    assert state.pending_candidate_id is None
+    assert state.completed_generations[0].candidate_ids == [
+        "candidate-001",
+        "candidate-002",
+    ]
+    assert state.completed_generations[0].outcome == "no_improvement"
+
+
+def test_accepted_candidate_resets_patience_and_advances_generation(
+    policy_repository: PolicyRepository,
+) -> None:
+    settings = EvolutionSettings()
+    state = EvolutionState(
+        evolution_id="evolution-test",
+        champion_id="policy-v001",
+        progress=EvolutionProgress(generations_without_improvement=1),
+    )
+    candidate = _candidate(policy_repository)
+    state = register_candidate(state, candidate, settings)
+    state = record_candidate_decision(
+        state,
+        candidate,
+        "accepted",
+        settings,
+        champion_id="policy-v002",
+        completed_at="2026-08-30T00:00:00+00:00",
+    )
+
+    assert state.champion_id == "policy-v002"
+    assert state.progress.generation == 2
+    assert state.progress.generations_without_improvement == 0
+    assert state.completed_generations[0].accepted_candidate_id == "candidate-001"
+
+
+def test_pending_candidate_blocks_another_proposal(
+    policy_repository: PolicyRepository,
+) -> None:
+    state = EvolutionState(
+        evolution_id="evolution-test",
+        champion_id="policy-v001",
+        progress=EvolutionProgress(),
+    )
+    state = register_candidate(
+        state,
+        _candidate(policy_repository),
+        EvolutionSettings(),
+    )
+    stop = proposal_stop_condition(
+        state,
+        EvolutionSettings(),
+        policy_repository.champion(),
+        has_repeated_failure_pattern=True,
+    )
+
+    assert stop.should_stop is True
+    assert "awaiting validation" in stop.reason
+
+
+def test_champion_rollback_updates_idle_generation_state() -> None:
+    state = EvolutionState(
+        evolution_id="evolution-test",
+        champion_id="policy-v002",
+        progress=EvolutionProgress(generation=2),
+        completed_generations=[
+            {
+                "generation": 1,
+                "champion_id": "policy-v001",
+                "candidate_ids": ["candidate-001"],
+                "outcome": "improved",
+                "accepted_candidate_id": "candidate-001",
+                "completed_at": "2026-08-30T00:00:00+00:00",
+            }
+        ],
+    )
+
+    restored = record_champion_rollback(state, "policy-v001")
+
+    assert restored.champion_id == "policy-v001"
+    assert restored.progress.generation == 2
+    assert restored.completed_generations[0].outcome == "improved"
+
+
+def test_current_evolution_rebuilds_at_generation_two() -> None:
+    tracked = load_evolution_state(Path("evolution/evolution-v1/progress.json"))
+    state = rebuild_evolution_state(Path("."), "evolution-v1", EvolutionSettings())
+    remaining = remaining_single_field_mutations(
+        PolicyRepository(Path("policies")).champion(),
+        state.progress.attempted_mutations,
+    )
+    stop = proposal_stop_condition(
+        state,
+        EvolutionSettings(),
+        PolicyRepository(Path("policies")).champion(),
+        has_repeated_failure_pattern=True,
+    )
+
+    assert state.champion_id == "policy-v001"
+    assert state.progress.generation == 2
+    assert state.progress.candidates_in_generation == 0
+    assert state.progress.generations_without_improvement == 1
+    assert state.completed_generations[0].candidate_ids == [
+        "candidate-001",
+        "candidate-002",
+    ]
+    assert tracked.model_dump(exclude={"created_at", "updated_at"}) == state.model_dump(
+        exclude={"created_at", "updated_at"}
+    )
+    assert len(state.progress.attempted_mutations) == 2
+    assert remaining == [
+        ("max_react_steps", "15", "10"),
+        ("max_react_steps", "15", "20"),
+        ("prefer_search_before_read", "False", "True"),
+    ]
+    assert stop.should_stop is False
 
 
 def test_finalize_candidate_promotes_only_after_all_gates(

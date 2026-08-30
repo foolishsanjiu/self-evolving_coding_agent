@@ -24,6 +24,16 @@ from evodev.evolution.models import (
     ProposalAttemptReport,
 )
 from evodev.evolution.proposal import ProposalRejectedError, propose_mutation
+from evodev.evolution.state import (
+    evolution_state_path,
+    load_or_rebuild_evolution_state,
+    proposal_stop_condition,
+    record_candidate_decision,
+    record_champion_rollback,
+    register_candidate,
+    remaining_single_field_mutations,
+    write_evolution_state,
+)
 from evodev.evolution.validation import PolicyExperimentRunner, run_pairwise_validation
 from evodev.llm import LLMClient
 from evodev.policy.versioning import PolicyRepository
@@ -92,7 +102,6 @@ def _collect_train(arguments: argparse.Namespace) -> None:
 
 
 def _propose(arguments: argparse.Namespace) -> None:
-    _require_paid_confirmation(arguments.confirm_paid, "Mutation proposal")
     report_path = arguments.pattern_report
     if not report_path.is_absolute():
         report_path = arguments.project_root / report_path
@@ -100,6 +109,20 @@ def _propose(arguments: argparse.Namespace) -> None:
     repository = PolicyRepository(arguments.project_root / "policies")
     champion = repository.champion()
     settings = load_settings(arguments.project_root / "configs", arguments.project_root / ".env")
+    state = load_or_rebuild_evolution_state(
+        arguments.project_root, arguments.evolution_id, settings.evolution
+    )
+    stop = proposal_stop_condition(
+        state,
+        settings.evolution,
+        champion,
+        has_repeated_failure_pattern=any(
+            pattern.failed_runs >= 2 for pattern in report.patterns
+        ),
+    )
+    if stop.should_stop:
+        raise RuntimeError(f"Evolution stopped: {stop.reason}")
+    _require_paid_confirmation(arguments.confirm_paid, "Mutation proposal")
     relative_report_path = report_path.relative_to(arguments.project_root).as_posix()
     report_hash = hashlib.sha256(report_path.read_bytes()).hexdigest()
     attempt_path = _next_proposal_attempt_path(
@@ -132,6 +155,11 @@ def _propose(arguments: argparse.Namespace) -> None:
         print(rejected.model_dump_json(indent=2))
         return
     candidate = repository.save_candidate(proposal.mutation)
+    state = register_candidate(state, candidate, settings.evolution)
+    write_evolution_state(
+        state,
+        evolution_state_path(arguments.project_root, arguments.evolution_id),
+    )
     _write_proposal_attempt(
         ProposalAttemptReport(
             attempt_id=attempt_path.stem,
@@ -163,21 +191,41 @@ def _propose(arguments: argparse.Namespace) -> None:
             bundle,
             report_path=path.relative_to(arguments.project_root).as_posix(),
         )
+        candidate = repository.load(candidate.policy_id)
+        state = record_candidate_decision(
+            state,
+            candidate,
+            "rejected",
+            settings.evolution,
+            champion_id=repository.champion().policy_id,
+            completed_at=bundle.created_at,
+        )
+        write_evolution_state(
+            state,
+            evolution_state_path(arguments.project_root, arguments.evolution_id),
+        )
     print(bundle.model_dump_json(indent=2))
 
 
 def _validate(arguments: argparse.Namespace) -> None:
-    _require_paid_confirmation(arguments.confirm_paid, "Pairwise Validation")
     repository = PolicyRepository(arguments.project_root / "policies")
     champion = repository.champion()
     candidate = repository.load(arguments.candidate_id)
+    settings = load_settings(
+        arguments.project_root / "configs", arguments.project_root / ".env"
+    )
+    state = load_or_rebuild_evolution_state(
+        arguments.project_root, arguments.evolution_id, settings.evolution
+    )
+    if state.pending_candidate_id != candidate.policy_id:
+        raise RuntimeError(
+            "Pairwise Validation Candidate is not pending in the current generation"
+        )
+    _require_paid_confirmation(arguments.confirm_paid, "Pairwise Validation")
     schema = validate_policy_schema(champion, candidate)
     smoke = run_smoke_gate(candidate, arguments.project_root) if schema.passed else None
     pairwise = None
     if schema.passed and smoke and smoke.passed:
-        settings = load_settings(
-            arguments.project_root / "configs", arguments.project_root / ".env"
-        )
         pairwise = run_pairwise_validation(
             arguments.project_root,
             settings,
@@ -198,6 +246,24 @@ def _validate(arguments: argparse.Namespace) -> None:
         bundle,
         report_path=path.relative_to(arguments.project_root).as_posix(),
     )
+    if pairwise is not None and pairwise.decision.value == "inconclusive":
+        state_decision = "inconclusive"
+    else:
+        state_decision = repository.load(candidate.policy_id).validation_result.decision
+    if state_decision not in {"accepted", "rejected", "inconclusive"}:
+        raise RuntimeError(f"Unexpected Candidate decision: {state_decision}")
+    state = record_candidate_decision(
+        state,
+        candidate,
+        state_decision,
+        settings.evolution,
+        champion_id=repository.champion().policy_id,
+        completed_at=bundle.created_at,
+    )
+    write_evolution_state(
+        state,
+        evolution_state_path(arguments.project_root, arguments.evolution_id),
+    )
     print(
         json.dumps(
             {
@@ -209,12 +275,62 @@ def _validate(arguments: argparse.Namespace) -> None:
     )
 
 
+def _status(arguments: argparse.Namespace) -> None:
+    report_path = arguments.pattern_report
+    if not report_path.is_absolute():
+        report_path = arguments.project_root / report_path
+    report = FailurePatternReport.model_validate_json(
+        report_path.read_text(encoding="utf-8")
+    )
+    settings = load_settings(
+        arguments.project_root / "configs", arguments.project_root / ".env"
+    )
+    repository = PolicyRepository(arguments.project_root / "policies")
+    champion = repository.champion()
+    state = load_or_rebuild_evolution_state(
+        arguments.project_root, arguments.evolution_id, settings.evolution
+    )
+    stop = proposal_stop_condition(
+        state,
+        settings.evolution,
+        champion,
+        has_repeated_failure_pattern=any(
+            pattern.failed_runs >= 2 for pattern in report.patterns
+        ),
+    )
+    print(
+        json.dumps(
+            {
+                "state": state.model_dump(mode="json"),
+                "proposal_stop": stop.model_dump(mode="json"),
+                "remaining_mutations": remaining_single_field_mutations(
+                    champion, state.progress.attempted_mutations
+                ),
+            },
+            indent=2,
+        )
+    )
+
+
 def _rollback(arguments: argparse.Namespace) -> None:
     repository = PolicyRepository(arguments.project_root / "policies")
+    settings = load_settings(
+        arguments.project_root / "configs", arguments.project_root / ".env"
+    )
+    state = load_or_rebuild_evolution_state(
+        arguments.project_root, arguments.evolution_id, settings.evolution
+    )
+    if state.pending_candidate_id is not None or state.current_candidate_ids:
+        raise RuntimeError("Cannot roll back while the current generation has Candidates")
     restored = rollback_last_known_good(
         repository,
         report_path=arguments.report_path,
         reason=arguments.reason,
+    )
+    state = record_champion_rollback(state, restored.policy_id)
+    write_evolution_state(
+        state,
+        evolution_state_path(arguments.project_root, arguments.evolution_id),
     )
     print(restored.model_dump_json(indent=2))
 
@@ -248,7 +364,15 @@ def _parser() -> argparse.ArgumentParser:
     validate.add_argument("--confirm-paid", action="store_true")
     validate.set_defaults(handler=_validate)
 
+    status = commands.add_parser(
+        "status", help="Rebuild or inspect free Evolution budget state."
+    )
+    status.add_argument("--evolution-id", required=True)
+    status.add_argument("--pattern-report", type=Path, required=True)
+    status.set_defaults(handler=_status)
+
     rollback = commands.add_parser("rollback", help="Restore previous champion pointer.")
+    rollback.add_argument("--evolution-id", required=True)
     rollback.add_argument("--report-path", required=True)
     rollback.add_argument("--reason", required=True)
     rollback.set_defaults(handler=_rollback)
