@@ -1,0 +1,22 @@
+{
+  "attempt_id": "proposal-attempt-002",
+  "status": "accepted",
+  "paid_call": true,
+  "model": "deepseek-v4-flash",
+  "parent_policy_id": "policy-v001",
+  "pattern_report_path": "evolution/task13/failure-patterns-train-v1.json",
+  "pattern_report_hash": "632c086e50fcec49a95665384260cab7cb9c7cbebf77e9e400029df1414c5e1a",
+  "draft": {
+    "field": "inspect_tests_before_edit",
+    "new_value": "prefer",
+    "hypothesis": "The repeated target-test failure occurs because the agent edits code without first inspecting the relevant tests, causing blind patch attempts and failed target assertions.",
+    "expected_effect": "Encouraging test inspection before editing should clarify expected behavior, reduce blind patch iterations, and lower target-test failure frequency.",
+    "possible_risk": "If tests are not available or are expensive to inspect, the agent may spend extra steps before editing; the soft 'prefer' setting should still allow progress when tests cannot be accessed."
+  },
+  "observed_field": "inspect_tests_before_edit",
+  "input_tokens": 409,
+  "output_tokens": 413,
+  "candidate_id": "candidate-001",
+  "rejection_reason": null,
+  "created_at": "2026-08-30T15:19:03.116275+00:00"
+}

@@ -512,6 +512,31 @@ def test_first_paid_proposal_rejection_is_preserved() -> None:
     assert report.draft is None
 
 
+def test_second_paid_proposal_and_pre_validation_gates_are_preserved() -> None:
+    proposal = ProposalAttemptReport.model_validate_json(
+        Path("evolution/evolution-v1/proposal-attempt-002.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    candidate = PolicyRepository(Path("policies")).load("candidate-001")
+    gate_data = json.loads(
+        Path(
+            "evolution/evolution-v1/candidate-001/gates-pre-validation.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert proposal.status == "accepted"
+    assert proposal.input_tokens == 409
+    assert proposal.output_tokens == 413
+    assert proposal.draft is not None
+    assert proposal.draft.new_value == "prefer"
+    assert candidate.parent_id == "policy-v001"
+    assert candidate.policy.inspect_tests_before_edit == "prefer"
+    assert gate_data["schema_gate"]["passed"] is True
+    assert gate_data["smoke_gate"]["passed"] is True
+    assert gate_data["pairwise_gate"] is None
+
+
 def _evaluation(task_id: str, run_id: str) -> EvaluationResult:
     return EvaluationResult(
         task_id=task_id,

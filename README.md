@@ -442,6 +442,15 @@ CLI 尚未保存原始响应，所以 Attempt 记录明确将未知 Draft/Token 
 类型与 Allowed Set，CLI 也会持久化后续 Proposal 的 Draft、Token Usage、Candidate ID 或
 Reject Reason。再次 Proposal 属于新的付费调用，仍需单独授权。
 
+第二次授权的 Proposal 使用 409 Input Tokens、413 Output Tokens，提出唯一变更
+`inspect_tests_before_edit: off → prefer`。Harness 将其绑定为 `mutation-001`，Evidence 仅
+引用上述两次 Train Failure，并生成 `candidate-001`；其 Policy Hash 为
+`b1c094b6c299811e59e4a746aca8f13fc924070e607450b680f56b1ddb586df9`。8 项 Schema/Safety
+检查和 `fixtures/simple_read` Smoke Gate 均通过。Proposal Attempt 与 Pre-Validation Gate
+分别冻结在 `evolution/evolution-v1/proposal-attempt-002.json` 和
+`evolution/evolution-v1/candidate-001/gates-pre-validation.json`。Candidate 仍为 pending，
+Champion 仍为 `policy-v001`；Pairwise Validation 尚未授权或执行。
+
 ## 配置
 
 普通配置位于 `configs/`：
