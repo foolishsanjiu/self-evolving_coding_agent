@@ -1,0 +1,23 @@
+{
+  "experiment_id": "exp-baseline-v1",
+  "experiment_version": "exp-baseline-v1",
+  "repetitions": 1,
+  "agent_release": "0.1.0",
+  "policy_version": "fixed-react-v1",
+  "policy_hash": "45cc1142fee0fc096d587dcb265bec789687b63242bc979aa341ca23a3762947",
+  "experience_version": "none",
+  "experience_hash": "140bedbf9c3f6d56a9846d2ba7088798683f4da0c248231336e6a05679e4fdfe",
+  "model": "deepseek-v4-flash",
+  "temperature": 0.1,
+  "prompt_version": "react-system-v1",
+  "max_steps": 15,
+  "context_budget": 60000,
+  "tool_provider": "mcp-devtools-v1",
+  "tool_catalog_hash": "6b9879a000c06d27b75fbc5c46d95a41268fab4e9a3bb60fd0866178304ab3c2",
+  "sandbox_image": "evodev-python:3.11",
+  "sandbox_digest": "sha256:52b485a7b17bb160572782f342398329285ee45654cfb560c83b40cab2b065c3",
+  "benchmark_version": "1.0",
+  "benchmark_hash": "5d22632e017efeea07cde1f52c948aca03337df6314f6289e2393aec2558b453",
+  "evaluator_version": "1.0",
+  "created_at": "2026-08-30T04:45:32.027247+00:00"
+}

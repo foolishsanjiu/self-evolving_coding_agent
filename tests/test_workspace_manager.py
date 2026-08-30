@@ -66,6 +66,17 @@ def test_each_create_uses_an_independent_workspace(runs_root: Path) -> None:
     assert first.workspace_path.is_dir() and second.workspace_path.is_dir()
 
 
+def test_discard_removes_evaluator_workspace_without_final_diff(runs_root: Path) -> None:
+    manager = WorkspaceManager(runs_root)
+    run = manager.create(FIXTURE, run_id="discard_test")
+
+    manager.discard(run)
+
+    assert not run.workspace_path.exists()
+    assert not (run.run_path / "final.patch").exists()
+    assert not (run.run_path / "final.diff").exists()
+
+
 def test_rejects_unsafe_run_identifiers_and_foreign_paths(runs_root: Path) -> None:
     manager = WorkspaceManager(runs_root)
     with pytest.raises(ValueError, match="run_id"):

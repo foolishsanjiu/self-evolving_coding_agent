@@ -1,0 +1,18 @@
+{
+  "experiment_id": "exp-baseline-v1",
+  "total_attempts": 12,
+  "valid_evaluated_attempts": 12,
+  "resolved_attempts": 9,
+  "resolution_rate": 0.75,
+  "average_react_steps": 9.25,
+  "average_tool_calls": 11.1667,
+  "average_tokens": 32000.8333,
+  "average_latency_ms": 25056.9167,
+  "search_before_edit_rate": 0.4167,
+  "test_inspection_before_edit_rate": 0.9167,
+  "average_patch_attempts": 3.0833,
+  "failure_distribution": {
+    "RESOLVED": 9,
+    "TARGET_TEST_FAILED": 3
+  }
+}

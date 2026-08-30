@@ -20,6 +20,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 6：Docker Sandbox + 完整 Coding Loop**
 - **Task 7：Lightweight Trajectory Logging + Trace Analyzer**
 - **Task 8：Benchmark v1.0（12 Tasks）**
+- **Task 9：Independent Evaluator + Fixed-Policy Baseline**
 
 现有能力：
 
@@ -44,13 +45,15 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 仅针对只读、幂等工具瞬时错误的受限 Retry；
 - 项目级 `FakeLLM` 与 `fixtures/simple_read` 开发 Fixture；
 - 版本化 Run Metadata、追加式事件日志、Artifact 引用与崩溃恢复；
-- 落盘前密钥脱敏，以及五项可复算 Trace Feature。
+- 落盘前密钥脱敏，以及五项可复算 Trace Feature；
 - 12 题受控 Python Coding Benchmark、严格 Loader 与 Agent 可见性隔离；
-- Before-Fail / After-Gold-Pass QA、Task Checksum 与 Manifest Hash。
+- Before-Fail / After-Gold-Pass QA、Task Checksum 与 Manifest Hash；
+- Fresh Workspace + Docker 的独立分层 Evaluator 与失败分类；
+- 受控实验 Manifest、指标汇总，以及冻结的 `exp-baseline-v1`。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-尚未实现 Independent Evaluation、Experience 或 Policy Evolution。
+尚未实现 Experience 或 Policy Evolution。
 
 ## 环境
 
@@ -71,7 +74,7 @@ python -m pip install -e .
 主要运行时依赖包括 OpenAI-compatible SDK、Pydantic、PyYAML、python-dotenv 和
 `mcp>=2.1,<3`；完整版本约束以 `requirements.txt` 为准。
 
-Task 6–8 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
+Task 6–9 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
 
 ```powershell
 docker version
@@ -214,6 +217,60 @@ Original Repository + Hidden Evaluation -> FAIL
 Original Repository + Gold Patch + Hidden Evaluation -> PASS
 ```
 
+## Independent Evaluation 与 Baseline
+
+`IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和
+`agent_run_id`。它从 Original Repository 创建新的评估 workspace，应用 Patch 后分别在
+新 Docker 容器中执行 Syntax、Hidden Target Tests 和 Hidden Regression Tests。Agent
+Final Answer、自测结论与原 Agent workspace 均不作为成功证据。
+
+Grade 按以下顺序推进，全部通过才是 `RESOLVED`：
+
+```text
+PATCH_EXISTS -> PATCH_APPLIES -> SYNTAX_VALID
+             -> TARGET_TESTS_PASS -> REGRESSION_TESTS_PASS
+```
+
+失败分类区分 Patch、Syntax、Target、Regression、Agent、Evaluation Timeout 与
+Environment Error。`ExperimentReporter` 从公开 Trajectory 自动汇总 Resolution Rate、
+ReAct Steps、Tool Calls、Tokens、Latency 与三项核心行为指标，并生成：
+
+```text
+evaluation_runs/exp_xxx/
+├── manifest.json
+├── summary.json
+├── summary.csv
+└── instances/task_xxx/
+    ├── report.json
+    ├── final.patch
+    ├── test_output.txt
+    └── trajectory_ref.json
+```
+
+已冻结的 `exp-baseline-v1` 使用 `deepseek-v4-flash`、temperature 0.1、固定 ReAct
+Policy、每题一次，共 12 个有效评估：
+
+| 指标 | 结果 |
+|---|---:|
+| Resolved | 9 / 12 |
+| Task Resolution Rate | 75% |
+| Average ReAct Steps | 9.25 |
+| Average Tool Calls | 11.1667 |
+| Average Tokens | 32,000.8333 |
+| Average Latency | 25,056.9167 ms |
+| Search-before-edit Rate | 41.67% |
+| Test-inspection-before-edit Rate | 91.67% |
+| Average Patch Attempts | 3.0833 |
+
+未解决任务为 `task_002`、`task_008`、`task_010`，均为 `TARGET_TEST_FAILED`；没有
+Regression、Timeout 或 Environment Failure。可审计冻结快照位于
+`baselines/exp-baseline-v1/`，完整本地运行产物位于被 Git 忽略的 `runs/` 与
+`evaluation_runs/`。再次运行会产生 API 费用：
+
+```powershell
+evodev-baseline --experiment-id exp-baseline-v1-new
+```
+
 ## 配置
 
 普通配置位于 `configs/`：
@@ -253,24 +310,26 @@ python -m ruff check .
 - 文件列表、分段读取、代码搜索和 workspace 逃逸防护；
 - 直接回答、连续工具调用、同轮多工具调用和 Max Steps；
 - Tool Failure 返回模型继续修正；
-- EventSink Hook。
+- EventSink Hook；
 - AgentState 的文件、Patch、测试和错误状态更新；
 - 上下文超预算后的确定性裁剪和旧 Observation 元数据压缩；
 - 只读幂等 Retry、非幂等禁止 Retry、Tool/LLM Exception 状态化；
-- FakeLLM 的确定性请求记录和错误路径。
+- FakeLLM 的确定性请求记录和错误路径；
 - 六个 DevTools 的风险元数据、参数校验和归一化错误；
 - Patch → Git Diff → pytest 的成功/失败/超时路径；
-- MCP 进程内组件调用与真实 stdio 子进程传输。
+- MCP 进程内组件调用与真实 stdio 子进程传输；
 - MCP Client connect/disconnect、分页终止、Catalog 缓存与手动刷新；
 - Native/MCP Provider 语义一致性与 ReAct Agent 零修改替换；
-- MCP Transport Error 与 Tool Execution Error 分层归一化和统计。
+- MCP Transport Error 与 Tool Execution Error 分层归一化和统计；
 - Disposable Workspace create/reset/cleanup 与 Original Repository 不变性；
 - Docker 参数边界、Artifact、输出截断、失败和超时清理语义；
 - Simple Bug、Patch Failure、Test Failure、Infinite Test 四类多轮 Coding Loop；
 - Run Metadata、事件顺序与 `call_id` 关联、Artifact 完整性和落盘脱敏；
-- JSONL 尾部崩溃恢复、最终 Patch/Diff 脱敏及五项 Trace Feature 复算。
+- JSONL 尾部崩溃恢复、最终 Patch/Diff 脱敏及五项 Trace Feature 复算；
 - Benchmark 固定规模与类别、Manifest 完整性和近重复 split 防泄漏；
-- Agent Workspace 私有资产隔离及 12 题 Before-Fail / After-Gold-Pass QA。
+- Agent Workspace 私有资产隔离及 12 题 Before-Fail / After-Gold-Pass QA；
+- Gold、Empty、Invalid、Syntax 与 Regression Break 五类独立评估路径；
+- Fresh Evaluation Workspace、分层 Grade、实验汇总与冻结 Baseline 一致性。
 
 Docker 可用且镜像构建完成后，真实隔离验收为：
 

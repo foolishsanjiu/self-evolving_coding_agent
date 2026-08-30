@@ -25,6 +25,7 @@ dev = [
 
 [project.scripts]
 evodev-smoke-llm = "evodev.smoke_llm:main"
+evodev-baseline = "evodev.evaluation.baseline:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

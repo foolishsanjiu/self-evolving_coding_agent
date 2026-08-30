@@ -138,3 +138,8 @@ class WorkspaceManager:
         (run.run_path / "final.patch").write_text(persisted_diff, encoding="utf-8")
         (run.run_path / "final.diff").write_text(persisted_diff, encoding="utf-8")
         self._remove_tree(run.workspace_path)
+
+    def discard(self, run: WorkspaceRun) -> None:
+        """Remove a disposable workspace without persisting evaluator-private files."""
+        self._validate_run(run)
+        self._remove_tree(run.workspace_path)

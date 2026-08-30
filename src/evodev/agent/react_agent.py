@@ -129,6 +129,8 @@ class ReActAgent:
                     step_count=step_count,
                     finish_reason=turn.finish_reason,
                     tool_call_count=len(turn.tool_calls),
+                    input_tokens=turn.input_tokens,
+                    output_tokens=turn.output_tokens,
                 )
 
                 if not turn.tool_calls:

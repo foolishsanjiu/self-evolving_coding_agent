@@ -1,0 +1,13 @@
+task_id,agent_run_id,resolved,valid_evaluation,failure_type,react_steps,tool_calls,tokens,latency_ms,searched_before_edit,inspected_tests_before_edit,patch_attempts
+task_001,run_task_001_r01,True,True,RESOLVED,6,8,9700,11500,True,True,2
+task_002,run_task_002_r01,False,True,TARGET_TEST_FAILED,15,18,76620,56777,False,True,5
+task_003,run_task_003_r01,True,True,RESOLVED,8,9,20821,17058,False,True,1
+task_004,run_task_004_r01,True,True,RESOLVED,11,13,37702,29962,False,True,5
+task_005,run_task_005_r01,True,True,RESOLVED,5,5,8522,8537,False,True,1
+task_006,run_task_006_r01,True,True,RESOLVED,6,6,8751,7033,False,False,2
+task_007,run_task_007_r01,True,True,RESOLVED,10,12,27274,24989,True,True,5
+task_008,run_task_008_r01,False,True,TARGET_TEST_FAILED,8,11,22305,19692,True,True,3
+task_009,run_task_009_r01,True,True,RESOLVED,5,6,8856,8101,True,True,1
+task_010,run_task_010_r01,False,True,TARGET_TEST_FAILED,15,19,100108,71822,True,True,5
+task_011,run_task_011_r01,True,True,RESOLVED,9,10,17866,12722,False,True,4
+task_012,run_task_012_r01,True,True,RESOLVED,13,17,45485,32490,False,True,3

@@ -172,7 +172,12 @@ def test_agent_stops_at_max_steps() -> None:
 def test_agent_emits_events_through_replaceable_sink() -> None:
     sink = RecordingEventSink()
     agent = ReActAgent(
-        FakeLLM([_tool_turn("first"), ModelTurn(content="done")]),
+        FakeLLM(
+            [
+                _tool_turn("first"),
+                ModelTurn(content="done", input_tokens=5, output_tokens=2),
+            ]
+        ),
         RecordingProvider(),
         event_sink=sink,
     )
@@ -188,6 +193,9 @@ def test_agent_emits_events_through_replaceable_sink() -> None:
         "FINAL_ANSWER",
         "RUN_FINISHED",
     ]
+    final_model_event = [event for event in sink.events if event.type == "MODEL_TURN"][-1]
+    assert final_model_event.data["input_tokens"] == 5
+    assert final_model_event.data["output_tokens"] == 2
 
 
 class SequencedProvider(ToolProvider):
