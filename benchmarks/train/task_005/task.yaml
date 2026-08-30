@@ -1,0 +1,8 @@
+task_id: task_005
+category: test_repair
+difficulty: easy
+description: Repair the incorrect odd-number assertion in the public is_even test; production code is correct.
+test_command: pytest -q
+expected_behavior: The public test must assert that 3 is not even without changing math_utils.py.
+repository_template: even_test_v1
+benchmark_version: "1.0"

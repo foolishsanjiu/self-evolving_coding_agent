@@ -1,0 +1,8 @@
+task_id: task_012
+category: bug_fix
+difficulty: hard
+description: Trace order_total across modules and fix percentage tax calculation without changing discount behavior.
+test_command: pytest -q
+expected_behavior: Tax rates are percentages; order totals still apply discounts before tax.
+repository_template: order_tax_v1
+benchmark_version: "1.0"

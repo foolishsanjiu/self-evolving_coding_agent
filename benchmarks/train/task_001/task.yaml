@@ -1,0 +1,8 @@
+task_id: task_001
+category: bug_fix
+difficulty: easy
+description: Fix discounted_price so discount_percent is interpreted as a percentage of price.
+test_command: pytest -q
+expected_behavior: A 20 percent discount on 50 returns 40 while zero discount preserves the price.
+repository_template: pricing_percentage_v1
+benchmark_version: "1.0"

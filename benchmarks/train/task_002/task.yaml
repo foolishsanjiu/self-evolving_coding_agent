@@ -1,0 +1,8 @@
+task_id: task_002
+category: exception_handling
+difficulty: easy
+description: Make parse_port reject non-integers and ports outside 1..65535 with clear ValueError messages.
+test_command: pytest -q
+expected_behavior: Valid ports parse as integers; invalid text and out-of-range values raise ValueError.
+repository_template: port_parser_v1
+benchmark_version: "1.0"

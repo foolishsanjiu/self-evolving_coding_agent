@@ -1,0 +1,8 @@
+task_id: task_006
+category: bug_fix
+difficulty: medium
+description: Fix cart_total so a percentage discount applies to the complete cart rather than only the first item.
+test_command: pytest -q
+expected_behavior: All item prices are summed before the percentage discount is applied.
+repository_template: cart_discount_v1
+benchmark_version: "1.0"

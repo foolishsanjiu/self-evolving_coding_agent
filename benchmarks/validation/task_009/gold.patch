@@ -1,0 +1,23 @@
+diff --git a/inventory.py b/inventory.py
+--- a/inventory.py
++++ b/inventory.py
+@@ -1,6 +1,10 @@
++def _matches(record: dict[str, str], query: str) -> bool:
++    return query.casefold() in record["name"].casefold()
++
++
+ def find_skus(records: list[dict[str, str]], query: str) -> list[str]:
+     matches = []
+     for record in records:
+-        if query in record["name"]:
++        if _matches(record, query):
+             matches.append(record["sku"])
+     return matches
+@@ -9,6 +13,6 @@
+ def count_matches(records: list[dict[str, str]], query: str) -> int:
+     count = 0
+     for record in records:
+-        if query in record["name"]:
++        if _matches(record, query):
+             count += 1
+     return count

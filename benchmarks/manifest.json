@@ -1,0 +1,103 @@
+{
+  "benchmark_version": "1.0",
+  "task_count": 12,
+  "split_counts": {
+    "train": 6,
+    "validation": 3,
+    "test": 3
+  },
+  "category_counts": {
+    "bug_fix": 4,
+    "exception_handling": 2,
+    "feature": 2,
+    "refactoring": 2,
+    "test_repair": 2
+  },
+  "tasks": [
+    {
+      "task_id": "task_001",
+      "split": "train",
+      "category": "bug_fix",
+      "repository_template": "pricing_percentage_v1",
+      "checksum": "439e29119d3c907acd5c95f0533edbb7dd0a3fb5dce4f2cf0ee41711c3d8bb2a"
+    },
+    {
+      "task_id": "task_002",
+      "split": "train",
+      "category": "exception_handling",
+      "repository_template": "port_parser_v1",
+      "checksum": "4368414ca314260561759083367700c38383fedd33aa32f2a75c7845defabcdc"
+    },
+    {
+      "task_id": "task_003",
+      "split": "train",
+      "category": "feature",
+      "repository_template": "text_slug_v1",
+      "checksum": "4a366bde39b0216735916a20181ea3ab23db58ce7e98435d765848a288f7d995"
+    },
+    {
+      "task_id": "task_004",
+      "split": "train",
+      "category": "refactoring",
+      "repository_template": "user_labels_v1",
+      "checksum": "036824409734c3c346b954ab2fa39f8281556fb2e852f280033cc2d58a566d8e"
+    },
+    {
+      "task_id": "task_005",
+      "split": "train",
+      "category": "test_repair",
+      "repository_template": "even_test_v1",
+      "checksum": "88dfe01881f0c071b4ac2d7d166c6a5f887aad81ad8f691f9179ec707df4048a"
+    },
+    {
+      "task_id": "task_006",
+      "split": "train",
+      "category": "bug_fix",
+      "repository_template": "cart_discount_v1",
+      "checksum": "ef5b8def5eaaf5a736851e0d7c02c7a2ced1e847fe2e3b1696e419df5095917a"
+    },
+    {
+      "task_id": "task_007",
+      "split": "validation",
+      "category": "bug_fix",
+      "repository_template": "sequence_median_v1",
+      "checksum": "4a88158bfe6f3bcc6caf0e02d0f4e51abcd76886bcb38692f86add87664791a4"
+    },
+    {
+      "task_id": "task_008",
+      "split": "validation",
+      "category": "exception_handling",
+      "repository_template": "required_name_v1",
+      "checksum": "8e16897e518c0e3377263d3ebe5d8a1194cf84fc5817fb7278898af135236ac9"
+    },
+    {
+      "task_id": "task_009",
+      "split": "validation",
+      "category": "refactoring",
+      "repository_template": "inventory_search_v1",
+      "checksum": "b7c0db3757a7e81e6158afb9b91256d3698049ca9cc28e973886fbb1b205a5a0"
+    },
+    {
+      "task_id": "task_010",
+      "split": "test",
+      "category": "feature",
+      "repository_template": "range_merge_v1",
+      "checksum": "881867241da2c1c79b23b1c6c4fde492a4f554770884cd953331e5a83e872acc"
+    },
+    {
+      "task_id": "task_011",
+      "split": "test",
+      "category": "test_repair",
+      "repository_template": "reverse_test_v1",
+      "checksum": "a6cf3ae8da8fb613dbd6c0498676884f06e7b0cdd92947a82a47d5ac73f97809"
+    },
+    {
+      "task_id": "task_012",
+      "split": "test",
+      "category": "bug_fix",
+      "repository_template": "order_tax_v1",
+      "checksum": "85eab55fb23cc185805d633a60600c3543cf21e7ad2ffd034ea630f62c14dcd9"
+    }
+  ],
+  "manifest_hash": "5d22632e017efeea07cde1f52c948aca03337df6314f6289e2393aec2558b453"
+}

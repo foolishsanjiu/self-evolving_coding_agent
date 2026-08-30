@@ -1,0 +1,8 @@
+task_id: task_004
+category: refactoring
+difficulty: medium
+description: Remove duplicated name normalization by introducing one _normalize_name helper without changing output.
+test_command: pytest -q
+expected_behavior: User and admin labels retain their current output and share one normalization helper.
+repository_template: user_labels_v1
+benchmark_version: "1.0"

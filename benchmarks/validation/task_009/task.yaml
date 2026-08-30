@@ -1,0 +1,8 @@
+task_id: task_009
+category: refactoring
+difficulty: hard
+description: Refactor duplicated inventory name matching into _matches and make both callers case-insensitive.
+test_command: pytest -q
+expected_behavior: SKU search and match counting share one case-insensitive matching rule.
+repository_template: inventory_search_v1
+benchmark_version: "1.0"

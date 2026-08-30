@@ -1,0 +1,8 @@
+task_id: task_008
+category: exception_handling
+difficulty: medium
+description: Make require_name normalize valid names and raise ValueError for missing, non-string, or blank names.
+test_command: pytest -q
+expected_behavior: Valid names are stripped; invalid values raise ValueError with a stable message.
+repository_template: required_name_v1
+benchmark_version: "1.0"

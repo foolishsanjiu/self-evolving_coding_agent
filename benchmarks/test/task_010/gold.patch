@@ -1,0 +1,14 @@
+diff --git a/ranges.py b/ranges.py
+--- a/ranges.py
++++ b/ranges.py
+@@ -1,2 +1,9 @@
+ def merge_ranges(ranges: list[tuple[int, int]]) -> list[tuple[int, int]]:
+-    raise NotImplementedError
++    merged: list[tuple[int, int]] = []
++    for start, end in sorted(ranges):
++        if not merged or start > merged[-1][1] + 1:
++            merged.append((start, end))
++            continue
++        previous_start, previous_end = merged[-1]
++        merged[-1] = (previous_start, max(previous_end, end))
++    return merged

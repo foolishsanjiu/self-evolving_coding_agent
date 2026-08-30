@@ -1,0 +1,13 @@
+diff --git a/ports.py b/ports.py
+--- a/ports.py
++++ b/ports.py
+@@ -1,2 +1,8 @@
+ def parse_port(value: str) -> int:
+-    return int(value)
++    try:
++        port = int(value)
++    except ValueError as exc:
++        raise ValueError("port must be an integer") from exc
++    if not 1 <= port <= 65535:
++        raise ValueError("port must be between 1 and 65535")
++    return port

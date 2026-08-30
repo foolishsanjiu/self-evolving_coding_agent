@@ -1,0 +1,7 @@
+diff --git a/tests/test_math_utils.py b/tests/test_math_utils.py
+--- a/tests/test_math_utils.py
++++ b/tests/test_math_utils.py
+@@ -4,2 +4,2 @@
+ def test_odd_number() -> None:
+-    assert is_even(3)
++    assert not is_even(3)

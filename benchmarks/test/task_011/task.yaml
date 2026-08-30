@@ -1,0 +1,8 @@
+task_id: task_011
+category: test_repair
+difficulty: easy
+description: Repair the public reverse-text test expectation; do not modify the correct reverse implementation.
+test_command: pytest -q
+expected_behavior: The public test expects reverse_text("abc") to equal "cba".
+repository_template: reverse_test_v1
+benchmark_version: "1.0"

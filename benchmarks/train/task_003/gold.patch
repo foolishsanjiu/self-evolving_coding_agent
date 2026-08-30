@@ -1,0 +1,11 @@
+diff --git a/text_utils.py b/text_utils.py
+--- a/text_utils.py
++++ b/text_utils.py
+@@ -1,2 +1,6 @@
++import re
++
++
+ def slugify(value: str) -> str:
+-    raise NotImplementedError
++    words = re.findall(r"[a-z0-9]+", value.lower())
++    return "-".join(words)

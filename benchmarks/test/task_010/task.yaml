@@ -1,0 +1,8 @@
+task_id: task_010
+category: feature
+difficulty: medium
+description: Implement merge_ranges for unsorted inclusive integer ranges, merging overlaps and touching ranges.
+test_command: pytest -q
+expected_behavior: Returned ranges are sorted, disjoint, and merge both overlapping and adjacent inputs.
+repository_template: range_merge_v1
+benchmark_version: "1.0"

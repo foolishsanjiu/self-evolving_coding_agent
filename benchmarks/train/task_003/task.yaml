@@ -1,0 +1,8 @@
+task_id: task_003
+category: feature
+difficulty: medium
+description: Implement slugify using lowercase ASCII words separated by single hyphens.
+test_command: pytest -q
+expected_behavior: Whitespace and punctuation collapse into hyphens with no leading or trailing separator.
+repository_template: text_slug_v1
+benchmark_version: "1.0"

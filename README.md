@@ -19,6 +19,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 5：MCP Client + Dynamic Tool Discovery**
 - **Task 6：Docker Sandbox + 完整 Coding Loop**
 - **Task 7：Lightweight Trajectory Logging + Trace Analyzer**
+- **Task 8：Benchmark v1.0（12 Tasks）**
 
 现有能力：
 
@@ -44,10 +45,12 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 项目级 `FakeLLM` 与 `fixtures/simple_read` 开发 Fixture；
 - 版本化 Run Metadata、追加式事件日志、Artifact 引用与崩溃恢复；
 - 落盘前密钥脱敏，以及五项可复算 Trace Feature。
+- 12 题受控 Python Coding Benchmark、严格 Loader 与 Agent 可见性隔离；
+- Before-Fail / After-Gold-Pass QA、Task Checksum 与 Manifest Hash。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-尚未实现 Benchmark、Independent Evaluation、Experience 或 Policy Evolution。
+尚未实现 Independent Evaluation、Experience 或 Policy Evolution。
 
 ## 环境
 
@@ -68,7 +71,7 @@ python -m pip install -e .
 主要运行时依赖包括 OpenAI-compatible SDK、Pydantic、PyYAML、python-dotenv 和
 `mcp>=2.1,<3`；完整版本约束以 `requirements.txt` 为准。
 
-Task 6 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
+Task 6–8 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
 
 ```powershell
 docker version
@@ -181,6 +184,36 @@ manager.cleanup(run, redact=recorder.redactor.redact_text)
 `unique_files_read`、`patch_attempts` 和 `test_runs`。轨迹格式版本为 `1.0`，不记录模型的
 私有思维链。
 
+## Benchmark v1.0
+
+冻结的 Benchmark 位于 `benchmarks/`，包含恰好 12 个 Python Coding Tasks：
+
+| Split | 数量 | 用途 |
+|---|---:|---|
+| Train | 6 | 失败轨迹、Reflection、Experience 与 Mutation Evidence |
+| Validation | 3 | Candidate Policy Accept / Reject |
+| Test | 3 | 最终报告，不参与调优 |
+
+类别配额固定为 Bug Fix 4、Exception Handling 2、Feature 2、Refactoring 2、Test
+Repair 2。每个任务包含 `task.yaml`、`repo/`、Hidden Target/Regression Tests 和
+`gold.patch`。`BenchmarkLoader.create_agent_workspace()` 只从 `repo/` 创建 disposable
+workspace，因此 Agent 看不到任务元数据之外的 Hidden Tests 与 Gold Patch。
+
+`benchmarks/manifest.json` 冻结每题规范化 SHA-256 Checksum 和全局 Manifest Hash。
+Loader 会验证 6/3/3 split、类别配额、Task ID 唯一性、必需资产以及同一 Repository
+Template 不跨 split。运行 Benchmark QA：
+
+```powershell
+python -m pytest tests/test_benchmark.py -v
+```
+
+其中 12 个参数化用例分别在独立临时 Git workspace 中验证：
+
+```text
+Original Repository + Hidden Evaluation -> FAIL
+Original Repository + Gold Patch + Hidden Evaluation -> PASS
+```
+
 ## 配置
 
 普通配置位于 `configs/`：
@@ -236,6 +269,8 @@ python -m ruff check .
 - Simple Bug、Patch Failure、Test Failure、Infinite Test 四类多轮 Coding Loop；
 - Run Metadata、事件顺序与 `call_id` 关联、Artifact 完整性和落盘脱敏；
 - JSONL 尾部崩溃恢复、最终 Patch/Diff 脱敏及五项 Trace Feature 复算。
+- Benchmark 固定规模与类别、Manifest 完整性和近重复 split 防泄漏；
+- Agent Workspace 私有资产隔离及 12 题 Before-Fail / After-Gold-Pass QA。
 
 Docker 可用且镜像构建完成后，真实隔离验收为：
 

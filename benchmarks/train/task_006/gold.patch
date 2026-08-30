@@ -1,0 +1,10 @@
+diff --git a/cart.py b/cart.py
+--- a/cart.py
++++ b/cart.py
+@@ -1,5 +1,4 @@
+ def cart_total(prices: list[float], discount_percent: float) -> float:
+     if not prices:
+         return 0.0
+-    discounted_first = prices[0] * (1 - discount_percent / 100)
+-    return discounted_first + sum(prices[1:])
++    return sum(prices) * (1 - discount_percent / 100)

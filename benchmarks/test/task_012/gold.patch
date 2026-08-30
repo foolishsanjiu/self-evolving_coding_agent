@@ -1,0 +1,7 @@
+diff --git a/tax.py b/tax.py
+--- a/tax.py
++++ b/tax.py
+@@ -1,2 +1,2 @@
+ def add_tax(amount: float, tax_percent: float) -> float:
+-    return amount + amount * tax_percent
++    return amount + amount * tax_percent / 100

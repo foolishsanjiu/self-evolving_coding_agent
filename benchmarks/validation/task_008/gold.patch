@@ -1,0 +1,10 @@
+diff --git a/config_reader.py b/config_reader.py
+--- a/config_reader.py
++++ b/config_reader.py
+@@ -1,2 +1,5 @@
+ def require_name(data: dict[str, object]) -> str:
+-    return data["name"]
++    name = data.get("name")
++    if not isinstance(name, str) or not name.strip():
++        raise ValueError("name is required")
++    return name.strip()
