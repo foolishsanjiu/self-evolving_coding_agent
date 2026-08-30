@@ -515,10 +515,19 @@ Candidate 没有触发 Catastrophic Regression，保留为 rejected；最终报�
 的搜索额度已经用完，并且两者都未晋升；Task 13 的 Accepted Mutation 验收项仍未满足。
 
 免费状态重建已将上述结果固化为 Generation 1 `no_improvement`，当前进入 Generation 2：
-代内 Candidate 为 0/2、连续无提升为 1/2，Proposal Stop Condition 为 false。相对当前
-Champion，未尝试的 Transition 只剩 `prefer_search_before_read: false → true`、
-`max_react_steps: 15 → 10` 和 `15 → 20`。该状态只表示下一次 Proposal 在预算内，不构成
-付费授权。
+初始代内 Candidate 为 0/2、连续无提升为 1/2，Proposal Stop Condition 为 false。相对当前
+Champion，当时未尝试的 Transition 为 `prefer_search_before_read: false → true`、
+`max_react_steps: 15 → 10` 和 `15 → 20`。
+
+第四次授权的 Proposal 使用 458 Input Tokens、984 Output Tokens，选择此前未尝试的
+`prefer_search_before_read: false → true`，生成 `candidate-003` / `mutation-003`；Policy Hash
+为 `5f3b4c4a56c64d209acaf0ea435c0a9f001eb8bd8f6b83f30560d0442df33c41`。8 项
+Schema/Safety 检查全部通过，Smoke Gate 以 3 Steps、2 Tool Calls、0 Policy Precondition
+Failures 通过。Proposal Attempt 与 Pre-Validation Gate 分别冻结在
+`evolution/evolution-v1/proposal-attempt-004.json` 和
+`evolution/evolution-v1/candidate-003/gates-pre-validation.json`。当前 Generation 2 为
+1/2、连续无提升仍为 1/2，`candidate-003` 是唯一 pending Candidate；在完成 Pairwise 前，
+Proposal Stop Condition 会阻止新 Proposal。Champion 仍为 `policy-v001`。
 
 ## 配置
 

@@ -513,7 +513,7 @@ def test_current_evolution_rebuilds_at_generation_two() -> None:
 
     assert state.champion_id == "policy-v001"
     assert state.progress.generation == 2
-    assert state.progress.candidates_in_generation == 0
+    assert state.progress.candidates_in_generation == 1
     assert state.progress.generations_without_improvement == 1
     assert state.completed_generations[0].candidate_ids == [
         "candidate-001",
@@ -522,13 +522,15 @@ def test_current_evolution_rebuilds_at_generation_two() -> None:
     assert tracked.model_dump(exclude={"created_at", "updated_at"}) == state.model_dump(
         exclude={"created_at", "updated_at"}
     )
-    assert len(state.progress.attempted_mutations) == 2
+    assert state.current_candidate_ids == ["candidate-003"]
+    assert state.pending_candidate_id == "candidate-003"
+    assert len(state.progress.attempted_mutations) == 3
     assert remaining == [
         ("max_react_steps", "15", "10"),
         ("max_react_steps", "15", "20"),
-        ("prefer_search_before_read", "False", "True"),
     ]
-    assert stop.should_stop is False
+    assert stop.should_stop is True
+    assert "candidate-003" in stop.reason
 
 
 def test_finalize_candidate_promotes_only_after_all_gates(
@@ -787,6 +789,35 @@ def test_candidate_002_rejected_case_study_is_preserved() -> None:
     assert gates.pairwise_gate.candidate.resolved_attempts == 5
     assert gates.pairwise_gate.candidate.task_resolutions["task_009"] == 2
     assert gates.pairwise_gate.catastrophic_regressions == []
+
+
+def test_fourth_paid_proposal_and_candidate_003_are_preserved() -> None:
+    proposal = ProposalAttemptReport.model_validate_json(
+        Path("evolution/evolution-v1/proposal-attempt-004.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    candidate = PolicyRepository(Path("policies")).load("candidate-003")
+    gates = CandidateGateBundle.model_validate_json(
+        Path(
+            "evolution/evolution-v1/candidate-003/gates-pre-validation.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert proposal.status == "accepted"
+    assert proposal.input_tokens == 458
+    assert proposal.output_tokens == 984
+    assert proposal.draft is not None
+    assert proposal.draft.field == "prefer_search_before_read"
+    assert proposal.draft.new_value is True
+    assert candidate.parent_id == "policy-v001"
+    assert candidate.status == "candidate"
+    assert candidate.policy.prefer_search_before_read is True
+    assert gates.schema_gate.passed is True
+    assert gates.smoke_gate is not None
+    assert gates.smoke_gate.passed is True
+    assert gates.smoke_gate.policy_precondition_failures == 0
+    assert gates.pairwise_gate is None
 
 
 def _evaluation(task_id: str, run_id: str) -> EvaluationResult:

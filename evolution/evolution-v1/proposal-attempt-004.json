@@ -1,0 +1,22 @@
+{
+  "attempt_id": "proposal-attempt-004",
+  "status": "accepted",
+  "paid_call": true,
+  "model": "deepseek-v4-flash",
+  "parent_policy_id": "policy-v001",
+  "pattern_report_path": "evolution/task13/failure-patterns-train-v1.json",
+  "pattern_report_hash": "632c086e50fcec49a95665384260cab7cb9c7cbebf77e9e400029df1414c5e1a",
+  "draft": {
+    "field": "prefer_search_before_read",
+    "new_value": true,
+    "hypothesis": "The repeated TARGET_TEST_FAILED pattern shows multiple patch attempts with no editing before tests, suggesting the agent may be patching without first searching for relevant test expectations or code context. Enabling search-before-read forces an explicit retrieval step before reading files, which should ground edits in the correct API/semantics and reduce blind patch churn.",
+    "expected_effect": "Fewer failed target tests and lower average patch attempts because the agent will locate relevant tests/documentation before constructing patches.",
+    "possible_risk": "The extra search step consumes one or more react steps, potentially leaving fewer steps for actual patching and debugging; with max_react_steps=15 this could occasionally truncate a successful repair."
+  },
+  "observed_field": "prefer_search_before_read",
+  "input_tokens": 458,
+  "output_tokens": 984,
+  "candidate_id": "candidate-003",
+  "rejection_reason": null,
+  "created_at": "2026-08-30T17:22:54.624498+00:00"
+}
