@@ -66,6 +66,18 @@ class SandboxSettings(BaseModel):
     max_output_chars: int = Field(default=20_000, gt=0)
 
 
+class EvolutionSettings(BaseModel):
+    """Hard bounds for the v1 policy search and validation gate."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_generations: int = Field(default=5, ge=1, le=5)
+    max_candidates_per_generation: int = Field(default=2, ge=1, le=2)
+    no_improvement_patience: int = Field(default=2, ge=1, le=2)
+    validation_repetitions: Literal[3] = 3
+    significant_cost_reduction: float = Field(default=0.1, gt=0, le=0.5)
+
+
 class AppSettings(BaseModel):
     """Validated application settings."""
 
@@ -75,6 +87,7 @@ class AppSettings(BaseModel):
     agent: AgentSettings
     experience: ExperienceSettings
     sandbox: SandboxSettings
+    evolution: EvolutionSettings
 
 
 def _read_yaml(path: Path) -> dict[str, Any]:
@@ -101,6 +114,7 @@ def load_settings(config_dir: Path, env_file: Path | None = None) -> AppSettings
             "agent": _read_yaml(config_dir / "agent.yaml"),
             "experience": _read_yaml(config_dir / "experience.yaml"),
             "sandbox": _read_yaml(config_dir / "sandbox.yaml"),
+            "evolution": _read_yaml(config_dir / "evolution.yaml"),
         }
     )
 

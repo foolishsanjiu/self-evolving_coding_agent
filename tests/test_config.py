@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from evodev.config import (
+    EvolutionSettings,
     ModelSettings,
     SandboxSettings,
     load_sandbox_settings,
@@ -26,6 +27,8 @@ def test_load_settings_and_resolve_key(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.experience.max_chars == 2_500
     assert settings.sandbox.network == "none"
     assert settings.sandbox.pids_limit == 128
+    assert settings.evolution.max_generations == 5
+    assert settings.evolution.validation_repetitions == 3
     assert settings.model.resolve_api_key() == "secret-value"
     assert "secret-value" not in settings.model.model_dump_json()
 
@@ -59,3 +62,10 @@ def test_load_sandbox_settings_independently() -> None:
 
     assert settings.image == "evodev-python:3.11"
     assert settings.max_output_chars == 20_000
+
+
+def test_evolution_budget_is_bounded() -> None:
+    with pytest.raises(ValidationError):
+        EvolutionSettings(max_generations=6)
+    with pytest.raises(ValidationError):
+        EvolutionSettings(validation_repetitions=1)

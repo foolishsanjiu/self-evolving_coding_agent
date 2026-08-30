@@ -3,6 +3,7 @@
 from evodev.config.settings import (
     AgentSettings,
     AppSettings,
+    EvolutionSettings,
     ExperienceSettings,
     ModelSettings,
     SandboxSettings,
@@ -13,6 +14,7 @@ from evodev.config.settings import (
 __all__ = [
     "AgentSettings",
     "AppSettings",
+    "EvolutionSettings",
     "ExperienceSettings",
     "ModelSettings",
     "SandboxSettings",

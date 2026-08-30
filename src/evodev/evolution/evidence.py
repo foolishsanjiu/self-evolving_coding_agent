@@ -1,0 +1,71 @@
+"""Build mutation evidence strictly from persisted Train evaluations."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from evodev.benchmark import BenchmarkLoader
+from evodev.evaluation.models import EvaluationResult
+from evodev.policy.aggregation import aggregate_failure_patterns
+from evodev.policy.models import TrainRunEvidence
+from evodev.trajectory import TraceAnalyzer
+
+from .models import FailurePatternReport
+
+
+def aggregate_train_failure_report(
+    project_root: Path,
+    experiment_ids: list[str],
+    *,
+    report_id: str,
+) -> FailurePatternReport:
+    """Load public run evidence while rejecting non-Train provenance."""
+    root = project_root.resolve()
+    tasks = {
+        task.config.task_id: task
+        for task in BenchmarkLoader(root / "benchmarks").load_tasks()
+    }
+    evidence = []
+    for experiment_id in experiment_ids:
+        experiment_path = root / "evaluation_runs" / experiment_id
+        if not experiment_path.is_dir():
+            raise FileNotFoundError(f"Evaluation experiment not found: {experiment_id}")
+        for report_path in sorted((experiment_path / "instances").rglob("report.json")):
+            result = EvaluationResult.model_validate_json(
+                report_path.read_text(encoding="utf-8")
+            )
+            task = tasks.get(result.task_id)
+            if task is None:
+                raise ValueError(f"Unknown benchmark task in evaluation: {result.task_id}")
+            if task.split != "train":
+                continue
+            run_path = root / "runs" / experiment_id / result.agent_run_id
+            features_path = run_path / "trace_features.json"
+            if features_path.is_file():
+                features = json.loads(features_path.read_text(encoding="utf-8"))
+            else:
+                events = TraceAnalyzer.load_events(run_path / "events.jsonl")
+                features = TraceAnalyzer.analyze(events)
+            evidence.append(
+                TrainRunEvidence(
+                    run_id=f"{experiment_id}/{result.agent_run_id}",
+                    failure_type=result.failure_type,
+                    inspected_tests_before_edit=bool(
+                        features["inspected_tests_before_edit"]
+                    ),
+                    patch_attempts=int(features["patch_attempts"]),
+                )
+            )
+    if not evidence:
+        raise ValueError("No Train evaluations were found in the selected experiments")
+    return FailurePatternReport(
+        report_id=report_id,
+        source_experiment_ids=experiment_ids,
+        patterns=aggregate_failure_patterns(evidence),
+    )
+
+
+def write_failure_pattern_report(report: FailurePatternReport, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(report.model_dump_json(indent=2), encoding="utf-8")

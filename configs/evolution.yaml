@@ -1,0 +1,5 @@
+max_generations: 5
+max_candidates_per_generation: 2
+no_improvement_patience: 2
+validation_repetitions: 3
+significant_cost_reduction: 0.10

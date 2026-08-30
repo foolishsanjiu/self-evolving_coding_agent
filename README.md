@@ -58,11 +58,14 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 仅含三个可演化字段的强类型 `AgentPolicy` 与代码层 Frozen Invariants；
 - Soft Guidance、PreToolCall Hard Guard 和 Policy 驱动的 ReAct Step Limit；
 - Train-only Failure Pattern Aggregation、单字段 Mutation 与可校验文件版本链。
+- Task 13 离线 Evolution Engine：Train-only Proposal、三层 Gate、搜索预算与回滚；
+  真实 Accepted/Rejected Case Study 尚待单独授权的付费运行。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-Task 12 已建立 Policy 演化边界与运行时 Hook；尚未实现 Task 13 的 Proposal LLM、
-Validation Gate、自动晋升或自动回滚。
+Task 12 已建立 Policy 演化边界与运行时 Hook。Task 13 的离线引擎与执行入口已经实现；
+当前冻结 Baseline 只有 1 次 Train `TARGET_TEST_FAILED`，未达到重复模式门槛，因此尚未
+调用 Proposal LLM，也未执行付费 Pairwise Validation 或生成 Case Study。
 
 ## 环境
 
@@ -83,7 +86,7 @@ python -m pip install -e .
 主要运行时依赖包括 OpenAI-compatible SDK、Pydantic、PyYAML、python-dotenv 和
 `mcp>=2.1,<3`；完整版本约束以 `requirements.txt` 为准。
 
-Task 6–12 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
+Task 6–13 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
 
 ```powershell
 docker version
@@ -377,6 +380,56 @@ champion。当前 `policy-v001` 冻结为 Task 12 前的默认行为。Repositor
 accepted、rejected 和显式 rolled-back 状态，但 Task 12 不自行做 Validation 决策；
 自动 Proposal、Pairwise Validation Gate、Promotion 与 Rollback 属于 Task 13。
 
+## Evolution Engine 与 Validation Gate
+
+Task 13 将 Proposal 与 Evaluation 分离：Proposal 只接收出现至少两次的 Train Failure
+Pattern，只能返回单字段 `field/new_value` 和 Hypothesis/Effect/Risk；Parent、Old Value、
+Mutation ID 与 Train Evidence 均由 Harness 绑定。Validation 或 Test 数据不会进入 Proposal。
+
+Candidate 依次通过：
+
+1. Schema/Safety：三字段、单 Mutation、Parent、Hash、Frozen Invariants 和 Train Evidence；
+2. Smoke：复用 `fixtures/simple_read` 检查 Agent、Tool Calling 和 Hard Guard；
+3. Pairwise Validation：Champion/Candidate 各运行 3 个 Validation Tasks × 3 次。
+
+Pairwise 判定不使用加权 Fitness：先比较 9 次有效尝试的 Resolution；任何原先至少
+`2/3` 稳定而 Candidate 变为 `0/3` 的任务会触发 Catastrophic Regression Reject。
+Resolution 完全相同时，只有 Tokens 至少下降 10%，且 Steps/Tool Calls/Latency 中至少
+另一项也下降 10% 才可接受。条件不一致或不足 9 次有效评估返回 `inconclusive`，Candidate
+保持 pending，不把基础设施故障当作策略失败。
+
+搜索边界位于 `configs/evolution.yaml`：最多 5 Generations、每代 2 Candidates、连续 2 代
+无提升停止，Validation 重复次数固定为 3。已尝试的单字段 Transition 不会重复 Proposal。
+旧 Champion 和 Rejected Candidate 永不覆盖；Rollback 只恢复 previous champion 指针。
+
+零费用聚合已有 Train 历史：
+
+```powershell
+evodev-evolve aggregate --experiment-ids exp-baseline-v1 `
+  --report-id failure-patterns-baseline-v1 `
+  --output evolution_runs/task13/failure-patterns-baseline-v1.json
+```
+
+当前结果只有 `task_002` 的一次 `TARGET_TEST_FAILED`，因此 Proposal Gate 会停止。以下命令
+均会产生模型 API 费用，并且缺少 `--confirm-paid` 时会拒绝执行：
+
+```powershell
+# 额外收集 Train 历史；默认 6 tasks × 2 runs
+evodev-evolve collect-train --experiment-id exp-policy-train-v1 `
+  --repetitions 2 --confirm-paid
+
+# 一次 Proposal LLM 调用并运行离线 Schema/Smoke Gate
+evodev-evolve propose --pattern-report evolution_runs/task13/failure-patterns-v1.json `
+  --evolution-id evolution-v1 --confirm-paid
+
+# Champion/Candidate 各 9 个 Agent Runs
+evodev-evolve validate --candidate-id candidate-001 `
+  --evolution-id evolution-v1 --confirm-paid
+```
+
+真实 Case Study、Policy 晋升和最终 Champion 冻结尚未执行；它们需要明确的付费授权，
+不能由下一任务名称或 README 命令视为授权。
+
 ## 配置
 
 普通配置位于 `configs/`：
@@ -446,6 +499,10 @@ python -m ruff check .
 - Policy Guidance、测试前编辑 Hard Guard 和 Policy Step Limit；
 - Train-only Mutation Evidence 与重复 Failure Pattern Aggregation；
 - Candidate 单字段变更、Accepted/Rejected 保存、Parent Chain 与显式 Rollback。
+- Train-only Proposal Provenance、重复模式门槛与重复 Transition 拒绝；
+- Schema/Smoke Gate、3×3 Pairwise Resolution-first 判定与 Catastrophic Guard；
+- Inconclusive 基础设施路径、Generation/Candidate/Patience/API Budget 停止条件；
+- 付费 CLI 显式确认、旧 Champion 保留和 Last-Known-Good Pointer Rollback。
 
 Docker 可用且镜像构建完成后，真实隔离验收为：
 

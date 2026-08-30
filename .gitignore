@@ -31,6 +31,7 @@ Thumbs.db
 # EvoDev runtime artifacts
 runs/
 evaluation_runs/
+evolution_runs/
 results/
 data/*.sqlite
 data/*.sqlite-*

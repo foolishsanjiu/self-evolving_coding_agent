@@ -77,6 +77,24 @@ class PolicyRepository:
     def champion(self) -> VersionedPolicy:
         return self.load(self.load_index().champion)
 
+    def next_mutation_id(self) -> str:
+        mutation_numbers = []
+        for path in self.root.glob("*.yaml"):
+            record = self.load(path.stem)
+            if record.mutation_id:
+                mutation_numbers.append(int(record.mutation_id.removeprefix("mutation-")))
+        return f"mutation-{max(mutation_numbers, default=0) + 1:03d}"
+
+    def attempted_mutations(self) -> set[tuple[str, str, str]]:
+        transitions = set()
+        for path in self.root.glob("candidate-*.yaml"):
+            mutation = self.load(path.stem).mutation
+            if mutation:
+                transitions.add(
+                    (mutation.field, str(mutation.old_value), str(mutation.new_value))
+                )
+        return transitions
+
     @staticmethod
     def _next_id(paths: list[Path], prefix: str) -> str:
         numbers = [int(path.stem.removeprefix(prefix)) for path in paths]
@@ -121,7 +139,11 @@ class PolicyRepository:
         candidate = self.load(candidate_id)
         if candidate.status != PolicyStatus.CANDIDATE:
             raise ValueError("Only pending candidates can be decided")
-        if candidate.parent_id != self.load_index().champion:
+        index = self.load_index()
+        if (
+            validation_result.decision == "accepted"
+            and candidate.parent_id != index.champion
+        ):
             raise ValueError("Candidate parent is no longer the current champion")
 
         candidate.status = PolicyStatus(validation_result.decision)
@@ -130,7 +152,6 @@ class PolicyRepository:
         if candidate.status == PolicyStatus.REJECTED:
             return None
 
-        index = self.load_index()
         version_id = self._next_id(list(self.root.glob("policy-v*.yaml")), "policy-v")
         accepted = VersionedPolicy.create(
             policy_id=version_id,
