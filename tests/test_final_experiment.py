@@ -65,28 +65,26 @@ def test_final_config_is_the_exact_fixed_2x2_matrix() -> None:
         FinalExperimentConfig.model_validate(invalid)
 
 
-def test_preflight_pins_all_identities_and_stops_before_second_accepted_case() -> None:
+def test_preflight_pins_all_identities_and_is_ready_with_two_accepted_cases() -> None:
     preflight = _preflight()
     manifest = preflight.manifest
     variants = {item.variant_id: item for item in manifest.variants}
 
-    assert preflight.ready_to_freeze is False
-    assert preflight.accepted_case_studies == 1
+    assert preflight.ready_to_freeze is True
+    assert preflight.accepted_case_studies == 2
     assert preflight.required_accepted_case_studies == 2
-    assert preflight.blocking_reasons == [
-        "Task 14 requires at least two Accepted Mutation case studies"
-    ]
+    assert preflight.blocking_reasons == []
     assert preflight.expected_agent_runs == 36
     assert manifest.git_commit == "a" * 40
     assert manifest.benchmark_task_ids == ["task_010", "task_011", "task_012"]
     assert manifest.tool_catalog_hash == "b" * 64
     assert variants[FinalVariantId.BASELINE].policy_version == "policy-v001"
     assert variants[FinalVariantId.EXPERIENCE].experience_version == "experience-v001"
-    assert variants[FinalVariantId.POLICY].policy_version == "policy-v002"
-    assert variants[FinalVariantId.COMBINED].policy_version == "policy-v002"
+    assert variants[FinalVariantId.POLICY].policy_version == "policy-v003"
+    assert variants[FinalVariantId.COMBINED].policy_version == "policy-v003"
     assert variants[FinalVariantId.COMBINED].experience_version == "experience-v001"
     assert variants[FinalVariantId.BASELINE].max_steps == 15
-    assert variants[FinalVariantId.COMBINED].max_steps == 20
+    assert variants[FinalVariantId.COMBINED].max_steps == 10
     assert manifest.freeze.policy_evolution_enabled is False
     assert manifest.freeze.selective_reruns_allowed is False
 
@@ -107,23 +105,22 @@ def test_manifest_write_requires_a_ready_preflight() -> None:
     root = Path(".test_runtime") / f"final_manifest_{uuid4().hex}"
     path = root / "experiment_manifest.json"
     try:
-        with pytest.raises(RuntimeError, match="not ready"):
-            write_frozen_final_manifest(preflight, path)
-
-        ready = preflight.model_copy(
+        blocked = preflight.model_copy(
             update={
-                "ready_to_freeze": True,
-                "blocking_reasons": [],
-                "accepted_case_studies": 2,
+                "ready_to_freeze": False,
+                "blocking_reasons": ["test blocker"],
             }
         )
-        written = write_frozen_final_manifest(ready, path)
+        with pytest.raises(RuntimeError, match="not ready"):
+            write_frozen_final_manifest(blocked, path)
+
+        written = write_frozen_final_manifest(preflight, path)
 
         assert path.is_file()
-        assert write_frozen_final_manifest(ready, path) == written
+        assert write_frozen_final_manifest(preflight, path) == written
 
-        changed_manifest = ready.manifest.model_copy(update={"model": "changed-model"})
-        changed = ready.model_copy(update={"manifest": changed_manifest})
+        changed_manifest = preflight.manifest.model_copy(update={"model": "changed-model"})
+        changed = preflight.model_copy(update={"manifest": changed_manifest})
         with pytest.raises(ValueError, match="other conditions"):
             write_frozen_final_manifest(changed, path)
     finally:

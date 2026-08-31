@@ -1,0 +1,37 @@
+policy_id: policy-v003
+parent_id: policy-v002
+status: accepted
+mutation_id: mutation-006
+mutation:
+  mutation_id: mutation-006
+  parent_policy_id: policy-v002
+  field: max_react_steps
+  old_value: 20
+  new_value: 10
+  evidence:
+  - split: train
+    run_ids:
+    - exp-baseline-v1/run_task_002_r01
+    - exp-policy-train-v1/run_task_002_r02
+    reference: evolution/task13/failure-patterns-train-v1.json#TARGET_TEST_FAILED
+  hypothesis: The repeated target-test failures occur after many reactive patch attempts,
+    suggesting the agent is spending excessive steps thrashing on edits rather than
+    converging. Cap total reaction steps at 10 to force earlier commitment to a promising
+    patch and reduce unproductive late-stage churn.
+  expected_effect: Fewer TARGET_TEST_FAILED repetitions because the agent will be
+    less likely to bury successful fixes under additional speculative patch attempts,
+    and will allocate more limited steps toward high-value verification actions.
+  possible_risk: Some tasks may require more than 10 steps for legitimate multi-step
+    diagnosis and repair, so the cap could cause premature termination on complex
+    targets and reduce overall pass rate.
+  created_at: '2026-08-31T05:48:31.047680+00:00'
+validation_result:
+  decision: accepted
+  report_path: evolution/evolution-v1/candidate-006/gates-final.json
+  reason: Resolution tied while tokens and another cost metric improved materially.
+policy:
+  inspect_tests_before_edit: 'off'
+  prefer_search_before_read: false
+  max_react_steps: 10
+content_hash: 0444b7c0a49dd5482ee1ce2748aedab1f8b07019d6a48ca4e89ace4bc81c4a65
+created_at: '2026-08-31T05:58:55.255446+00:00'

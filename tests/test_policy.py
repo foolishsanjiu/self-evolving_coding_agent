@@ -227,9 +227,9 @@ def test_policy_hash_is_canonical() -> None:
 
 def test_tracked_champion_policy_snapshot_is_loadable() -> None:
     record = PolicyRepository(Path("policies")).champion()
-    expected = AgentPolicy(max_react_steps=20)
+    expected = AgentPolicy(max_react_steps=10)
 
-    assert record.policy_id == "policy-v002"
-    assert record.parent_id == "policy-v001"
+    assert record.policy_id == "policy-v003"
+    assert record.parent_id == "policy-v002"
     assert record.policy == expected
     assert record.content_hash == expected.content_hash()

@@ -1,9 +1,9 @@
 {
   "evolution_id": "evolution-v1",
-  "champion_id": "policy-v002",
+  "champion_id": "policy-v003",
   "progress": {
-    "generation": 3,
-    "candidates_in_generation": 1,
+    "generation": 4,
+    "candidates_in_generation": 0,
     "generations_without_improvement": 0,
     "attempted_mutations": [
       [
@@ -24,6 +24,11 @@
       [
         "max_react_steps",
         "20",
+        "10"
+      ],
+      [
+        "max_react_steps",
+        "20",
         "15"
       ],
       [
@@ -34,9 +39,7 @@
     ],
     "api_budget_exhausted": false
   },
-  "current_candidate_ids": [
-    "candidate-005"
-  ],
+  "current_candidate_ids": [],
   "pending_candidate_id": null,
   "completed_generations": [
     {
@@ -60,8 +63,19 @@
       "outcome": "improved",
       "accepted_candidate_id": "candidate-004",
       "completed_at": "2026-08-31T03:45:21.619173+00:00"
+    },
+    {
+      "generation": 3,
+      "champion_id": "policy-v002",
+      "candidate_ids": [
+        "candidate-005",
+        "candidate-006"
+      ],
+      "outcome": "improved",
+      "accepted_candidate_id": "candidate-006",
+      "completed_at": "2026-08-31T05:58:55.247497+00:00"
     }
   ],
   "created_at": "2026-08-30T17:15:41.243629+00:00",
-  "updated_at": "2026-08-31T05:20:11.014009+00:00"
+  "updated_at": "2026-08-31T05:58:55.262089+00:00"
 }

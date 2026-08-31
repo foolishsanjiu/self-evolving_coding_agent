@@ -1,0 +1,30 @@
+{
+  "candidate_id": "candidate-006",
+  "schema_gate": {
+    "candidate_id": "candidate-006",
+    "passed": true,
+    "checks": {
+      "policy_schema_valid": true,
+      "single_mutation": true,
+      "mutation_matches_change": true,
+      "parent_is_champion": true,
+      "candidate_status": true,
+      "content_hash_valid": true,
+      "frozen_invariants_intact": true,
+      "train_evidence_only": true
+    },
+    "reason": "Schema and safety checks passed."
+  },
+  "smoke_gate": {
+    "candidate_id": "candidate-006",
+    "passed": true,
+    "fixture": "fixtures/simple_read",
+    "agent_status": "SUCCESS",
+    "react_steps": 3,
+    "tool_calls": 2,
+    "policy_precondition_failures": 0,
+    "reason": "Smoke fixture passed."
+  },
+  "pairwise_gate": null,
+  "created_at": "2026-08-31T05:48:31.059215+00:00"
+}
