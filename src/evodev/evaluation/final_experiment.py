@@ -177,6 +177,15 @@ class FinalRunResult(BaseModel):
     patch_attempts: int = Field(ge=0)
 
 
+class FinalRunSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    variant_id: FinalVariantId
+    task_id: str
+    repetition: Literal[1, 2, 3]
+    agent_run_id: str
+
+
 class FinalEfficiencyMetrics(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -207,6 +216,14 @@ class FinalExperimentSummary(BaseModel):
 
     experiment_id: str
     variants: list[FinalVariantSummary] = Field(min_length=4, max_length=4)
+    created_at: str = Field(default_factory=utc_now)
+
+
+class FinalRunResultsArtifact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    experiment_id: str
+    results: list[FinalRunResult] = Field(min_length=36, max_length=36)
     created_at: str = Field(default_factory=utc_now)
 
 
@@ -407,6 +424,23 @@ def _efficiency(records: list[FinalRunResult]) -> FinalEfficiencyMetrics:
     )
 
 
+def build_final_run_plan(manifest: FinalExperimentManifest) -> list[FinalRunSpec]:
+    return [
+        FinalRunSpec(
+            variant_id=variant.variant_id,
+            task_id=task_id,
+            repetition=repetition,
+            agent_run_id=(
+                f"{manifest.experiment_id}-{variant.variant_id.value}-"
+                f"{task_id}-r{repetition:02d}"
+            ),
+        )
+        for variant in manifest.variants
+        for task_id in manifest.benchmark_task_ids
+        for repetition in range(1, variant.runs_per_task + 1)
+    ]
+
+
 def summarize_final_results(
     manifest: FinalExperimentManifest,
     results: list[FinalRunResult],
@@ -455,7 +489,9 @@ def summarize_final_results(
 def _parser():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Plan and freeze EvoDev Task 14.")
+    parser = argparse.ArgumentParser(
+        description="Plan, freeze, run, and present EvoDev Task 14."
+    )
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument(
         "--config",
@@ -466,12 +502,26 @@ def _parser():
     commands.add_parser("plan", help="Run a no-cost Final Experiment preflight.")
     freeze = commands.add_parser("freeze", help="Write the immutable Final Manifest.")
     freeze.add_argument("--confirm-freeze", action="store_true")
+    run = commands.add_parser("run", help="Execute the paid frozen 36-run experiment.")
+    run.add_argument("--confirm-paid", action="store_true")
+    demo = commands.add_parser("demo", help="Render an existing run as concise CLI logs.")
+    demo.add_argument("--run-path", type=Path, required=True)
+    demo.add_argument("--evaluation-report", type=Path, required=True)
     return parser
 
 
 def main() -> None:
     arguments = _parser().parse_args()
     root = arguments.project_root.resolve()
+    if arguments.command == "demo":
+        from evodev.evaluation.demo import render_cli_demo
+
+        print("\n".join(render_cli_demo(arguments.run_path, arguments.evaluation_report)))
+        return
+    if arguments.command == "run":
+        from evodev.evaluation.final_runner import require_final_paid_confirmation
+
+        require_final_paid_confirmation(arguments.confirm_paid)
     config_path = arguments.config
     if not config_path.is_absolute():
         config_path = root / config_path
@@ -487,6 +537,24 @@ def main() -> None:
             root / config.results_dir / "experiment_manifest.json",
         )
         print(manifest.model_dump_json(indent=2))
+        return
+    if arguments.command == "run":
+        from evodev.evaluation.final_runner import FinalExperimentRunner
+
+        manifest_path = root / config.results_dir / "experiment_manifest.json"
+        if not manifest_path.is_file():
+            raise FileNotFoundError("Frozen Final Manifest is missing")
+        manifest = FinalExperimentManifest.model_validate_json(
+            manifest_path.read_text(encoding="utf-8")
+        )
+        summary = FinalExperimentRunner(
+            root,
+            settings,
+            config,
+            manifest,
+            preflight,
+        ).run()
+        print(summary.model_dump_json(indent=2))
         return
     print(preflight.model_dump_json(indent=2))
 

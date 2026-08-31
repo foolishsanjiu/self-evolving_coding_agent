@@ -67,8 +67,8 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - Task 13 离线 Evolution Engine：Train-only Proposal、三层 Gate、搜索预算与回滚；
 - 四个真实 Pairwise Case Studies：三个 Rejected Candidate 与首个 Accepted Mutation；
 - 当前 Champion `policy-v002`，将 `max_react_steps` 从 15 提升到 20。
-- Task 14 严格 A/B/C/D 2×2 配置、Final Manifest Preflight、只读冻结协议与
-  Overall/Resolved-run 双口径结果 Schema。
+- Task 14 严格 A/B/C/D 2×2 配置、Final Manifest Preflight、只读冻结协议、固定
+  36-run Runner、Result Artifact Writer、CLI Demo 与 Overall/Resolved-run 双口径汇总。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
@@ -657,7 +657,39 @@ evodev-final --project-root . --config configs/experiments/final-v1.yaml `
 冻结会写入 `results/final-v1/experiment_manifest.json`；相同条件可重复验证，不同条件禁止覆盖。
 当前尚未冻结该文件。结果契约要求每个 Variant 恰好 9 次、每题恰好 3 次且 Run ID 唯一；自动
 汇总以 Resolution Rate 为唯一 Primary Metric，同时分别计算 Overall Efficiency 和
-Resolved-run Efficiency，避免把快速失败误解为高效率。本阶段没有新增第三方依赖。
+Resolved-run Efficiency，避免把快速失败误解为高效率。
+
+真实执行入口：
+
+```powershell
+evodev-final --project-root . --config configs/experiments/final-v1.yaml `
+  run --confirm-paid
+```
+
+`run` 在任何 Preflight、Docker 或模型动作前先检查 `--confirm-paid`，随后要求冻结 Manifest
+存在且所有当前身份与其一致。执行顺序固定为 A → B → C → D，每个 Variant 按三个 Test Tasks
+各运行三次。任何已有的部分轨迹、Instance 或 Summary 都会拒绝选择性续跑，必须升级
+Experiment Version 并全量重跑。全部36次完成后自动生成：
+
+```text
+results/final-v1/
+├── experiment_manifest.json
+├── run_results.json
+├── summary.json
+├── summary.csv
+└── instances/<variant>/<task>/attempt_<NN>/
+```
+
+CLI Demo 不运行 Agent，只读取现有的公开轨迹、Final Patch 和独立评估报告：
+
+```powershell
+evodev-final demo `
+  --run-path runs/final-v1/final-v1-D-task_010-r01 `
+  --evaluation-report results/final-v1/instances/D/task_010/attempt_01/report.json
+```
+
+输出为精简的 `[SEARCH] → [READ] → [PATCH] → [TEST] → [FINAL PATCH] → [EVAL]` 日志，
+不包含私有推理。本阶段没有新增第三方依赖，尚未冻结 Manifest、调用模型或生成 Final Results。
 
 ## 配置
 
