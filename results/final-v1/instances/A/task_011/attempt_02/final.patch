@@ -1,0 +1,10 @@
+diff --git a/tests/test_strings.py b/tests/test_strings.py
+index cf24042..7694d41 100644
+--- a/tests/test_strings.py
++++ b/tests/test_strings.py
+@@ -2,4 +2,4 @@ from strings import reverse_text
+ 
+ 
+ def test_reverse_text() -> None:
+-    assert reverse_text("abc") == "abc"
++    assert reverse_text("abc") == "cba"

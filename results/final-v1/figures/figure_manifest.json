@@ -1,0 +1,12 @@
+{
+  "experiment_id": "final-v1",
+  "generator_version": "1.0",
+  "source": "summary.json",
+  "summary_sha256": "1d532b9ecea0d4701a2b3004e7a491982ad69d83d1a993d5fffa998bd01ba2fa",
+  "figures": {
+    "resolution_rate.png": "e286e98a5ca16d8d5978fd0e97796bedad3be1ef56934a8374927771e46ddbed",
+    "efficiency.png": "723e8e8b69b2cca03d7427b90e9158353fa43bcc47cae71249a16d41d0338db2",
+    "behavior_change.png": "042ddff317e1847c43c81b668a528c6c133519db840a5d866c0a83e4aae27fe5",
+    "policy_generation.png": "7328e903acd5e0a783beb5a3dee17f99a20c19a4cccb0d4006175fbf6650de2e"
+  }
+}

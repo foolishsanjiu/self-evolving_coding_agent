@@ -1,0 +1,21 @@
+diff --git a/tax.py b/tax.py
+index 9e6466c..e6a094a 100644
+--- a/tax.py
++++ b/tax.py
+@@ -1,2 +1,2 @@
+ def add_tax(amount: float, tax_percent: float) -> float:
+-    return amount + amount * tax_percent
++    return amount * (1 + tax_percent / 100)
+diff --git a/tests/test_orders.py b/tests/test_orders.py
+index 3ad002f..fff7066 100644
+--- a/tests/test_orders.py
++++ b/tests/test_orders.py
+@@ -3,3 +3,8 @@ from orders import order_total
+ 
+ def test_zero_tax_order() -> None:
+     assert order_total(100, 20, 0) == 80
++
++
++def test_percentage_tax_order() -> None:
++    assert order_total(100, 20, 10) == 88  # (100 - 20) + 10% = 88
++    assert order_total(100, 0, 5) == 105   # 100 + 5% = 105

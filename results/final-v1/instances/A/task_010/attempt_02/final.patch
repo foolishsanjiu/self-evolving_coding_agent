@@ -1,0 +1,23 @@
+diff --git a/ranges.py b/ranges.py
+index c44482a..df08cdc 100644
+--- a/ranges.py
++++ b/ranges.py
+@@ -1,2 +1,17 @@
+ def merge_ranges(ranges: list[tuple[int, int]]) -> list[tuple[int, int]]:
+-    raise NotImplementedError
++    if not ranges:
++        return []
++
++    # Sort by start so overlapping/touching ranges are adjacent.
++    sorted_ranges = sorted(ranges, key=lambda r: r[0])
++
++    merged: list[tuple[int, int]] = []
++    cur_start, cur_end = sorted_ranges[0]
++
++    for start, end in sorted_ranges[1:]:
++        # Inclusive ranges: adjacent values (end + 1 == start) also merge.
++        if start <= cur_end + 1:
++            cur_end = max(cur_end, end)
++        else:
++            merged.append((cur_start, cur_end))
++            cur_start, cur_end = start, end

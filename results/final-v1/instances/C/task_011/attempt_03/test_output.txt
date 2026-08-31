@@ -1,0 +1,16 @@
+== patch_apply ==
+Patch applied
+
+== syntax ==
+.                                                                        [100%]
+1 passed in 0.34s
+
+
+== target ==
+.                                                                        [100%]
+1 passed in 0.07s
+
+
+== regression ==
+.                                                                        [100%]
+1 passed in 0.04s

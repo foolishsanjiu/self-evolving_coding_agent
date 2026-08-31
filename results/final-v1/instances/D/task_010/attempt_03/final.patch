@@ -1,0 +1,27 @@
+diff --git a/ranges.py b/ranges.py
+index c44482a..c2d1a45 100644
+--- a/ranges.py
++++ b/ranges.py
+@@ -1,2 +1,21 @@
+ def merge_ranges(ranges: list[tuple[int, int]]) -> list[tuple[int, int]]:
+-    raise NotImplementedError
++    """Merge a list of inclusive integer ranges, combining overlaps and
++    touching (adjacent) ranges. The input order does not matter.
++
++    Ranges are inclusive, so (1, 4) and (5, 7) are touching and merge into
++    (1, 7).
++    """
++    if not ranges:
++        return []
++
++    ordered = sorted(ranges)
++    merged: list[tuple[int, int]] = [ordered[0]]
++
++    for start, end in ordered[1:]:
++        cur_start, cur_end = merged[-1]
++        if start <= cur_end + 1:
++            merged[-1] = (cur_start, max(cur_end, end))
++        else:
++            merged.append((start, end))
++
++    return merged

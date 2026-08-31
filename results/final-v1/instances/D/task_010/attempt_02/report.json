@@ -1,0 +1,21 @@
+{
+  "task_id": "task_010",
+  "agent_run_id": "final-v1-D-task_010-r02",
+  "evaluator_version": "1.0",
+  "benchmark_version": "1.0",
+  "benchmark_hash": "5d22632e017efeea07cde1f52c948aca03337df6314f6289e2393aec2558b453",
+  "grades": {
+    "patch_exists": false,
+    "patch_applies": false,
+    "syntax_valid": false,
+    "target_tests_pass": false,
+    "regression_tests_pass": false
+  },
+  "failure_type": "AGENT_ERROR",
+  "resolved": false,
+  "valid_evaluation": true,
+  "started_at": "2026-08-31T06:46:28.622047+00:00",
+  "finished_at": "2026-08-31T06:46:28.623048+00:00",
+  "duration_ms": 2,
+  "stage_outputs": {}
+}

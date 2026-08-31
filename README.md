@@ -25,11 +25,9 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 11：Experience Retrieval + Controlled Experiment**
 - **Task 12：Constrained Policy Space + File Versioning**
 - **Task 13：Offline Evolution Engine + Accepted/Rejected Case Studies**
+- **Task 14：Final Evolution Experiment + CLI Demo**
 
-当前进行中：
-
-- **Task 14：Final Evolution Experiment + CLI Demo**（Preflight 与冻结协议已实现，
-  尚未执行付费 Final Runs）
+Final v3.0 规划中的 14 项任务已全部完成。
 
 现有能力：
 
@@ -70,6 +68,8 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - Task 14 严格 A/B/C/D 2×2 配置、Final Manifest Preflight、只读冻结协议、固定
   36-run Runner、Result Artifact Writer、CLI Demo、Benchmark QA CLI、Final Artifact
   追溯校验、四张自动 PNG 图表与 Overall/Resolved-run 双口径汇总。
+- `final-v1` 已在冻结 Test Set 上完成 36/36 次有效评测：Baseline 为 6/9，Experience、
+  Policy 与 Combined 均为 8/9；全部 Result Artifact 与图表已通过离线追溯校验。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
@@ -679,7 +679,7 @@ Resolution 下降的 Rejected Case。当前 Champion 固定为 `policy-v003`，P
 搜索空间不解除阶段冻结；Task 14 正式实验必须在 Manifest 中固定当时 Git Commit 与该
 Champion Hash 后再运行。
 
-## Task 14 Final Experiment Preflight
+## Task 14 Final Experiment Results
 
 Task 14 使用 `configs/experiments/final-v1.yaml` 固定以下 2×2 设计：
 
@@ -689,6 +689,27 @@ Task 14 使用 `configs/experiments/final-v1.yaml` 固定以下 2×2 设计：
 | B. Experience | ON | OFF | `policy-v001` |
 | C. Policy | OFF | ON | `policy-v003` |
 | D. Combined | ON | ON | `policy-v003` |
+
+冻结实验已完成，Primary Metric 与主要效率指标如下。所有数字直接来自
+`results/final-v1/summary.json`，没有选择性补跑：
+
+| Variant | Valid | Resolved | Resolution | Steps / Run | Tool Calls / Run | Tokens / Run | Latency / Run |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| A. Baseline | 9/9 | 6/9 | 66.7% | 7.78 | 9.56 | 19,852.67 | 20,259.67 ms |
+| B. Experience | 9/9 | 8/9 | 88.9% | 7.44 | 8.89 | 20,129.89 | 18,063.00 ms |
+| C. Policy | 9/9 | 8/9 | 88.9% | 7.78 | 9.00 | 19,664.44 | 18,038.22 ms |
+| D. Combined | 9/9 | 8/9 | 88.9% | 6.44 | 8.00 | 15,715.78 | 44,789.11 ms |
+
+相对 Baseline，Combined 的 Resolution 提高 22.2 个百分点（相对提升 33.3%），Overall
+Steps、Tool Calls 和 Tokens 分别减少 17.1%、16.3% 和 20.8%。但 B、C、D 的 Resolution
+相同，因此本次小规模 Benchmark 支持 Experience 与 Policy 各自有效，不足以证明二者在
+Primary Metric 上存在额外互补增益。D 的一次 `task_010` 运行因模型返回截断 JSON 形成
+`AGENT_ERROR`；冻结协议将其作为有效失败保留且没有补跑，使 D 的 Overall Latency 明显升高。
+仅看 Resolved Runs 时，D 的平均 Tokens 为 17,169.63，与 Baseline 的 17,376.67 接近。
+
+![Final resolution rate](results/final-v1/figures/resolution_rate.png)
+
+![Final efficiency](results/final-v1/figures/efficiency.png)
 
 Test Set 固定为 `task_010`、`task_011`、`task_012`，每个 Variant 对每题运行 3 次，因此
 正式实验总计固定为 36 Agent Runs。Preflight 会读取并验证 Git Commit、模型与温度、Benchmark
@@ -704,8 +725,8 @@ evodev-final --project-root . --config configs/experiments/final-v1.yaml plan
 ```
 
 该命令只读取本地身份并发现 MCP Catalog，不解析、打印或发送 API Key，不调用模型，也不运行 Agent。
-当前真实 Preflight 正确计算出 36 Runs；在 Git 干净且 Docker/MCP 身份一致时，Accepted Case
-Study 为 2/2，`ready_to_freeze=true`。开发期间的未提交差异仍会形成独立阻塞项。
+冻结前真实 Preflight 正确计算出 36 Runs；在 Git 干净且 Docker/MCP 身份一致时，Accepted
+Case Study 为 2/2，`ready_to_freeze=true`。
 
 正式 Manifest 只能在所有阻塞消失后显式冻结：
 
@@ -715,9 +736,10 @@ evodev-final --project-root . --config configs/experiments/final-v1.yaml `
 ```
 
 冻结会写入 `results/final-v1/experiment_manifest.json`；相同条件可重复验证，不同条件禁止覆盖。
-当前尚未冻结该文件。结果契约要求每个 Variant 恰好 9 次、每题恰好 3 次且 Run ID 唯一；自动
-汇总以 Resolution Rate 为唯一 Primary Metric，同时分别计算 Overall Efficiency 和
-Resolved-run Efficiency，避免把快速失败误解为高效率。
+`final-v1` 已冻结在 Git Commit `f961eced94e6b4c43254e18a953a99c9a22b273c`，Manifest
+SHA-256 为 `9efe0c2f53a54a4b246c44275319d0ed8733f11189a7d75936641c29e183b9fc`。
+结果契约要求每个 Variant 恰好 9 次、每题恰好 3 次且 Run ID 唯一；自动汇总以 Resolution
+Rate 为唯一 Primary Metric，同时分别计算 Overall Efficiency 和 Resolved-run Efficiency。
 
 真实执行入口：
 
@@ -729,7 +751,7 @@ evodev-final --project-root . --config configs/experiments/final-v1.yaml `
 `run` 在任何 Preflight、Docker 或模型动作前先检查 `--confirm-paid`，随后要求冻结 Manifest
 存在且所有当前身份与其一致。执行顺序固定为 A → B → C → D，每个 Variant 按三个 Test Tasks
 各运行三次。任何已有的部分轨迹、Instance 或 Summary 都会拒绝选择性续跑，必须升级
-Experiment Version 并全量重跑。全部36次完成后自动生成：
+Experiment Version 并全量重跑。`final-v1` 已经完成，不能再次执行这条命令；其产物为：
 
 ```text
 results/final-v1/
@@ -770,8 +792,10 @@ evodev-final --project-root . --config configs/experiments/final-v1.yaml verify
 ```
 
 该命令会从 `run_results.json` 重新计算 Summary，核对 CSV，逐项关联 36 份独立评估报告，
-并校验 Summary 与四张 PNG 的 Hash 链；不读取 `.env`，也不访问 Docker 或模型。本阶段新增
-`matplotlib>=3.8,<4` 作为唯一图表依赖，尚未冻结 Manifest、调用模型或生成 Final Results。
+并校验 Summary 与四张 PNG 的 Hash 链；不读取 `.env`，也不访问 Docker 或模型。真实结果的
+校验结论为 `valid=true`、`verified_runs=36`、`verified_instances=36`、
+`verified_figures=4`、`summary_matches=true`、`csv_matches=true`。本阶段新增
+`matplotlib>=3.8,<4` 作为唯一图表依赖。
 
 独立于 Final 数据的 Single Task 演示命令为：
 
@@ -862,6 +886,8 @@ python -m ruff check .
 - Schema/Smoke Gate、3×3 Pairwise Resolution-first 判定与 Catastrophic Guard；
 - Inconclusive 基础设施路径、Generation/Candidate/Patience/API Budget 停止条件；
 - 付费 CLI 显式确认、旧 Champion 保留和 Last-Known-Good Pointer Rollback。
+- Final Manifest 身份冻结、36-run 平衡性、禁止选择性续跑与付费确认顺序；
+- Final Summary/CSV 复算、36 份 Instance 证据关联和四张 PNG Hash 校验。
 
 Docker 可用且镜像构建完成后，真实隔离验收为：
 
@@ -882,6 +908,17 @@ EvoDev ready
 ```
 
 真实调用会产生 API 费用，因此不属于默认单元测试。
+
+## Limitations
+
+- Final Benchmark 只有 3 个 Python Test Tasks、每组 9 次运行，不能外推为通用 Coding 能力，
+  也不宣称统计显著性；
+- 当前没有评测完整 SWE-bench，也没有覆盖多语言或大型真实仓库；
+- Policy Search Space 由人工限制为三个字段，系统没有进行模型微调；
+- MCP 仅使用本地 stdio，Docker Sandbox 面向受控 Coding Task，不是恶意代码安全边界；
+- Experience Retrieval 是结构化与词法匹配；B、C、D 在本次 Primary Metric 上并列，尚无
+  Experience 与 Policy 额外互补增益的证据；
+- `final-v1-D-task_010-r02` 因模型响应 JSON 截断产生一次 `AGENT_ERROR`，未进行选择性补跑。
 
 ## v1.0 实施路线
 

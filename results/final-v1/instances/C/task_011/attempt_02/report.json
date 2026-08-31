@@ -1,0 +1,26 @@
+{
+  "task_id": "task_011",
+  "agent_run_id": "final-v1-C-task_011-r02",
+  "evaluator_version": "1.0",
+  "benchmark_version": "1.0",
+  "benchmark_hash": "5d22632e017efeea07cde1f52c948aca03337df6314f6289e2393aec2558b453",
+  "grades": {
+    "patch_exists": true,
+    "patch_applies": true,
+    "syntax_valid": true,
+    "target_tests_pass": true,
+    "regression_tests_pass": true
+  },
+  "failure_type": "RESOLVED",
+  "resolved": true,
+  "valid_evaluation": true,
+  "started_at": "2026-08-31T06:39:57.154821+00:00",
+  "finished_at": "2026-08-31T06:40:01.879728+00:00",
+  "duration_ms": 4725,
+  "stage_outputs": {
+    "patch_apply": "Patch applied",
+    "syntax": ".                                                                        [100%]\n1 passed in 0.21s\n",
+    "target": ".                                                                        [100%]\n1 passed in 0.12s\n",
+    "regression": ".                                                                        [100%]\n1 passed in 0.07s\n"
+  }
+}

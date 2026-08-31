@@ -1,0 +1,24 @@
+diff --git a/ranges.py b/ranges.py
+index c44482a..93a73d8 100644
+--- a/ranges.py
++++ b/ranges.py
+@@ -1,2 +1,18 @@
+ def merge_ranges(ranges: list[tuple[int, int]]) -> list[tuple[int, int]]:
+-    raise NotImplementedError
++    """Merge unsorted inclusive integer ranges.
++
++    Overlapping ranges and ranges that touch (where one ends exactly one
++    below the next one starts) are merged into a single inclusive range.
++    The result is returned in ascending order.
++    """
++    if not ranges:
++        return []
++
++    merged: list[list[int]] = []
++    for start, end in sorted(ranges):
++        if not merged or start > merged[-1][1] + 1:
++            merged.append([start, end])
++        else:
++            merged[-1][1] = max(merged[-1][1], end)
++
++    return [(start, end) for start, end in merged]

@@ -1,0 +1,118 @@
+{
+  "experiment_id": "final-v1",
+  "variants": [
+    {
+      "variant_id": "A",
+      "label": "Baseline",
+      "policy_version": "policy-v001",
+      "total_attempts": 9,
+      "valid_attempts": 9,
+      "resolved_attempts": 6,
+      "resolution_rate": 0.6667,
+      "overall_efficiency": {
+        "average_react_steps": 7.7778,
+        "average_tool_calls": 9.5556,
+        "average_tokens": 19852.6667,
+        "average_latency_ms": 20259.6667
+      },
+      "resolved_run_efficiency": {
+        "average_react_steps": 7.0,
+        "average_tool_calls": 9.1667,
+        "average_tokens": 17376.6667,
+        "average_latency_ms": 15512.8333
+      },
+      "search_before_edit_rate": 0.4444,
+      "test_inspection_before_edit_rate": 1.0,
+      "average_patch_attempts": 1.4444,
+      "failure_distribution": {
+        "TARGET_TEST_FAILED": 3,
+        "RESOLVED": 6
+      }
+    },
+    {
+      "variant_id": "B",
+      "label": "Experience",
+      "policy_version": "policy-v001",
+      "total_attempts": 9,
+      "valid_attempts": 9,
+      "resolved_attempts": 8,
+      "resolution_rate": 0.8889,
+      "overall_efficiency": {
+        "average_react_steps": 7.4444,
+        "average_tool_calls": 8.8889,
+        "average_tokens": 20129.8889,
+        "average_latency_ms": 18063.0
+      },
+      "resolved_run_efficiency": {
+        "average_react_steps": 7.0,
+        "average_tool_calls": 8.5,
+        "average_tokens": 18340.625,
+        "average_latency_ms": 15919.75
+      },
+      "search_before_edit_rate": 0.6667,
+      "test_inspection_before_edit_rate": 1.0,
+      "average_patch_attempts": 1.4444,
+      "failure_distribution": {
+        "RESOLVED": 8,
+        "TARGET_TEST_FAILED": 1
+      }
+    },
+    {
+      "variant_id": "C",
+      "label": "Policy",
+      "policy_version": "policy-v003",
+      "total_attempts": 9,
+      "valid_attempts": 9,
+      "resolved_attempts": 8,
+      "resolution_rate": 0.8889,
+      "overall_efficiency": {
+        "average_react_steps": 7.7778,
+        "average_tool_calls": 9.0,
+        "average_tokens": 19664.4444,
+        "average_latency_ms": 18038.2222
+      },
+      "resolved_run_efficiency": {
+        "average_react_steps": 7.5,
+        "average_tool_calls": 8.5,
+        "average_tokens": 18873.25,
+        "average_latency_ms": 17160.125
+      },
+      "search_before_edit_rate": 0.3333,
+      "test_inspection_before_edit_rate": 1.0,
+      "average_patch_attempts": 2.0,
+      "failure_distribution": {
+        "TARGET_TEST_FAILED": 1,
+        "RESOLVED": 8
+      }
+    },
+    {
+      "variant_id": "D",
+      "label": "Combined",
+      "policy_version": "policy-v003",
+      "total_attempts": 9,
+      "valid_attempts": 9,
+      "resolved_attempts": 8,
+      "resolution_rate": 0.8889,
+      "overall_efficiency": {
+        "average_react_steps": 6.4444,
+        "average_tool_calls": 8.0,
+        "average_tokens": 15715.7778,
+        "average_latency_ms": 44789.1111
+      },
+      "resolved_run_efficiency": {
+        "average_react_steps": 6.875,
+        "average_tool_calls": 8.375,
+        "average_tokens": 17169.625,
+        "average_latency_ms": 15373.75
+      },
+      "search_before_edit_rate": 0.4444,
+      "test_inspection_before_edit_rate": 1.0,
+      "average_patch_attempts": 1.4444,
+      "failure_distribution": {
+        "RESOLVED": 8,
+        "AGENT_ERROR": 1
+      }
+    }
+  ],
+  "created_at": "2026-08-31T06:48:58.773643+00:00"
+}
