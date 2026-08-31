@@ -497,7 +497,7 @@ def test_champion_rollback_updates_idle_generation_state() -> None:
     assert restored.completed_generations[0].outcome == "improved"
 
 
-def test_current_evolution_rebuilds_after_generation_two() -> None:
+def test_current_evolution_rebuilds_after_candidate_005() -> None:
     tracked = load_evolution_state(Path("evolution/evolution-v1/progress.json"))
     state = rebuild_evolution_state(Path("."), "evolution-v1", EvolutionSettings())
     remaining = remaining_single_field_mutations(
@@ -513,7 +513,7 @@ def test_current_evolution_rebuilds_after_generation_two() -> None:
 
     assert state.champion_id == "policy-v002"
     assert state.progress.generation == 3
-    assert state.progress.candidates_in_generation == 0
+    assert state.progress.candidates_in_generation == 1
     assert state.progress.generations_without_improvement == 0
     assert state.completed_generations[0].candidate_ids == [
         "candidate-001",
@@ -528,13 +528,10 @@ def test_current_evolution_rebuilds_after_generation_two() -> None:
     ]
     assert state.completed_generations[1].outcome == "improved"
     assert state.completed_generations[1].accepted_candidate_id == "candidate-004"
-    assert state.current_candidate_ids == []
+    assert state.current_candidate_ids == ["candidate-005"]
     assert state.pending_candidate_id is None
-    assert len(state.progress.attempted_mutations) == 4
-    assert remaining == [
-        ("max_react_steps", "20", "10"),
-        ("max_react_steps", "20", "15"),
-    ]
+    assert len(state.progress.attempted_mutations) == 5
+    assert remaining == [("max_react_steps", "20", "10")]
     assert stop.should_stop is False
     assert stop.reason is None
 
@@ -917,6 +914,63 @@ def test_candidate_004_accepted_case_study_is_preserved() -> None:
     assert progress.completed_generations[1].accepted_candidate_id == "candidate-004"
 
 
+def test_sixth_paid_proposal_and_candidate_005_are_preserved() -> None:
+    proposal = ProposalAttemptReport.model_validate_json(
+        Path("evolution/evolution-v1/proposal-attempt-006.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    candidate = PolicyRepository(Path("policies")).load("candidate-005")
+    gates = CandidateGateBundle.model_validate_json(
+        Path(
+            "evolution/evolution-v1/candidate-005/gates-pre-validation.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert proposal.status == "accepted"
+    assert proposal.input_tokens == 499
+    assert proposal.output_tokens == 1260
+    assert proposal.draft is not None
+    assert proposal.draft.field == "max_react_steps"
+    assert proposal.draft.new_value == 15
+    assert candidate.parent_id == "policy-v002"
+    assert candidate.policy.max_react_steps == 15
+    assert gates.schema_gate.passed is True
+    assert gates.smoke_gate is not None
+    assert gates.smoke_gate.passed is True
+    assert gates.pairwise_gate is None
+
+
+def test_candidate_005_rejected_case_study_is_preserved() -> None:
+    repository = PolicyRepository(Path("policies"))
+    candidate = repository.load("candidate-005")
+    gates = CandidateGateBundle.model_validate_json(
+        Path("evolution/evolution-v1/candidate-005/gates-final.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    progress = load_evolution_state(Path("evolution/evolution-v1/progress.json"))
+
+    assert repository.champion().policy_id == "policy-v002"
+    assert candidate.status == "rejected"
+    assert candidate.validation_result.decision == "rejected"
+    assert candidate.validation_result.report_path == (
+        "evolution/evolution-v1/candidate-005/gates-final.json"
+    )
+    assert gates.pairwise_gate is not None
+    assert gates.pairwise_gate.decision == GateDecision.REJECT
+    assert gates.pairwise_gate.controlled_conditions_match is True
+    assert gates.pairwise_gate.champion.policy_id == "policy-v002"
+    assert gates.pairwise_gate.champion.resolved_attempts == 6
+    assert gates.pairwise_gate.candidate.resolved_attempts == 5
+    assert gates.pairwise_gate.candidate.task_resolutions["task_007"] == 2
+    assert gates.pairwise_gate.catastrophic_regressions == []
+    assert progress.champion_id == "policy-v002"
+    assert progress.progress.generation == 3
+    assert progress.progress.candidates_in_generation == 1
+    assert progress.pending_candidate_id is None
+
+
 @pytest.mark.parametrize(
     ("candidate_id", "expected_decision"),
     [
@@ -924,6 +978,7 @@ def test_candidate_004_accepted_case_study_is_preserved() -> None:
         ("candidate-002", "rejected"),
         ("candidate-003", "rejected"),
         ("candidate-004", "accepted"),
+        ("candidate-005", "rejected"),
     ],
 )
 def test_tracked_case_study_reports_are_internally_consistent(

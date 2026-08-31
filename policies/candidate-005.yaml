@@ -1,0 +1,38 @@
+policy_id: candidate-005
+parent_id: policy-v002
+status: rejected
+mutation_id: mutation-005
+mutation:
+  mutation_id: mutation-005
+  parent_policy_id: policy-v002
+  field: max_react_steps
+  old_value: 20
+  new_value: 15
+  evidence:
+  - split: train
+    run_ids:
+    - exp-baseline-v1/run_task_002_r01
+    - exp-policy-train-v1/run_task_002_r02
+    reference: evolution/task13/failure-patterns-train-v1.json#TARGET_TEST_FAILED
+  hypothesis: The repeated TARGET_TEST_FAILED pattern shows the agent making ~4.5
+    patch attempts per run without first inspecting tests, which suggests it may be
+    spending the full 20 steps in unfocused edit/verify loops. Reducing the react
+    budget to 15 should force earlier test inspection and more deliberate single-attempt
+    patches.
+  expected_effect: Fewer wasted patch attempts and a higher chance that each edit
+    is validated against the target test before the budget expires, turning more failing
+    runs into successes.
+  possible_risk: A genuinely long repair sequence that previously succeeded at steps
+    16-20 would now be truncated, potentially trading a slow pass for a fast fail
+    if the agent cannot adapt to the tighter budget.
+  created_at: '2026-08-31T05:10:24.364795+00:00'
+validation_result:
+  decision: rejected
+  report_path: evolution/evolution-v1/candidate-005/gates-final.json
+  reason: Candidate resolution declined; efficiency cannot override resolution.
+policy:
+  inspect_tests_before_edit: 'off'
+  prefer_search_before_read: false
+  max_react_steps: 15
+content_hash: fc3df9ac90a3b19bd0f7600e307057101b1b0e71345318bcf1ddb5328fa99d4c
+created_at: '2026-08-31T05:10:24.367889+00:00'

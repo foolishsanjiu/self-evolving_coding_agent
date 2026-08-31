@@ -1,0 +1,22 @@
+{
+  "attempt_id": "proposal-attempt-006",
+  "status": "accepted",
+  "paid_call": true,
+  "model": "deepseek-v4-flash",
+  "parent_policy_id": "policy-v002",
+  "pattern_report_path": "evolution/task13/failure-patterns-train-v1.json",
+  "pattern_report_hash": "632c086e50fcec49a95665384260cab7cb9c7cbebf77e9e400029df1414c5e1a",
+  "draft": {
+    "field": "max_react_steps",
+    "new_value": 15,
+    "hypothesis": "The repeated TARGET_TEST_FAILED pattern shows the agent making ~4.5 patch attempts per run without first inspecting tests, which suggests it may be spending the full 20 steps in unfocused edit/verify loops. Reducing the react budget to 15 should force earlier test inspection and more deliberate single-attempt patches.",
+    "expected_effect": "Fewer wasted patch attempts and a higher chance that each edit is validated against the target test before the budget expires, turning more failing runs into successes.",
+    "possible_risk": "A genuinely long repair sequence that previously succeeded at steps 16-20 would now be truncated, potentially trading a slow pass for a fast fail if the agent cannot adapt to the tighter budget."
+  },
+  "observed_field": "max_react_steps",
+  "input_tokens": 499,
+  "output_tokens": 1260,
+  "candidate_id": "candidate-005",
+  "rejection_reason": null,
+  "created_at": "2026-08-31T05:10:24.371795+00:00"
+}

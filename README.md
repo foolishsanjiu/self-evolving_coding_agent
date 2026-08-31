@@ -65,7 +65,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - Soft Guidance、PreToolCall Hard Guard 和 Policy 驱动的 ReAct Step Limit；
 - Train-only Failure Pattern Aggregation、单字段 Mutation 与可校验文件版本链。
 - Task 13 离线 Evolution Engine：Train-only Proposal、三层 Gate、搜索预算与回滚；
-- 四个真实 Pairwise Case Studies：三个 Rejected Candidate 与首个 Accepted Mutation；
+- 五个真实 Pairwise Case Studies：四个 Rejected Candidate 与首个 Accepted Mutation；
 - 当前 Champion `policy-v002`，将 `max_react_steps` 从 15 提升到 20。
 - Task 14 严格 A/B/C/D 2×2 配置、Final Manifest Preflight、只读冻结协议、固定
   36-run Runner、Result Artifact Writer、CLI Demo、Benchmark QA CLI、Final Artifact
@@ -73,10 +73,11 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-Task 13 已完成实现与真实案例验收。Generation 1 的两个 Candidate 和 Generation 2 的首个
-Candidate 均被拒绝；`candidate-004` 在相同控制条件下将 Resolution 从 4/9 提升到 6/9，
-已晋升为 `policy-v002`。当前状态进入 Generation 3，代内 Candidate 为 0/2、连续无提升为
-0/2，且没有 pending Candidate；任何后续 Proposal 或 Pairwise 仍需新的明确付费授权。
+Task 13 已完成实现与真实案例验收。Generation 1 的两个 Candidate、Generation 2 的首个
+Candidate 和 Generation 3 的首个 Candidate 均被拒绝；`candidate-004` 在相同控制条件下将
+Resolution 从 4/9 提升到 6/9，已晋升为 `policy-v002`。当前 Generation 3 代内 Candidate
+为 1/2、连续无提升为 0/2，且没有 pending Candidate；任何后续 Proposal 或 Pairwise 仍需
+新的明确付费授权。
 
 ## 环境
 
@@ -589,6 +590,35 @@ Catastrophic Regression，因此 `candidate-004` 被接受并晋升为 `policy-v
 `improved`，Generation 3 以 0/2 Candidate、0/2 Patience 开始，且没有 pending Candidate。
 至此 Task 13 所需的 Accepted Mutation 与 Rejected Mutation 案例均已获得并可从快照重建。
 
+第六次授权的 Proposal 使用 499 Input Tokens、1260 Output Tokens，基于 `policy-v002` 选择
+`max_react_steps: 20 → 15`，生成 `candidate-005` / `mutation-005`；其 Policy Hash 与历史
+`policy-v001` 一致，但这是从当前 Champion 出发的新单字段 Transition，仍按相同 Gate 独立验证。
+8 项 Schema/Safety 检查全部通过，Smoke Gate 以 3 Steps、2 Tool Calls、0 Policy
+Precondition Failures 通过。Proposal Attempt 与 Pre-Validation Gate 分别冻结在
+`evolution/evolution-v1/proposal-attempt-006.json` 和
+`evolution/evolution-v1/candidate-005/gates-pre-validation.json`。
+
+`candidate-005` 的 Pairwise Validation 已完成 18/18 次有效运行，控制条件一致：
+
+| 指标 | Champion `policy-v002` | `candidate-005` |
+| --- | ---: | ---: |
+| Resolved | 6/9 | 5/9 |
+| `task_007` | 3/3 | 2/3 |
+| `task_008` | 0/3 | 0/3 |
+| `task_009` | 3/3 | 3/3 |
+| 平均 Tokens | 28,753.1111 | 31,572.6667 |
+| 平均 ReAct Steps | 9.4444 | 9.6667 |
+| 平均 Tool Calls | 11.1111 | 11.2222 |
+| 平均 Latency (ms) | 23,769.6667 | 23,650.8889 |
+
+Candidate 的 Test-inspection 从 1.0000 降至 0.8889，Search-before-edit 从 0.7778 降至
+0.4444，平均 Patch Attempts 从 2.7778 增至 3.7778，并出现 1 次 Syntax Error。由于
+Resolution 从 6/9 降至 5/9，Gate 按固定的 Resolution-first 规则拒绝 Candidate；轻微
+Latency 变化不能覆盖 Resolution 下降。没有 Catastrophic Regression，Champion 保持
+`policy-v002`。最终报告冻结在 `evolution/evolution-v1/candidate-005/`。Generation 3
+当前为 1/2 Candidate、0/2 Patience、无 pending；剩余搜索空间仅为
+`max_react_steps: 20 → 10`。
+
 ### Task 13 最终验收审计
 
 Task 13 的 12 项验收标准已逐项通过：
@@ -603,15 +633,15 @@ Task 13 的 12 项验收标准已逐项通过：
 | Resolution Rate 优先于成本 | PASS | `candidate-004` 成本上升但 Resolution 4/9 → 6/9，按固定规则接受 |
 | Catastrophic Regression Guard 生效 | PASS | `test_catastrophic_regression_overrides_aggregate_gain` 覆盖强制拒绝路径 |
 | 通过验证才 Promote | PASS | `finalize_candidate()` 要求完整 Gate；当前仅 `candidate-004` 晋升 |
-| 旧 Policy 和 Rejected Candidate 全部保留 | PASS | `policy-v001`、`candidate-001` 至 `candidate-004` 及最终报告均受 Git 跟踪 |
+| 旧 Policy 和 Rejected Candidate 全部保留 | PASS | `policy-v001`、`candidate-001` 至 `candidate-005` 及最终报告均受 Git 跟踪 |
 | 可恢复 Last-Known-Good Champion | PASS | `rollback_last_known_good()` 只恢复指针，并拒绝在非空当前代回滚 |
-| Generation、Candidate、Patience Budget | PASS | `progress.json` 可重建；Generation 3 为 0/2 Candidate、0/2 Patience |
+| Generation、Candidate、Patience Budget | PASS | `progress.json` 可重建；Generation 3 为 1/2 Candidate、0/2 Patience |
 | Validation / Test 不参与 Mutation Generation | PASS | Aggregator 跳过非 Train；`MutationEvidence.split` 只允许 `train` |
 
-跨 Artifact 回归还会逐个比较四个 Case Study 的独立 `pairwise-report.json`、最终 Gate、
+跨 Artifact 回归还会逐个比较五个 Case Study 的独立 `pairwise-report.json`、最终 Gate、
 Candidate Decision、Report Path 与 Policy Hash，防止冻结结果发生漂移。Task 13 最低必做案例
 “1 个 Accepted + 1 个因 Resolution 下降而 Rejected”已满足：`candidate-004` 为 Accepted，
-`candidate-001` 和 `candidate-002` 均为 Resolution 下降的 Rejected Case。
+`candidate-001`、`candidate-002` 和 `candidate-005` 均为 Resolution 下降的 Rejected Case。
 
 规划中的“2 Accepted + 1 Rejected”是 Task 14 最终 README 与展示验收项。当前只有 1 个
 Accepted Case，因此第二个 Accepted 是 Task 14 的开放前置项，不能通过修改标签或选择性报告
