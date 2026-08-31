@@ -35,6 +35,7 @@ Final v3.0 规划中的 14 项任务已全部完成。
 - YAML 与环境变量配置加载；
 - `TaskSpec`、`ModelTurn` 等基础 Schema；
 - OpenAI-compatible `LLMClient`，默认配置为 DeepSeek；
+- 工具参数不是合法 JSON 对象时最多重试一次，并累计重试请求的 Token 用量；
 - 基础日志与真实模型 smoke 命令；
 - 显式单 ReAct Tool Calling Loop；
 - 可替换 `ToolProvider` 与 `NoOpEventSink`；
@@ -705,6 +706,8 @@ Steps、Tool Calls 和 Tokens 分别减少 17.1%、16.3% 和 20.8%。但 B、C�
 相同，因此本次小规模 Benchmark 支持 Experience 与 Policy 各自有效，不足以证明二者在
 Primary Metric 上存在额外互补增益。D 的一次 `task_010` 运行因模型返回截断 JSON 形成
 `AGENT_ERROR`；冻结协议将其作为有效失败保留且没有补跑，使 D 的 Overall Latency 明显升高。
+后续代码已为同类畸形工具参数增加一次有限重试；`final-v1` 作为冻结历史实验保持原样，
+其指标不会被修复后的行为回填或改写。
 仅看 Resolved Runs 时，D 的平均 Tokens 为 17,169.63，与 Baseline 的 17,376.67 接近。
 
 ![Final resolution rate](results/final-v1/figures/resolution_rate.png)

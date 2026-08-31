@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+import pytest
+
 from evodev.config import ModelSettings
 from evodev.llm import LLMClient
 from evodev.tools import ToolSpec
@@ -14,6 +16,29 @@ class FakeCompletions:
         tool_call = SimpleNamespace(
             id="call-1",
             function=SimpleNamespace(name="read_file", arguments='{"path":"README.md"}'),
+        )
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(content=None, tool_calls=[tool_call]),
+                    finish_reason="tool_calls",
+                )
+            ],
+            usage=SimpleNamespace(prompt_tokens=12, completion_tokens=7),
+        )
+
+
+class SequencedCompletions:
+    def __init__(self, arguments: list[str]) -> None:
+        self.arguments = arguments
+        self.requests = []
+
+    def create(self, **kwargs):
+        self.requests.append(kwargs)
+        arguments = self.arguments[len(self.requests) - 1]
+        tool_call = SimpleNamespace(
+            id="call-1",
+            function=SimpleNamespace(name="read_file", arguments=arguments),
         )
         return SimpleNamespace(
             choices=[
@@ -47,6 +72,46 @@ def test_generate_normalizes_provider_response() -> None:
     assert turn.tool_calls[0].call_id == "call-1"
     assert turn.tool_calls[0].arguments == {"path": "README.md"}
     assert completions.request["model"] == "deepseek-chat"
+
+
+def test_generate_retries_malformed_tool_arguments_once() -> None:
+    completions = SequencedCompletions(
+        ['{"path":"README.md"', '{"path":"README.md"}']
+    )
+    fake_client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
+    settings = ModelSettings(
+        provider="deepseek",
+        model="deepseek-chat",
+        api_key_env="UNUSED_IN_FAKE",
+    )
+
+    turn = LLMClient(settings, client=fake_client).generate(
+        [{"role": "user", "content": "Inspect the repository"}],
+        tools=[{"type": "function", "function": {"name": "read_file"}}],
+    )
+
+    assert len(completions.requests) == 2
+    assert turn.tool_calls[0].arguments == {"path": "README.md"}
+    assert turn.input_tokens == 24
+    assert turn.output_tokens == 14
+
+
+def test_generate_rejects_repeated_malformed_tool_arguments() -> None:
+    completions = SequencedCompletions(['{"path":', '["README.md"]'])
+    fake_client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
+    settings = ModelSettings(
+        provider="deepseek",
+        model="deepseek-chat",
+        api_key_env="UNUSED_IN_FAKE",
+    )
+
+    with pytest.raises(ValueError, match="after 2 attempts"):
+        LLMClient(settings, client=fake_client).generate(
+            [{"role": "user", "content": "Inspect the repository"}],
+            tools=[{"type": "function", "function": {"name": "read_file"}}],
+        )
+
+    assert len(completions.requests) == 2
 
 
 def test_generate_adapts_canonical_messages_and_tools() -> None:

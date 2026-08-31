@@ -15,6 +15,12 @@ from evodev.tools.contracts import ToolCall
 
 logger = logging.getLogger(__name__)
 
+_TOOL_ARGUMENT_RETRY_LIMIT = 1
+
+
+class _MalformedToolArguments(ValueError):
+    """A provider returned tool arguments that are not a JSON object."""
+
 
 class LLMClient:
     """Normalize an OpenAI-compatible chat completion into ``ModelTurn``."""
@@ -45,17 +51,69 @@ class LLMClient:
         if tools:
             request["tools"] = self._format_tools(tools)
 
-        started = time.perf_counter()
-        response = self._get_client().chat.completions.create(**request)
-        duration_ms = round((time.perf_counter() - started) * 1000)
+        total_input_tokens = 0
+        total_output_tokens = 0
+        total_duration_ms = 0
+        max_attempts = _TOOL_ARGUMENT_RETRY_LIMIT + 1
+        for attempt in range(1, max_attempts + 1):
+            started = time.perf_counter()
+            response = self._get_client().chat.completions.create(**request)
+            total_duration_ms += round((time.perf_counter() - started) * 1000)
+            usage = response.usage
+            total_input_tokens += usage.prompt_tokens if usage else 0
+            total_output_tokens += usage.completion_tokens if usage else 0
 
-        choice = response.choices[0]
-        message = choice.message
+            choice = response.choices[0]
+            message = choice.message
+            try:
+                normalized_calls = self._normalize_tool_calls(message)
+            except _MalformedToolArguments as exc:
+                logger.warning(
+                    "malformed_tool_arguments provider=%s model=%s attempt=%d max_attempts=%d",
+                    self.settings.provider,
+                    self.settings.model,
+                    attempt,
+                    max_attempts,
+                )
+                if attempt == max_attempts:
+                    raise ValueError(
+                        f"Model tool-call arguments remained invalid after {max_attempts} attempts"
+                    ) from exc
+                continue
+
+            turn = ModelTurn(
+                content=message.content,
+                tool_calls=normalized_calls,
+                finish_reason=choice.finish_reason,
+                input_tokens=total_input_tokens,
+                output_tokens=total_output_tokens,
+            )
+            logger.info(
+                "model_call provider=%s model=%s duration_ms=%d input_tokens=%d output_tokens=%d",
+                self.settings.provider,
+                self.settings.model,
+                total_duration_ms,
+                turn.input_tokens,
+                turn.output_tokens,
+            )
+            return turn
+
+        raise AssertionError("Model generation retry loop terminated unexpectedly")
+
+    @staticmethod
+    def _normalize_tool_calls(message: Any) -> list[ToolCall]:
         normalized_calls = []
         for call in message.tool_calls or []:
-            arguments = json.loads(call.function.arguments)
+            try:
+                arguments = json.loads(call.function.arguments)
+            except json.JSONDecodeError as exc:
+                raise _MalformedToolArguments(
+                    "Model tool-call arguments are not valid JSON"
+                ) from exc
             if not isinstance(arguments, dict):
-                raise ValueError("Model tool-call arguments must decode to an object")
+                raise _MalformedToolArguments(
+                    "Model tool-call arguments must decode to an object"
+                )
             normalized_calls.append(
                 ToolCall(
                     call_id=call.id,
@@ -63,24 +121,7 @@ class LLMClient:
                     arguments=arguments,
                 )
             )
-
-        usage = response.usage
-        turn = ModelTurn(
-            content=message.content,
-            tool_calls=normalized_calls,
-            finish_reason=choice.finish_reason,
-            input_tokens=usage.prompt_tokens if usage else 0,
-            output_tokens=usage.completion_tokens if usage else 0,
-        )
-        logger.info(
-            "model_call provider=%s model=%s duration_ms=%d input_tokens=%d output_tokens=%d",
-            self.settings.provider,
-            self.settings.model,
-            duration_ms,
-            turn.input_tokens,
-            turn.output_tokens,
-        )
-        return turn
+        return normalized_calls
 
     @staticmethod
     def _format_tools(tools: list[Any]) -> list[dict[str, Any]]:
