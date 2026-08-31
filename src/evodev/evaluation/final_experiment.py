@@ -507,6 +507,10 @@ def _parser():
     demo = commands.add_parser("demo", help="Render an existing run as concise CLI logs.")
     demo.add_argument("--run-path", type=Path, required=True)
     demo.add_argument("--evaluation-report", type=Path, required=True)
+    verify = commands.add_parser(
+        "verify", help="Verify persisted Final artifacts without external calls."
+    )
+    verify.add_argument("--results-dir", type=Path)
     return parser
 
 
@@ -517,6 +521,19 @@ def main() -> None:
         from evodev.evaluation.demo import render_cli_demo
 
         print("\n".join(render_cli_demo(arguments.run_path, arguments.evaluation_report)))
+        return
+    if arguments.command == "verify":
+        from evodev.evaluation.final_artifacts import verify_final_result_artifacts
+
+        config_path = arguments.config
+        if not config_path.is_absolute():
+            config_path = root / config_path
+        config = load_final_experiment_config(config_path)
+        results_dir = arguments.results_dir or Path(config.results_dir)
+        if not results_dir.is_absolute():
+            results_dir = root / results_dir
+        report = verify_final_result_artifacts(results_dir)
+        print(report.model_dump_json(indent=2))
         return
     if arguments.command == "run":
         from evodev.evaluation.final_runner import require_final_paid_confirmation

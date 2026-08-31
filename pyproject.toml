@@ -31,6 +31,8 @@ evodev-experience-experiment = "evodev.evaluation.experience_experiment:main"
 evodev-prepare-validation-baseline = "evodev.evaluation.experience_experiment:prepare_main"
 evodev-evolve = "evodev.evolution.cli:main"
 evodev-final = "evodev.evaluation.final_experiment:main"
+evodev-benchmark-qa = "evodev.benchmark.validate:main"
+evodev-run = "evodev.run:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

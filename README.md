@@ -68,7 +68,8 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 四个真实 Pairwise Case Studies：三个 Rejected Candidate 与首个 Accepted Mutation；
 - 当前 Champion `policy-v002`，将 `max_react_steps` 从 15 提升到 20。
 - Task 14 严格 A/B/C/D 2×2 配置、Final Manifest Preflight、只读冻结协议、固定
-  36-run Runner、Result Artifact Writer、CLI Demo 与 Overall/Resolved-run 双口径汇总。
+  36-run Runner、Result Artifact Writer、CLI Demo、Benchmark QA CLI、Final Artifact
+  追溯校验与 Overall/Resolved-run 双口径汇总。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
@@ -229,7 +230,9 @@ Loader 会验证 6/3/3 split、类别配额、Task ID 唯一性、必需资产�
 Template 不跨 split。运行 Benchmark QA：
 
 ```powershell
-python -m pytest tests/test_benchmark.py -v
+python -m evodev.benchmark.validate
+# 或安装后的等价入口
+evodev-benchmark-qa
 ```
 
 其中 12 个参数化用例分别在独立临时 Git workspace 中验证：
@@ -689,7 +692,28 @@ evodev-final demo `
 ```
 
 输出为精简的 `[SEARCH] → [READ] → [PATCH] → [TEST] → [FINAL PATCH] → [EVAL]` 日志，
-不包含私有推理。本阶段没有新增第三方依赖，尚未冻结 Manifest、调用模型或生成 Final Results。
+不包含私有推理。Final Results 生成后可执行完全离线的证据一致性校验：
+
+```powershell
+evodev-final --project-root . --config configs/experiments/final-v1.yaml verify
+```
+
+该命令会从 `run_results.json` 重新计算 Summary，核对 CSV，并逐项关联 36 份独立评估报告；
+不读取 `.env`，也不访问 Docker 或模型。本阶段没有新增第三方依赖，尚未冻结 Manifest、调用
+模型或生成 Final Results。规划要求的四张 PNG 仍需图表依赖后实现。
+
+独立于 Final 数据的 Single Task 演示命令为：
+
+```powershell
+python -m evodev.run `
+  --task benchmarks/test/task_010 `
+  --policy policy-v002 `
+  --confirm-paid
+```
+
+该命令必须显式确认付费，且结果只写入 `runs/single/` 与 `evaluation_runs/single/`，不会混入
+冻结的 Final 36-run 结果。重复相同 Task 时需用 `--run-id` 指定新的唯一 ID；可选参数
+`--experience-snapshot experiences/experience-v001.json` 用于启用冻结 Experience。
 
 ## 配置
 

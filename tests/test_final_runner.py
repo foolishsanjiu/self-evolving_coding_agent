@@ -12,7 +12,10 @@ import pytest
 from evodev.config import load_settings
 from evodev.evaluation import final_experiment
 from evodev.evaluation.demo import render_cli_demo
-from evodev.evaluation.final_artifacts import write_final_result_artifacts
+from evodev.evaluation.final_artifacts import (
+    verify_final_result_artifacts,
+    write_final_result_artifacts,
+)
 from evodev.evaluation.final_experiment import (
     FinalExperimentPlanner,
     FinalRunResult,
@@ -79,6 +82,39 @@ def _results() -> list[FinalRunResult]:
                     )
                 )
     return results
+
+
+def _write_instance_reports(
+    root: Path,
+    preflight,
+    results: list[FinalRunResult],
+) -> None:
+    for result in results:
+        repetition = int(result.agent_run_id.rsplit("-r", maxsplit=1)[1])
+        report_path = (
+            root
+            / "instances"
+            / result.variant_id.value
+            / result.task_id
+            / f"attempt_{repetition:02d}"
+            / "report.json"
+        )
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(
+            EvaluationResult(
+                task_id=result.task_id,
+                agent_run_id=result.agent_run_id,
+                benchmark_version=preflight.manifest.benchmark_version,
+                benchmark_hash=preflight.manifest.benchmark_hash,
+                grades=EvaluationGrades(),
+                failure_type=result.failure_type,
+                resolved=result.resolved,
+                valid_evaluation=result.valid_evaluation,
+                started_at="2026-08-31T00:00:00+00:00",
+                duration_ms=1,
+            ).model_dump_json(indent=2),
+            encoding="utf-8",
+        )
 
 
 def test_final_run_plan_is_fixed_balanced_and_unique() -> None:
@@ -166,6 +202,30 @@ def test_final_artifact_writer_requires_complete_results() -> None:
             assert len(list(csv.DictReader(stream))) == 36
         with pytest.raises(FileExistsError, match="already exist"):
             write_final_result_artifacts(root, preflight.manifest, _results())
+    finally:
+        shutil.rmtree(root)
+
+
+def test_final_artifact_verifier_recomputes_and_links_all_evidence() -> None:
+    _, _, preflight = _preflight()
+    root = Path(".test_runtime") / f"final_verify_{uuid4().hex}"
+    root.mkdir(parents=True)
+    results = _results()
+    try:
+        (root / "experiment_manifest.json").write_text(
+            preflight.manifest.model_dump_json(indent=2), encoding="utf-8"
+        )
+        write_final_result_artifacts(root, preflight.manifest, results)
+        _write_instance_reports(root, preflight, results)
+
+        report = verify_final_result_artifacts(root)
+
+        assert report.valid is True
+        assert report.verified_runs == 36
+        assert report.verified_instances == 36
+        (root / "summary.csv").write_text("tampered\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="CSV does not match"):
+            verify_final_result_artifacts(root)
     finally:
         shutil.rmtree(root)
 
