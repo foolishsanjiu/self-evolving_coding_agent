@@ -26,6 +26,11 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 12：Constrained Policy Space + File Versioning**
 - **Task 13：Offline Evolution Engine + Accepted/Rejected Case Studies**
 
+当前进行中：
+
+- **Task 14：Final Evolution Experiment + CLI Demo**（Preflight 与冻结协议已实现，
+  尚未执行付费 Final Runs）
+
 现有能力：
 
 - `src/` 可安装 Python 包骨架；
@@ -62,6 +67,8 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - Task 13 离线 Evolution Engine：Train-only Proposal、三层 Gate、搜索预算与回滚；
 - 四个真实 Pairwise Case Studies：三个 Rejected Candidate 与首个 Accepted Mutation；
 - 当前 Champion `policy-v002`，将 `max_react_steps` 从 15 提升到 20。
+- Task 14 严格 A/B/C/D 2×2 配置、Final Manifest Preflight、只读冻结协议与
+  Overall/Resolved-run 双口径结果 Schema。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
@@ -611,13 +618,57 @@ Accepted Case，因此第二个 Accepted 是 Task 14 的开放前置项，不能
 搜索空间只代表算法预算未耗尽，不解除阶段冻结；Task 14 正式实验必须在 Manifest 中固定当时
 Git Commit 与该 Champion Hash 后再运行。
 
+## Task 14 Final Experiment Preflight
+
+Task 14 使用 `configs/experiments/final-v1.yaml` 固定以下 2×2 设计：
+
+| Variant | Experience | Evolved Policy | 当前 Policy |
+| --- | ---: | ---: | --- |
+| A. Baseline | OFF | OFF | `policy-v001` |
+| B. Experience | ON | OFF | `policy-v001` |
+| C. Policy | OFF | ON | `policy-v002` |
+| D. Combined | ON | ON | `policy-v002` |
+
+Test Set 固定为 `task_010`、`task_011`、`task_012`，每个 Variant 对每题运行 3 次，因此
+正式实验总计固定为 36 Agent Runs。Preflight 会读取并验证 Git Commit、模型与温度、Benchmark
+Version/Hash、Experience Snapshot、Baseline/Champion Policy Version/Hash、Docker Image
+Digest、Evaluator Version 以及 MCP Tool Catalog Version/Hash。它同时固化以下约束：Code、
+Benchmark、Experience、Policy 和 Sandbox 只读，禁止 Test 阶段生成 Experience、继续 Policy
+Evolution 或选择性补跑。
+
+零费用计划检查：
+
+```powershell
+evodev-final --project-root . --config configs/experiments/final-v1.yaml plan
+```
+
+该命令只读取本地身份并发现 MCP Catalog，不解析、打印或发送 API Key，不调用模型，也不运行 Agent。
+当前真实 Preflight 正确计算出 36 Runs，并因 Accepted Case Study 为 1/2 而保持
+`ready_to_freeze=false`。开发期间的未提交差异会形成另一个独立阻塞项；提交干净后只保留
+Case Study 阻塞。
+
+正式 Manifest 只能在所有阻塞消失后显式冻结：
+
+```powershell
+evodev-final --project-root . --config configs/experiments/final-v1.yaml `
+  freeze --confirm-freeze
+```
+
+冻结会写入 `results/final-v1/experiment_manifest.json`；相同条件可重复验证，不同条件禁止覆盖。
+当前尚未冻结该文件。结果契约要求每个 Variant 恰好 9 次、每题恰好 3 次且 Run ID 唯一；自动
+汇总以 Resolution Rate 为唯一 Primary Metric，同时分别计算 Overall Efficiency 和
+Resolved-run Efficiency，避免把快速失败误解为高效率。本阶段没有新增第三方依赖。
+
 ## 配置
 
 普通配置位于 `configs/`：
 
 - `configs/model.yaml`：模型提供方、模型名、温度和 API 地址；
 - `configs/agent.yaml`：Agent 步数、工具重试和字符上下文预算；
-- `configs/experience.yaml`：Experience 开关、Top-K 和字符预算。
+- `configs/experience.yaml`：Experience 开关、Top-K 和字符预算；
+- `configs/sandbox.yaml`：Docker 安全与资源限制；
+- `configs/evolution.yaml`：Policy Evolution 搜索与验证预算；
+- `configs/experiments/final-v1.yaml`：Task 14 固定 2×2 Final Experiment 设计。
 
 密钥只从环境变量或本地 `.env` 读取：
 

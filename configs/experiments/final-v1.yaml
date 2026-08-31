@@ -1,0 +1,26 @@
+experiment_id: final-v1
+experiment_version: final-v1
+results_dir: results/final-v1
+benchmark_split: test
+runs_per_task_per_variant: 3
+baseline_policy_id: policy-v001
+champion_policy_id: policy-v002
+experience_snapshot: experiences/experience-v001.json
+minimum_accepted_case_studies: 2
+variants:
+  - variant_id: A
+    label: Baseline
+    experience_enabled: false
+    evolved_policy_enabled: false
+  - variant_id: B
+    label: Experience
+    experience_enabled: true
+    evolved_policy_enabled: false
+  - variant_id: C
+    label: Policy
+    experience_enabled: false
+    evolved_policy_enabled: true
+  - variant_id: D
+    label: Combined
+    experience_enabled: true
+    evolved_policy_enabled: true
