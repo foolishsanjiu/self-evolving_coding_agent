@@ -547,6 +547,17 @@ Search-before-edit 从 0.3333 提升到 1.0000，但 Test-inspection 从 1.0000 
 仍为 1/2、连续无提升为 1/2，但 pending 已清除；下一 Candidate 在预算内，剩余搜索空间
 仅为 `max_react_steps: 15 → 10` 或 `15 → 20`。Task 13 的 Accepted Mutation 验收项仍未满足。
 
+第五次授权的 Proposal 使用 479 Input Tokens、737 Output Tokens，选择
+`max_react_steps: 15 → 20`，生成 `candidate-004` / `mutation-004`；Policy Hash 为
+`45e02b910f5ed82c171da5253b0431ee27a2efee6059f85891adbfde5d276970`。8 项
+Schema/Safety 检查全部通过，Smoke Gate 以 3 Steps、2 Tool Calls、0 Policy Precondition
+Failures 通过。Proposal Attempt 与 Pre-Validation Gate 分别冻结在
+`evolution/evolution-v1/proposal-attempt-005.json` 和
+`evolution/evolution-v1/candidate-004/gates-pre-validation.json`。Generation 2 已达到
+2/2，`candidate-004` 是唯一 pending Candidate，Champion 仍为 `policy-v001`。其 Pairwise
+结果将决定：通过则产生首个 Accepted Mutation；拒绝则连续无提升达到 2/2，并触发 Patience
+Stop。本次 Proposal 不构成 Pairwise Validation 授权。
+
 ## 配置
 
 普通配置位于 `configs/`：

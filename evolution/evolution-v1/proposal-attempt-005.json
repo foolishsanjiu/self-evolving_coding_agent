@@ -1,0 +1,22 @@
+{
+  "attempt_id": "proposal-attempt-005",
+  "status": "accepted",
+  "paid_call": true,
+  "model": "deepseek-v4-flash",
+  "parent_policy_id": "policy-v001",
+  "pattern_report_path": "evolution/task13/failure-patterns-train-v1.json",
+  "pattern_report_hash": "632c086e50fcec49a95665384260cab7cb9c7cbebf77e9e400029df1414c5e1a",
+  "draft": {
+    "field": "max_react_steps",
+    "new_value": 20,
+    "hypothesis": "The repeated failure pattern shows the agent edits before inspecting tests and fails target tests after multiple patch attempts. With only 15 steps, it may run out of budget before it can backtrack to inspect tests after early failures. Increasing the step budget gives it more room to recover its strategy.",
+    "expected_effect": "The agent will have additional steps to inspect the failing tests at some point during the trajectory, increasing the chance of correcting its edits and passing the target tests.",
+    "possible_risk": "A larger step budget may allow the agent to persist in ineffective patch attempts, wasting compute without improving the outcome, especially if the root cause is not step count but a lack of test inspection."
+  },
+  "observed_field": "max_react_steps",
+  "input_tokens": 479,
+  "output_tokens": 737,
+  "candidate_id": "candidate-004",
+  "rejection_reason": null,
+  "created_at": "2026-08-31T02:42:26.636523+00:00"
+}

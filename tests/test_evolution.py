@@ -513,7 +513,7 @@ def test_current_evolution_rebuilds_at_generation_two() -> None:
 
     assert state.champion_id == "policy-v001"
     assert state.progress.generation == 2
-    assert state.progress.candidates_in_generation == 1
+    assert state.progress.candidates_in_generation == 2
     assert state.progress.generations_without_improvement == 1
     assert state.completed_generations[0].candidate_ids == [
         "candidate-001",
@@ -522,14 +522,14 @@ def test_current_evolution_rebuilds_at_generation_two() -> None:
     assert tracked.model_dump(exclude={"created_at", "updated_at"}) == state.model_dump(
         exclude={"created_at", "updated_at"}
     )
-    assert state.current_candidate_ids == ["candidate-003"]
-    assert state.pending_candidate_id is None
-    assert len(state.progress.attempted_mutations) == 3
+    assert state.current_candidate_ids == ["candidate-003", "candidate-004"]
+    assert state.pending_candidate_id == "candidate-004"
+    assert len(state.progress.attempted_mutations) == 4
     assert remaining == [
         ("max_react_steps", "15", "10"),
-        ("max_react_steps", "15", "20"),
     ]
-    assert stop.should_stop is False
+    assert stop.should_stop is True
+    assert "candidate-004" in stop.reason
 
 
 def test_finalize_candidate_promotes_only_after_all_gates(
@@ -842,6 +842,35 @@ def test_candidate_003_rejected_case_study_is_preserved() -> None:
         gates.pairwise_gate.champion.average_tokens
     )
     assert gates.pairwise_gate.catastrophic_regressions == []
+
+
+def test_fifth_paid_proposal_and_candidate_004_are_preserved() -> None:
+    proposal = ProposalAttemptReport.model_validate_json(
+        Path("evolution/evolution-v1/proposal-attempt-005.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    candidate = PolicyRepository(Path("policies")).load("candidate-004")
+    gates = CandidateGateBundle.model_validate_json(
+        Path(
+            "evolution/evolution-v1/candidate-004/gates-pre-validation.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert proposal.status == "accepted"
+    assert proposal.input_tokens == 479
+    assert proposal.output_tokens == 737
+    assert proposal.draft is not None
+    assert proposal.draft.field == "max_react_steps"
+    assert proposal.draft.new_value == 20
+    assert candidate.parent_id == "policy-v001"
+    assert candidate.status == "candidate"
+    assert candidate.policy.max_react_steps == 20
+    assert gates.schema_gate.passed is True
+    assert gates.smoke_gate is not None
+    assert gates.smoke_gate.passed is True
+    assert gates.smoke_gate.policy_precondition_failures == 0
+    assert gates.pairwise_gate is None
 
 
 def _evaluation(task_id: str, run_id: str) -> EvaluationResult:
