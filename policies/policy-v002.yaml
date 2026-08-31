@@ -1,4 +1,4 @@
-policy_id: candidate-004
+policy_id: policy-v002
 parent_id: policy-v001
 status: accepted
 mutation_id: mutation-004
@@ -34,4 +34,4 @@ policy:
   prefer_search_before_read: false
   max_react_steps: 20
 content_hash: 45e02b910f5ed82c171da5253b0431ee27a2efee6059f85891adbfde5d276970
-created_at: '2026-08-31T02:42:26.631610+00:00'
+created_at: '2026-08-31T03:45:21.624856+00:00'

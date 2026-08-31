@@ -24,6 +24,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - **Task 10：Reflection + Experience Extraction**
 - **Task 11：Experience Retrieval + Controlled Experiment**
 - **Task 12：Constrained Policy Space + File Versioning**
+- **Task 13：Offline Evolution Engine + Accepted/Rejected Case Studies**
 
 现有能力：
 
@@ -59,13 +60,15 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - Soft Guidance、PreToolCall Hard Guard 和 Policy 驱动的 ReAct Step Limit；
 - Train-only Failure Pattern Aggregation、单字段 Mutation 与可校验文件版本链。
 - Task 13 离线 Evolution Engine：Train-only Proposal、三层 Gate、搜索预算与回滚；
-  真实 Accepted/Rejected Case Study 尚待单独授权的付费运行。
+- 四个真实 Pairwise Case Studies：三个 Rejected Candidate 与首个 Accepted Mutation；
+- 当前 Champion `policy-v002`，将 `max_react_steps` 从 15 提升到 20。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
-Task 12 已建立 Policy 演化边界与运行时 Hook。Task 13 的离线引擎与执行入口已经实现；
-当前冻结 Baseline 只有 1 次 Train `TARGET_TEST_FAILED`，未达到重复模式门槛，因此尚未
-调用 Proposal LLM，也未执行付费 Pairwise Validation 或生成 Case Study。
+Task 13 已完成实现与真实案例验收。Generation 1 的两个 Candidate 和 Generation 2 的首个
+Candidate 均被拒绝；`candidate-004` 在相同控制条件下将 Resolution 从 4/9 提升到 6/9，
+已晋升为 `policy-v002`。当前状态进入 Generation 3，代内 Candidate 为 0/2、连续无提升为
+0/2，且没有 pending Candidate；任何后续 Proposal 或 Pairwise 仍需新的明确付费授权。
 
 ## 环境
 
@@ -376,7 +379,8 @@ Agent 策略的 Train Failure，不吸收 Environment、Timeout 或已解决运�
 
 版本仓库位于 `policies/`。每个 YAML 快照保存 parent、status、mutation、validation
 result、canonical SHA-256 hash 与创建时间；`index.json` 只指向 champion 和 previous
-champion。当前 `policy-v001` 冻结为 Task 12 前的默认行为。Repository 能保存
+champion。`policy-v001` 冻结为 Task 12 前的默认行为，当前 Champion 为 Task 13 晋升的
+`policy-v002`。Repository 能保存
 accepted、rejected 和显式 rolled-back 状态，但 Task 12 不自行做 Validation 决策；
 自动 Proposal、Pairwise Validation Gate、Promotion 与 Rollback 属于 Task 13。
 
@@ -553,10 +557,27 @@ Search-before-edit 从 0.3333 提升到 1.0000，但 Test-inspection 从 1.0000 
 Schema/Safety 检查全部通过，Smoke Gate 以 3 Steps、2 Tool Calls、0 Policy Precondition
 Failures 通过。Proposal Attempt 与 Pre-Validation Gate 分别冻结在
 `evolution/evolution-v1/proposal-attempt-005.json` 和
-`evolution/evolution-v1/candidate-004/gates-pre-validation.json`。Generation 2 已达到
-2/2，`candidate-004` 是唯一 pending Candidate，Champion 仍为 `policy-v001`。其 Pairwise
-结果将决定：通过则产生首个 Accepted Mutation；拒绝则连续无提升达到 2/2，并触发 Patience
-Stop。本次 Proposal 不构成 Pairwise Validation 授权。
+`evolution/evolution-v1/candidate-004/gates-pre-validation.json`。
+
+`candidate-004` 的 Pairwise Validation 已完成 18/18 次有效运行，控制条件一致：
+
+| 指标 | Champion `policy-v001` | `candidate-004` |
+| --- | ---: | ---: |
+| Resolved | 4/9 | 6/9 |
+| `task_007` | 3/3 | 3/3 |
+| `task_008` | 0/3 | 0/3 |
+| `task_009` | 1/3 | 3/3 |
+| 平均 Tokens | 25,801.3333 | 71,151.4444 |
+| 平均 ReAct Steps | 9.1111 | 14.3333 |
+| 平均 Tool Calls | 10.6667 | 16.5556 |
+| 平均 Latency (ms) | 18,209.4444 | 42,425.2222 |
+
+Candidate 的成本指标均明显上升，但 Gate 的固定优先级是 Resolution First：成本仅在
+Resolution 完全相同时用于判定，不能否决解决数从 4 提升到 6 的 Candidate。没有
+Catastrophic Regression，因此 `candidate-004` 被接受并晋升为 `policy-v002`；最终 Gate 与
+独立 Pairwise 报告冻结在 `evolution/evolution-v1/candidate-004/`。Generation 2 记录为
+`improved`，Generation 3 以 0/2 Candidate、0/2 Patience 开始，且没有 pending Candidate。
+至此 Task 13 所需的 Accepted Mutation 与 Rejected Mutation 案例均已获得并可从快照重建。
 
 ## 配置
 

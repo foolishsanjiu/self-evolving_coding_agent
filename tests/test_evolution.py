@@ -497,7 +497,7 @@ def test_champion_rollback_updates_idle_generation_state() -> None:
     assert restored.completed_generations[0].outcome == "improved"
 
 
-def test_current_evolution_rebuilds_at_generation_two() -> None:
+def test_current_evolution_rebuilds_after_generation_two() -> None:
     tracked = load_evolution_state(Path("evolution/evolution-v1/progress.json"))
     state = rebuild_evolution_state(Path("."), "evolution-v1", EvolutionSettings())
     remaining = remaining_single_field_mutations(
@@ -511,10 +511,10 @@ def test_current_evolution_rebuilds_at_generation_two() -> None:
         has_repeated_failure_pattern=True,
     )
 
-    assert state.champion_id == "policy-v001"
-    assert state.progress.generation == 2
-    assert state.progress.candidates_in_generation == 2
-    assert state.progress.generations_without_improvement == 1
+    assert state.champion_id == "policy-v002"
+    assert state.progress.generation == 3
+    assert state.progress.candidates_in_generation == 0
+    assert state.progress.generations_without_improvement == 0
     assert state.completed_generations[0].candidate_ids == [
         "candidate-001",
         "candidate-002",
@@ -522,14 +522,21 @@ def test_current_evolution_rebuilds_at_generation_two() -> None:
     assert tracked.model_dump(exclude={"created_at", "updated_at"}) == state.model_dump(
         exclude={"created_at", "updated_at"}
     )
-    assert state.current_candidate_ids == ["candidate-003", "candidate-004"]
-    assert state.pending_candidate_id == "candidate-004"
+    assert state.completed_generations[1].candidate_ids == [
+        "candidate-003",
+        "candidate-004",
+    ]
+    assert state.completed_generations[1].outcome == "improved"
+    assert state.completed_generations[1].accepted_candidate_id == "candidate-004"
+    assert state.current_candidate_ids == []
+    assert state.pending_candidate_id is None
     assert len(state.progress.attempted_mutations) == 4
     assert remaining == [
-        ("max_react_steps", "15", "10"),
+        ("max_react_steps", "20", "10"),
+        ("max_react_steps", "20", "15"),
     ]
-    assert stop.should_stop is True
-    assert "candidate-004" in stop.reason
+    assert stop.should_stop is False
+    assert stop.reason is None
 
 
 def test_finalize_candidate_promotes_only_after_all_gates(
@@ -775,13 +782,13 @@ def test_candidate_002_rejected_case_study_is_preserved() -> None:
         )
     )
 
-    assert repository.champion().policy_id == "policy-v001"
     assert candidate.status == "rejected"
     assert candidate.validation_result.decision == "rejected"
     assert candidate.validation_result.report_path == (
         "evolution/evolution-v1/candidate-002/gates-final.json"
     )
     assert gates.pairwise_gate is not None
+    assert gates.pairwise_gate.champion.policy_id == "policy-v001"
     assert gates.pairwise_gate.decision == GateDecision.REJECT
     assert gates.pairwise_gate.controlled_conditions_match is True
     assert gates.pairwise_gate.champion.resolved_attempts == 6
@@ -827,13 +834,13 @@ def test_candidate_003_rejected_case_study_is_preserved() -> None:
         )
     )
 
-    assert repository.champion().policy_id == "policy-v001"
     assert candidate.status == "rejected"
     assert candidate.validation_result.decision == "rejected"
     assert candidate.validation_result.report_path == (
         "evolution/evolution-v1/candidate-003/gates-final.json"
     )
     assert gates.pairwise_gate is not None
+    assert gates.pairwise_gate.champion.policy_id == "policy-v001"
     assert gates.pairwise_gate.decision == GateDecision.REJECT
     assert gates.pairwise_gate.controlled_conditions_match is True
     assert gates.pairwise_gate.champion.resolved_attempts == 6
@@ -864,13 +871,50 @@ def test_fifth_paid_proposal_and_candidate_004_are_preserved() -> None:
     assert proposal.draft.field == "max_react_steps"
     assert proposal.draft.new_value == 20
     assert candidate.parent_id == "policy-v001"
-    assert candidate.status == "candidate"
     assert candidate.policy.max_react_steps == 20
     assert gates.schema_gate.passed is True
     assert gates.smoke_gate is not None
     assert gates.smoke_gate.passed is True
     assert gates.smoke_gate.policy_precondition_failures == 0
     assert gates.pairwise_gate is None
+
+
+def test_candidate_004_accepted_case_study_is_preserved() -> None:
+    repository = PolicyRepository(Path("policies"))
+    candidate = repository.load("candidate-004")
+    promoted = repository.load("policy-v002")
+    gates = CandidateGateBundle.model_validate_json(
+        Path("evolution/evolution-v1/candidate-004/gates-final.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    progress = load_evolution_state(Path("evolution/evolution-v1/progress.json"))
+
+    assert repository.champion().policy_id == "policy-v002"
+    assert candidate.status == "accepted"
+    assert candidate.validation_result.decision == "accepted"
+    assert candidate.validation_result.report_path == (
+        "evolution/evolution-v1/candidate-004/gates-final.json"
+    )
+    assert promoted.status == "accepted"
+    assert promoted.parent_id == "policy-v001"
+    assert promoted.mutation_id == candidate.mutation_id
+    assert promoted.content_hash == candidate.content_hash
+    assert promoted.policy.max_react_steps == 20
+    assert promoted.validation_result.report_path == (
+        "evolution/evolution-v1/candidate-004/gates-final.json"
+    )
+    assert gates.pairwise_gate is not None
+    assert gates.pairwise_gate.decision == GateDecision.ACCEPT
+    assert gates.pairwise_gate.controlled_conditions_match is True
+    assert gates.pairwise_gate.champion.resolved_attempts == 4
+    assert gates.pairwise_gate.candidate.resolved_attempts == 6
+    assert gates.pairwise_gate.catastrophic_regressions == []
+    assert progress.champion_id == "policy-v002"
+    assert progress.progress.generation == 3
+    assert progress.progress.generations_without_improvement == 0
+    assert progress.completed_generations[1].outcome == "improved"
+    assert progress.completed_generations[1].accepted_candidate_id == "candidate-004"
 
 
 def _evaluation(task_id: str, run_id: str) -> EvaluationResult:
