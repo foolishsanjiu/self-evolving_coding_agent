@@ -69,7 +69,7 @@ EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底�
 - 当前 Champion `policy-v002`，将 `max_react_steps` 从 15 提升到 20。
 - Task 14 严格 A/B/C/D 2×2 配置、Final Manifest Preflight、只读冻结协议、固定
   36-run Runner、Result Artifact Writer、CLI Demo、Benchmark QA CLI、Final Artifact
-  追溯校验与 Overall/Resolved-run 双口径汇总。
+  追溯校验、四张自动 PNG 图表与 Overall/Resolved-run 双口径汇总。
 
 真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
 
@@ -680,7 +680,21 @@ results/final-v1/
 ├── run_results.json
 ├── summary.json
 ├── summary.csv
-└── instances/<variant>/<task>/attempt_<NN>/
+├── instances/<variant>/<task>/attempt_<NN>/
+└── figures/
+    ├── resolution_rate.png
+    ├── efficiency.png
+    ├── behavior_change.png
+    ├── policy_generation.png
+    └── figure_manifest.json
+```
+
+四张 PNG 只读取 `summary.json` 生成。`figure_manifest.json` 固定记录 Summary SHA-256
+和每张 PNG 的 SHA-256；`policy_generation.png` 只比较 Experience 都关闭的 A/C 两组，避免
+把 Experience 效果误记为 Policy 效果。若 Final 数据已存在但图表尚未生成，可单独运行：
+
+```powershell
+evodev-final --project-root . --config configs/experiments/final-v1.yaml figures
 ```
 
 CLI Demo 不运行 Agent，只读取现有的公开轨迹、Final Patch 和独立评估报告：
@@ -698,9 +712,9 @@ evodev-final demo `
 evodev-final --project-root . --config configs/experiments/final-v1.yaml verify
 ```
 
-该命令会从 `run_results.json` 重新计算 Summary，核对 CSV，并逐项关联 36 份独立评估报告；
-不读取 `.env`，也不访问 Docker 或模型。本阶段没有新增第三方依赖，尚未冻结 Manifest、调用
-模型或生成 Final Results。规划要求的四张 PNG 仍需图表依赖后实现。
+该命令会从 `run_results.json` 重新计算 Summary，核对 CSV，逐项关联 36 份独立评估报告，
+并校验 Summary 与四张 PNG 的 Hash 链；不读取 `.env`，也不访问 Docker 或模型。本阶段新增
+`matplotlib>=3.8,<4` 作为唯一图表依赖，尚未冻结 Manifest、调用模型或生成 Final Results。
 
 独立于 Final 数据的 Single Task 演示命令为：
 

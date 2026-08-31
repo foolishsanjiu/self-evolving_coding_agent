@@ -25,6 +25,7 @@ class FinalArtifactVerification(BaseModel):
     experiment_id: str
     verified_runs: int = Field(ge=0)
     verified_instances: int = Field(ge=0)
+    verified_figures: int = Field(ge=0)
     summary_matches: bool
     csv_matches: bool
     valid: bool
@@ -159,10 +160,16 @@ def verify_final_result_artifacts(results_root: Path) -> FinalArtifactVerificati
             )
         instances += 1
 
+    from evodev.evaluation.final_figures import verify_final_figures
+
+    figure_manifest = verify_final_figures(root)
+    if figure_manifest.experiment_id != manifest.experiment_id:
+        raise ValueError("Final figures do not match the Final Manifest experiment")
     return FinalArtifactVerification(
         experiment_id=manifest.experiment_id,
         verified_runs=len(artifact.results),
         verified_instances=instances,
+        verified_figures=len(figure_manifest.figures),
         summary_matches=True,
         csv_matches=True,
         valid=True,

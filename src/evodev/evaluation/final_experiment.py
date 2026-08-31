@@ -199,6 +199,8 @@ class FinalVariantSummary(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     variant_id: FinalVariantId
+    label: str
+    policy_version: str
     total_attempts: int = Field(ge=0)
     valid_attempts: int = Field(ge=0)
     resolved_attempts: int = Field(ge=0)
@@ -462,6 +464,8 @@ def summarize_final_results(
         summaries.append(
             FinalVariantSummary(
                 variant_id=variant.variant_id,
+                label=variant.label,
+                policy_version=variant.policy_version,
                 total_attempts=len(records),
                 valid_attempts=len(valid),
                 resolved_attempts=len(resolved),
@@ -511,6 +515,10 @@ def _parser():
         "verify", help="Verify persisted Final artifacts without external calls."
     )
     verify.add_argument("--results-dir", type=Path)
+    figures = commands.add_parser(
+        "figures", help="Generate immutable PNG figures from summary.json."
+    )
+    figures.add_argument("--results-dir", type=Path)
     return parser
 
 
@@ -522,9 +530,7 @@ def main() -> None:
 
         print("\n".join(render_cli_demo(arguments.run_path, arguments.evaluation_report)))
         return
-    if arguments.command == "verify":
-        from evodev.evaluation.final_artifacts import verify_final_result_artifacts
-
+    if arguments.command in {"verify", "figures"}:
         config_path = arguments.config
         if not config_path.is_absolute():
             config_path = root / config_path
@@ -532,7 +538,14 @@ def main() -> None:
         results_dir = arguments.results_dir or Path(config.results_dir)
         if not results_dir.is_absolute():
             results_dir = root / results_dir
-        report = verify_final_result_artifacts(results_dir)
+        if arguments.command == "figures":
+            from evodev.evaluation.final_figures import generate_final_figures
+
+            report = generate_final_figures(results_dir)
+        else:
+            from evodev.evaluation.final_artifacts import verify_final_result_artifacts
+
+            report = verify_final_result_artifacts(results_dir)
         print(report.model_dump_json(indent=2))
         return
     if arguments.command == "run":

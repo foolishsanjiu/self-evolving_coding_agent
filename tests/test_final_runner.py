@@ -24,6 +24,7 @@ from evodev.evaluation.final_experiment import (
     build_final_run_plan,
     load_final_experiment_config,
 )
+from evodev.evaluation.final_figures import FIGURE_NAMES, generate_final_figures
 from evodev.evaluation.final_runner import (
     FinalExperimentRunner,
     require_final_paid_confirmation,
@@ -217,14 +218,28 @@ def test_final_artifact_verifier_recomputes_and_links_all_evidence() -> None:
         )
         write_final_result_artifacts(root, preflight.manifest, results)
         _write_instance_reports(root, preflight, results)
+        figure_manifest = generate_final_figures(root)
 
         report = verify_final_result_artifacts(root)
 
+        assert set(figure_manifest.figures) == set(FIGURE_NAMES)
+        assert all(
+            (root / "figures" / name).read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+            for name in FIGURE_NAMES
+        )
         assert report.valid is True
         assert report.verified_runs == 36
         assert report.verified_instances == 36
-        (root / "summary.csv").write_text("tampered\n", encoding="utf-8")
+        assert report.verified_figures == 4
+        csv_path = root / "summary.csv"
+        csv_content = csv_path.read_text(encoding="utf-8")
+        csv_path.write_text("tampered\n", encoding="utf-8")
         with pytest.raises(ValueError, match="CSV does not match"):
+            verify_final_result_artifacts(root)
+        csv_path.write_text(csv_content, encoding="utf-8", newline="")
+        figure_path = root / "figures" / FIGURE_NAMES[0]
+        figure_path.write_bytes(b"tampered")
+        with pytest.raises(ValueError, match="figure hash does not match"):
             verify_final_result_artifacts(root)
     finally:
         shutil.rmtree(root)

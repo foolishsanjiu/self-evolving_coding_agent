@@ -22,6 +22,7 @@ from evodev.evaluation.final_experiment import (
     FinalRunSpec,
     build_final_run_plan,
 )
+from evodev.evaluation.final_figures import generate_final_figures
 from evodev.evaluation.models import EvaluationRequest
 from evodev.experience import ExperienceRetriever, build_retrieval_query, load_snapshot
 from evodev.llm import LLMClient
@@ -144,7 +145,9 @@ class FinalExperimentRunner:
                     agent_workspaces,
                 )
             )
-        return write_final_result_artifacts(self.results_root, self.manifest, results)
+        summary = write_final_result_artifacts(self.results_root, self.manifest, results)
+        generate_final_figures(self.results_root)
+        return summary
 
     def _run_one(
         self,
