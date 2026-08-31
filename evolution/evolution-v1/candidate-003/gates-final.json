@@ -1,0 +1,70 @@
+{
+  "candidate_id": "candidate-003",
+  "schema_gate": {
+    "candidate_id": "candidate-003",
+    "passed": true,
+    "checks": {
+      "policy_schema_valid": true,
+      "single_mutation": true,
+      "mutation_matches_change": true,
+      "parent_is_champion": true,
+      "candidate_status": true,
+      "content_hash_valid": true,
+      "frozen_invariants_intact": true,
+      "train_evidence_only": true
+    },
+    "reason": "Schema and safety checks passed."
+  },
+  "smoke_gate": {
+    "candidate_id": "candidate-003",
+    "passed": true,
+    "fixture": "fixtures/simple_read",
+    "agent_status": "SUCCESS",
+    "react_steps": 3,
+    "tool_calls": 2,
+    "policy_precondition_failures": 0,
+    "reason": "Smoke fixture passed."
+  },
+  "pairwise_gate": {
+    "candidate_id": "candidate-003",
+    "decision": "rejected",
+    "reason": "Resolution tied without a material, corroborated cost reduction.",
+    "champion": {
+      "policy_id": "policy-v001",
+      "total_attempts": 9,
+      "valid_attempts": 9,
+      "resolved_attempts": 6,
+      "resolution_rate": 0.6667,
+      "average_tokens": 33723.4444,
+      "average_react_steps": 9.6667,
+      "average_tool_calls": 10.8889,
+      "average_latency_ms": 25476.7778,
+      "task_resolutions": {
+        "task_007": 3,
+        "task_009": 3,
+        "task_008": 0
+      }
+    },
+    "candidate": {
+      "policy_id": "candidate-003",
+      "total_attempts": 9,
+      "valid_attempts": 9,
+      "resolved_attempts": 6,
+      "resolution_rate": 0.6667,
+      "average_tokens": 37622.7778,
+      "average_react_steps": 11.0,
+      "average_tool_calls": 13.0,
+      "average_latency_ms": 32557.4444,
+      "task_resolutions": {
+        "task_007": 3,
+        "task_009": 3,
+        "task_008": 0
+      }
+    },
+    "controlled_conditions_match": true,
+    "catastrophic_regressions": [],
+    "significant_cost_reduction": 0.1,
+    "created_at": "2026-08-31T02:36:49.555757+00:00"
+  },
+  "created_at": "2026-08-31T02:36:49.559538+00:00"
+}

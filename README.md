@@ -529,6 +529,24 @@ Failures 通过。Proposal Attempt 与 Pre-Validation Gate 分别冻结在
 1/2、连续无提升仍为 1/2，`candidate-003` 是唯一 pending Candidate；在完成 Pairwise 前，
 Proposal Stop Condition 会阻止新 Proposal。Champion 仍为 `policy-v001`。
 
+`candidate-003` 的 Pairwise Validation 已完成 18/18 次有效运行，三个任务的成功分布完全
+相同，Champion 与 Candidate 均为 6/9 Resolved：
+
+| 指标 | Champion `policy-v001` | `candidate-003` |
+| --- | ---: | ---: |
+| Resolved | 6/9 | 6/9 |
+| 平均 Tokens | 33,723.4444 | 37,622.7778 |
+| 平均 ReAct Steps | 9.6667 | 11.0000 |
+| 平均 Tool Calls | 10.8889 | 13.0000 |
+| 平均 Latency (ms) | 25,476.7778 | 32,557.4444 |
+
+Search-before-edit 从 0.3333 提升到 1.0000，但 Test-inspection 从 1.0000 降到 0.8889，
+平均 Patch Attempts 从 4.2222 增至 6.1111。由于 Resolution 持平且没有显著、可佐证的
+成本下降，Gate 拒绝 Candidate；没有 Catastrophic Regression，Champion 仍为
+`policy-v001`。最终报告冻结在 `evolution/evolution-v1/candidate-003/`。Generation 2
+仍为 1/2、连续无提升为 1/2，但 pending 已清除；下一 Candidate 在预算内，剩余搜索空间
+仅为 `max_react_steps: 15 → 10` 或 `15 → 20`。Task 13 的 Accepted Mutation 验收项仍未满足。
+
 ## 配置
 
 普通配置位于 `configs/`：
