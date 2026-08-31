@@ -579,6 +579,38 @@ Catastrophic Regression，因此 `candidate-004` 被接受并晋升为 `policy-v
 `improved`，Generation 3 以 0/2 Candidate、0/2 Patience 开始，且没有 pending Candidate。
 至此 Task 13 所需的 Accepted Mutation 与 Rejected Mutation 案例均已获得并可从快照重建。
 
+### Task 13 最终验收审计
+
+Task 13 的 12 项验收标准已逐项通过：
+
+| 验收项 | 结果 | 主要证据 |
+| --- | --- | --- |
+| Proposal 与 Evaluation 分离 | PASS | `evolution/proposal.py` 只生成 Mutation；`evolution/gates.py` 独立判定 |
+| Candidate 不能直接修改 Champion | PASS | Candidate 独立快照；仅 `finalize_candidate()` 可在 Gate 后调用 Repository 决策 |
+| Schema / Safety Gate 生效 | PASS | 8 项检查冻结在每个 `gates-pre-validation.json` 与 `gates-final.json` |
+| Smoke Gate 复用 Development Fixtures | PASS | `run_smoke_gate()` 固定使用 `fixtures/simple_read` |
+| Pairwise 使用相同条件和重复 Run | PASS | 每个 Arm 均为 3 Tasks × 3 Runs；Manifest 条件比较为 true |
+| Resolution Rate 优先于成本 | PASS | `candidate-004` 成本上升但 Resolution 4/9 → 6/9，按固定规则接受 |
+| Catastrophic Regression Guard 生效 | PASS | `test_catastrophic_regression_overrides_aggregate_gain` 覆盖强制拒绝路径 |
+| 通过验证才 Promote | PASS | `finalize_candidate()` 要求完整 Gate；当前仅 `candidate-004` 晋升 |
+| 旧 Policy 和 Rejected Candidate 全部保留 | PASS | `policy-v001`、`candidate-001` 至 `candidate-004` 及最终报告均受 Git 跟踪 |
+| 可恢复 Last-Known-Good Champion | PASS | `rollback_last_known_good()` 只恢复指针，并拒绝在非空当前代回滚 |
+| Generation、Candidate、Patience Budget | PASS | `progress.json` 可重建；Generation 3 为 0/2 Candidate、0/2 Patience |
+| Validation / Test 不参与 Mutation Generation | PASS | Aggregator 跳过非 Train；`MutationEvidence.split` 只允许 `train` |
+
+跨 Artifact 回归还会逐个比较四个 Case Study 的独立 `pairwise-report.json`、最终 Gate、
+Candidate Decision、Report Path 与 Policy Hash，防止冻结结果发生漂移。Task 13 最低必做案例
+“1 个 Accepted + 1 个因 Resolution 下降而 Rejected”已满足：`candidate-004` 为 Accepted，
+`candidate-001` 和 `candidate-002` 均为 Resolution 下降的 Rejected Case。
+
+规划中的“2 Accepted + 1 Rejected”是 Task 14 最终 README 与展示验收项。当前只有 1 个
+Accepted Case，因此第二个 Accepted 是 Task 14 的开放前置项，不能通过修改标签或选择性报告
+伪造；继续 Proposal/Pairwise 需要新的明确付费授权，而且搜索结果不保证被接受。Task 13 的
+最终 Champion 固定为 `policy-v002`，Policy Hash 为
+`45e02b910f5ed82c171da5253b0431ee27a2efee6059f85891adbfde5d276970`。CLI 状态仍显示剩余
+搜索空间只代表算法预算未耗尽，不解除阶段冻结；Task 14 正式实验必须在 Manifest 中固定当时
+Git Commit 与该 Champion Hash 后再运行。
+
 ## 配置
 
 普通配置位于 `configs/`：

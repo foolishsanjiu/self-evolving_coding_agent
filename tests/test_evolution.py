@@ -917,6 +917,35 @@ def test_candidate_004_accepted_case_study_is_preserved() -> None:
     assert progress.completed_generations[1].accepted_candidate_id == "candidate-004"
 
 
+@pytest.mark.parametrize(
+    ("candidate_id", "expected_decision"),
+    [
+        ("candidate-001", "rejected"),
+        ("candidate-002", "rejected"),
+        ("candidate-003", "rejected"),
+        ("candidate-004", "accepted"),
+    ],
+)
+def test_tracked_case_study_reports_are_internally_consistent(
+    candidate_id: str,
+    expected_decision: str,
+) -> None:
+    candidate = PolicyRepository(Path("policies")).load(candidate_id)
+    case_root = Path("evolution/evolution-v1") / candidate_id
+    final_path = case_root / "gates-final.json"
+    gate_data = json.loads(final_path.read_text(encoding="utf-8"))
+    pairwise_data = json.loads(
+        (case_root / "pairwise-report.json").read_text(encoding="utf-8")
+    )
+
+    assert pairwise_data == gate_data["pairwise_gate"]
+    assert pairwise_data["decision"] == expected_decision
+    assert candidate.status == expected_decision
+    assert candidate.validation_result.decision == expected_decision
+    assert candidate.validation_result.report_path == final_path.as_posix()
+    assert candidate.content_hash == candidate.policy.content_hash()
+
+
 def _evaluation(task_id: str, run_id: str) -> EvaluationResult:
     return EvaluationResult(
         task_id=task_id,
