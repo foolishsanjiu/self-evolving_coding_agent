@@ -1,935 +1,176 @@
 # EvoDev
 
-**EvoDev: An Evaluation-Driven Self-Evolving ReAct Coding Agent**
+**An Evaluation-Driven Self-Evolving ReAct Coding Agent**
 
-EvoDev 是一个面向软件开发任务的单 ReAct Agent。项目研究在底层 LLM 固定、
-不进行模型微调的前提下，能否通过失败轨迹提取 Experience，并在受约束的 Policy
-空间内进行可验证演化，从而提高编码任务解决率。
+EvoDev 是一个面向软件开发任务的单 Agent 研究型项目。它在底层 LLM 固定、
+不进行模型微调的前提下，从失败轨迹中提取可复用 Experience，并在受约束的 Policy
+空间内通过独立评测完成候选生成、验证、晋升与回滚。
 
-核心主线：`Build → Act → Measure → Improve → Prove`。
+> 核心问题：Coding Agent 能否通过可审计的评测闭环改进自身行为，而不只是增加 Prompt 技巧？
 
-## 当前状态
+项目已完成 Final v3.0 的 14 项任务，包含可安装 Python 包、MCP 工具服务、Docker
+Sandbox、12 题受控 Benchmark、独立 Evaluator、Experience/Policy 演化，以及冻结的
+36-run A/B/C/D 最终实验。
 
-当前已完成：
+[完整技术报告](docs/TECHNICAL_REPORT.md) ·
+[最终实验数据](results/final-v1/summary.json) ·
+[冻结实验清单](results/final-v1/experiment_manifest.json)
 
-- **Task 1：Project Initialization**
-- **Task 2：ReAct Loop + Native Tool Calling**
-- **Task 3：Simplified Agent Harness**
-- **Task 4：DevTools MCP Server**
-- **Task 5：MCP Client + Dynamic Tool Discovery**
-- **Task 6：Docker Sandbox + 完整 Coding Loop**
-- **Task 7：Lightweight Trajectory Logging + Trace Analyzer**
-- **Task 8：Benchmark v1.0（12 Tasks）**
-- **Task 9：Independent Evaluator + Fixed-Policy Baseline**
-- **Task 10：Reflection + Experience Extraction**
-- **Task 11：Experience Retrieval + Controlled Experiment**
-- **Task 12：Constrained Policy Space + File Versioning**
-- **Task 13：Offline Evolution Engine + Accepted/Rejected Case Studies**
-- **Task 14：Final Evolution Experiment + CLI Demo**
+## 核心结果
 
-Final v3.0 规划中的 14 项任务已全部完成。
+在冻结 Test Set 上，每个 Variant 对 3 个任务各运行 3 次：
 
-现有能力：
+| Variant | Experience | Evolved Policy | Resolved | Resolution Rate |
+|---|:---:|:---:|---:|---:|
+| A · Baseline | No | No | 6 / 9 | 66.67% |
+| B · Experience | Yes | No | 8 / 9 | 88.89% |
+| C · Policy | No | Yes | 8 / 9 | 88.89% |
+| D · Combined | Yes | Yes | 8 / 9 | 88.89% |
 
-- `src/` 可安装 Python 包骨架；
-- YAML 与环境变量配置加载；
-- `TaskSpec`、`ModelTurn` 等基础 Schema；
-- OpenAI-compatible `LLMClient`，默认配置为 DeepSeek；
-- 工具参数不是合法 JSON 对象时最多重试一次，并累计重试请求的 Token 用量；
-- 基础日志与真实模型 smoke 命令；
-- 显式单 ReAct Tool Calling Loop；
-- 可替换 `ToolProvider` 与 `NoOpEventSink`；
-- `list_files`、`read_file`、`search_code`、`apply_patch`、`git_diff`、
-  `run_tests` 六个 Native Tool；
-- workspace 路径边界、结构化 ToolResult 和错误归一化；
-- 基于官方 MCP Python SDK 2.x 的 DevTools stdio Server；
-- Unified Diff 应用、Git Diff 获取和受控 pytest 路径/selector 执行；
-- `fixtures/simple_bug` 的失败测试、补丁、diff、测试通过闭环；
-- 可连接、断开和手动刷新的 `MCPToolProvider`；
-- 支持分页发现与缓存的 Canonical `ToolSpec` Catalog；
-- MCP Result 到 Canonical `ToolResult` 的归一化及分层错误统计；
-- `AgentState` 统一任务生命周期和 Working Memory；
-- `ContextManager` 基于字符预算确定性保留/压缩上下文；
-- 仅针对只读、幂等工具瞬时错误的受限 Retry；
-- 项目级 `FakeLLM` 与 `fixtures/simple_read` 开发 Fixture；
-- 版本化 Run Metadata、追加式事件日志、Artifact 引用与崩溃恢复；
-- 落盘前密钥脱敏，以及五项可复算 Trace Feature；
-- 12 题受控 Python Coding Benchmark、严格 Loader 与 Agent 可见性隔离；
-- Before-Fail / After-Gold-Pass QA、Task Checksum 与 Manifest Hash；
-- Fresh Workspace + Docker 的独立分层 Evaluator 与失败分类；
-- 受控实验 Manifest、指标汇总，以及冻结的 `exp-baseline-v1`；
-- Train-only Experience Store、`experience-v001` 冻结快照与受限 Top-K 检索；
-- Relevant/Random Validation 对照实验与 Retrieval/Utilization 指标。
-- 仅含三个可演化字段的强类型 `AgentPolicy` 与代码层 Frozen Invariants；
-- Soft Guidance、PreToolCall Hard Guard 和 Policy 驱动的 ReAct Step Limit；
-- Train-only Failure Pattern Aggregation、单字段 Mutation 与可校验文件版本链。
-- Task 13 离线 Evolution Engine：Train-only Proposal、三层 Gate、搜索预算与回滚；
-- 六个真实 Pairwise Case Studies：四个 Rejected Candidate 与两个 Accepted Mutation；
-- 当前 Champion `policy-v003`，在保持 Validation Resolution 的同时将 `max_react_steps` 降至 10。
-- Task 14 严格 A/B/C/D 2×2 配置、Final Manifest Preflight、只读冻结协议、固定
-  36-run Runner、Result Artifact Writer、CLI Demo、Benchmark QA CLI、Final Artifact
-  追溯校验、四张自动 PNG 图表与 Overall/Resolved-run 双口径汇总。
-- `final-v1` 已在冻结 Test Set 上完成 36/36 次有效评测：Baseline 为 6/9，Experience、
-  Policy 与 Combined 均为 8/9；全部 Result Artifact 与图表已通过离线追溯校验。
+Experience 与 Policy 分别比 Baseline 提高 **22.22 个百分点**。B、C、D 在 Primary
+Metric 上并列，因此当前结果支持二者各自有效，但不足以证明额外的组合增益。
 
-真实模型 smoke call 需要本地 `LLM_API_KEY`，未配置密钥时不会自动调用或产生费用。
+![Final resolution rate](results/final-v1/figures/resolution_rate.png)
 
-Task 13 已完成实现与真实案例验收。`candidate-004` 将 Resolution 从 4/9 提升到 6/9，晋升
-为 `policy-v002`；Task 14 前置演化中的 `candidate-006` 在 Resolution 保持 6/9 时显著降低
-Tokens、Steps 与 Tool Calls，晋升为 `policy-v003`。当前进入 Generation 4，代内 Candidate
-为 0/2、连续无提升为 0/2，且没有 pending Candidate；Task 14 已满足 2 Accepted + 1 Rejected
-Case 前置条件，后续不再继续演化。
+## 系统架构
 
-## 环境
+```mermaid
+flowchart LR
+    subgraph Execution["Coding Execution"]
+        Task["Coding Task"] --> Agent["ReAct Agent"]
+        LLM["OpenAI-compatible LLM"] <--> Agent
+        Agent --> Provider["Tool Provider"]
+        Provider --> Native["Native Tools"]
+        Provider --> MCP["DevTools MCP Server"]
+        MCP --> Workspace["Disposable Git Workspace"]
+        MCP --> Sandbox["Docker Test Sandbox"]
+        Sandbox --> Workspace
+        Agent --> Trace["Versioned Trajectory"]
+    end
 
-- Python 3.11
-- Conda 管理基础环境
-- pip 管理项目依赖
-- Docker Desktop 或等价 Docker Engine（Task 6 起需要）
+    subgraph Research["Evaluation-Driven Evolution"]
+        Trace --> Evaluator["Independent Evaluator"]
+        Evaluator --> Evidence["Train Failure Evidence"]
+        Evidence --> Experience["Frozen Experience Snapshot"]
+        Evidence --> Proposal["Single-Field Policy Mutation"]
+        Proposal --> Gates["Schema + Smoke + Pairwise Gates"]
+        Validation["Validation Split"] --> Gates
+        Gates -->|Accept| Champion["Versioned Champion Policy"]
+        Gates -->|Reject| Archive["Auditable Rejection"]
+    end
+
+    Experience -.->|Experience context| Agent
+    Champion -.->|Runtime policy| Agent
+    Test["Frozen Test Split"] --> Final["A/B/C/D Final Experiment"]
+    Final --> Agent
+    Final --> Evaluator
+    Evaluator --> Results["Immutable Results + Hash Chain"]
+```
+
+数据边界固定为：
+
+- **Train（6题）**：失败轨迹、Reflection、Experience 与 Mutation Evidence；
+- **Validation（3题）**：Champion/Candidate 的 3×3 Pairwise Gate；
+- **Test（3题）**：冻结后仅用于最终 A/B/C/D 实验；
+- Repository Template 不跨 Split，Hidden Tests 与 Gold Patch 对 Agent 不可见。
+
+## 工程亮点
+
+- **完整 Coding Loop**：读取、搜索、补丁、Git Diff、测试与多轮错误恢复；
+- **统一工具层**：Native/MCP Provider 使用同一 Canonical Tool Contract；
+- **隔离执行**：Disposable Workspace + Docker，默认禁网、只读 rootfs 和资源限制；
+- **独立评测**：在 Fresh Workspace 中应用 Patch，分层执行 Target/Regression Tests；
+- **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
+- **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
+- **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
+- **工程验证**：206 项测试，Ruff 与依赖一致性检查通过。
+
+## 30 秒离线验证
+
+要求 Python 3.11。验证已提交的最终实验不需要 API Key、Docker 或网络：
 
 ```powershell
 conda env create -f environment.yml
 conda activate evodev
 python -m pip install -r requirements-dev.txt
 python -m pip install -e .
-```
 
-已有环境只需执行后两条 pip 命令。
-
-主要运行时依赖包括 OpenAI-compatible SDK、Pydantic、PyYAML、python-dotenv 和
-`mcp>=2.1,<3`；完整版本约束以 `requirements.txt` 为准。
-
-Task 6–13 没有新增 Python 依赖。Docker 必须能够同时访问 Client 与 Server：
-
-```powershell
-docker version
-```
-
-首次使用前，在项目根目录构建无运行时联网需求的测试镜像：
-
-```powershell
-docker pull python:3.11-slim
-docker build -f docker/sandbox/Dockerfile -t evodev-python:3.11 .
-```
-
-镜像构建属于 Repository Preparation，可能需要联网拉取基础镜像和 pytest；Agent
-执行测试时使用 `--pull never` 和 `--network none`，不会自由下载依赖。
-
-## Disposable Workspace 与 Docker Sandbox
-
-`WorkspaceManager` 将 Original Repository 复制到 `runs/run_<id>/workspace`，初始化独立
-Git baseline，并支持：
-
-- `create()`：创建当前 Run 独占的 workspace 与 artifacts 目录；
-- `reset()`：恢复 baseline 并清除 workspace 内新增文件；
-- `cleanup()`：先在 Run 根目录保存 `final.patch` 与 `final.diff`，再只删除 disposable workspace。
-
-每次 `run_tests` 都启动一个具名的一次性容器。固定边界包括：
-
-- 只挂载当前 disposable workspace 到 `/workspace`；
-- `--network none`、`--pull never`、`--cap-drop ALL`；
-- `no-new-privileges`、只读 rootfs，不挂载 Docker Socket；
-- CPU 1、Memory 1 GiB、PID 128、默认超时 60 秒；
-- 完整 stdout/stderr 写入 Run Artifact，模型侧只返回 20,000 字符以内的 head/tail。
-
-超时后 runner 使用容器名执行强制删除并通过 `docker inspect` 复查。Sandbox 默认配置在
-`configs/sandbox.yaml`。基础镜像只预装 pytest；其他 Benchmark 依赖应在准备阶段写入
-镜像，运行阶段不允许自由 `pip install`、`curl` 或 `wget`。
-
-## DevTools MCP Server
-
-从项目根目录启动 stdio Server，并将工具限制在指定 workspace：
-
-```powershell
-python -m mcp_servers.devtools.server --workspace D:\path\to\workspace
-```
-
-该命令从 Task 6 起默认让 `run_tests` 进入 Docker。仅限本地开发、明确不需要隔离时可加
-`--local-tests`；它不属于正式 Coding Run。
-
-Server 暴露六个结构化工具：
-
-- 只读：`list_files`、`read_file`、`search_code`、`git_diff`；
-- 写入：`apply_patch`，仅接受 workspace 内的 Unified Git Diff；
-- 执行：`run_tests`，仅接受测试路径与受限 pytest selector，不接受 Shell 命令。
-
-当前 `run_tests` 通过 Task 6 的 Docker Sandbox 执行，并具有资源限制、超时、输出截断
-与容器清理保证；`--local-tests` 仅用于明确选择的本地开发场景。
-
-Agent 侧使用 `MCPToolProvider` 连接 Server；首次连接会分页发现工具并缓存，ReAct 每步
-读取缓存，`refresh_tools()` 可显式刷新：
-
-```python
-from mcp import StdioServerParameters
-
-from evodev.agent import ReActAgent
-from evodev.tools import MCPToolProvider
-
-server = StdioServerParameters(
-    command="python",
-    args=["-m", "mcp_servers.devtools.server", "--workspace", str(workspace_path)],
-)
-with MCPToolProvider(server) as tools:
-    agent = ReActAgent(llm=llm, tool_provider=tools)
-    result = agent.run(task)
-```
-
-`MCPToolProvider` 和 `NativeToolProvider` 实现同一个同步 `ToolProvider` 接口；MCP SDK
-对象不会进入 ReAct 主循环。连接、超时、协议和 Server 退出错误与工具执行错误分别
-计数，避免后续 Evaluation 把基础设施故障误判为 Agent 策略失败。
-
-## Trajectory 与 Observability
-
-每次运行使用独立的 `runs/run_<id>/` 目录，包含：
-
-```text
-run.json
-events.jsonl
-final.patch
-final.diff
-trace_features.json
-artifacts/
-```
-
-`TrajectoryRecorder` 应在创建 `ReActAgent` 前初始化并作为 `event_sink` 注入。`run.json`
-记录 Agent、Policy、Experience、模型、Prompt、工具目录、Benchmark 与 Sandbox 的版本或
-哈希；工具目录哈希与工具发现顺序无关。`events.jsonl` 只持久化以下七类公开事件：
-
-- `RUN_STARTED`、`MODEL_TURN`、`TOOL_CALL`、`TOOL_RESULT`；
-- `FINAL_ANSWER`、`RUN_FINISHED`、`RUN_ERROR`。
-
-`TOOL_CALL` 与 `TOOL_RESULT` 通过 `call_id` 关联。大输出写入 `artifacts/`，事件只保留
-`artifact_ref`、`sha256`、`chars` 和 `truncated_for_llm`。Recorder 在落盘前过滤已知
-API Key、Authorization Header、`.env` 密钥和值及常见 token/key 模式；disposable
-workspace 也不会复制 `.env`。清理 workspace 时可传入相同过滤器：
-
-```python
-manager.cleanup(run, redact=recorder.redactor.redact_text)
-```
-
-事件采用 append、flush 与 `fsync`；重启时会截去尾部不完整 JSON 行并从下一序号继续。
-`TraceAnalyzer` 仅从公开事件复算 `searched_before_edit`、`inspected_tests_before_edit`、
-`unique_files_read`、`patch_attempts` 和 `test_runs`。轨迹格式版本为 `1.0`，不记录模型的
-私有思维链。
-
-## Benchmark v1.0
-
-冻结的 Benchmark 位于 `benchmarks/`，包含恰好 12 个 Python Coding Tasks：
-
-| Split | 数量 | 用途 |
-|---|---:|---|
-| Train | 6 | 失败轨迹、Reflection、Experience 与 Mutation Evidence |
-| Validation | 3 | Candidate Policy Accept / Reject |
-| Test | 3 | 最终报告，不参与调优 |
-
-类别配额固定为 Bug Fix 4、Exception Handling 2、Feature 2、Refactoring 2、Test
-Repair 2。每个任务包含 `task.yaml`、`repo/`、Hidden Target/Regression Tests 和
-`gold.patch`。`BenchmarkLoader.create_agent_workspace()` 只从 `repo/` 创建 disposable
-workspace，因此 Agent 看不到任务元数据之外的 Hidden Tests 与 Gold Patch。
-
-`benchmarks/manifest.json` 冻结每题规范化 SHA-256 Checksum 和全局 Manifest Hash。
-Loader 会验证 6/3/3 split、类别配额、Task ID 唯一性、必需资产以及同一 Repository
-Template 不跨 split。运行 Benchmark QA：
-
-```powershell
-python -m evodev.benchmark.validate
-# 或安装后的等价入口
-evodev-benchmark-qa
-```
-
-其中 12 个参数化用例分别在独立临时 Git workspace 中验证：
-
-```text
-Original Repository + Hidden Evaluation -> FAIL
-Original Repository + Gold Patch + Hidden Evaluation -> PASS
-```
-
-## Independent Evaluation 与 Baseline
-
-`IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和
-`agent_run_id`。它从 Original Repository 创建新的评估 workspace，应用 Patch 后分别在
-新 Docker 容器中执行 Syntax、Hidden Target Tests 和 Hidden Regression Tests。Agent
-Final Answer、自测结论与原 Agent workspace 均不作为成功证据。
-
-Grade 按以下顺序推进，全部通过才是 `RESOLVED`：
-
-```text
-PATCH_EXISTS -> PATCH_APPLIES -> SYNTAX_VALID
-             -> TARGET_TESTS_PASS -> REGRESSION_TESTS_PASS
-```
-
-失败分类区分 Patch、Syntax、Target、Regression、Agent、Evaluation Timeout 与
-Environment Error。`ExperimentReporter` 从公开 Trajectory 自动汇总 Resolution Rate、
-ReAct Steps、Tool Calls、Tokens、Latency 与三项核心行为指标，并生成：
-
-```text
-evaluation_runs/exp_xxx/
-├── manifest.json
-├── summary.json
-├── summary.csv
-└── instances/task_xxx/
-    ├── report.json
-    ├── final.patch
-    ├── test_output.txt
-    └── trajectory_ref.json
-```
-
-已冻结的 `exp-baseline-v1` 使用 `deepseek-v4-flash`、temperature 0.1、固定 ReAct
-Policy、每题一次，共 12 个有效评估：
-
-| 指标 | 结果 |
-|---|---:|
-| Resolved | 9 / 12 |
-| Task Resolution Rate | 75% |
-| Average ReAct Steps | 9.25 |
-| Average Tool Calls | 11.1667 |
-| Average Tokens | 32,000.8333 |
-| Average Latency | 25,056.9167 ms |
-| Search-before-edit Rate | 41.67% |
-| Test-inspection-before-edit Rate | 91.67% |
-| Average Patch Attempts | 3.0833 |
-
-未解决任务为 `task_002`、`task_008`、`task_010`，均为 `TARGET_TEST_FAILED`；没有
-Regression、Timeout 或 Environment Failure。可审计冻结快照位于
-`baselines/exp-baseline-v1/`，完整本地运行产物位于被 Git 忽略的 `runs/` 与
-`evaluation_runs/`。再次运行会产生 API 费用：
-
-```powershell
-evodev-baseline --experiment-id exp-baseline-v1-new
-```
-
-## Reflection 与 Experience Store
-
-Task 10 只对可归因于 Agent 策略的失败生成经验。`TARGET_TEST_FAILED`、
-`REGRESSION_FAILED`、`AGENT_MAX_STEPS`、`PATCH_APPLY_FAILED` 与重复无效工具策略可进入
-Reflection；Environment、Docker、MCP 连接和 API 故障不会污染 Experience Store。
-
-每次反思调用只接收任务描述、评估失败类型、Patch 摘要、相关测试失败、五项行为特征和
-至多 12 个重要事件。一次结构化模型调用同时返回两个独立校验的对象：解释本次失败的
-`Reflection`，以及可跨任务复用的 `ExperienceCandidate`。Evidence 必须引用允许的
-Trajectory Event、Behavioral Feature 或 Evaluator Result；具体任务答案、Gold Patch、
-隐藏断言和精确常量修复会被拒绝。
-
-SQLite Store 使用 `reflections`、`experiences`、`experience_sources` 三张表，支持
-`candidate`、`active`、`deprecated` 生命周期，并保留 Experience → Reflection → Run →
-Trajectory/Evaluation 的 Provenance。只有 Train 可写，Validation 与 Test 为只读。
-
-从已完成的 Baseline 生成 Train Experience 会产生 API 费用。以下命令只处理
-`task_002`；重复执行会跳过已经反思过的 Run：
-
-```powershell
-evodev-reflect --experiment-id exp-baseline-v1 --task-id task_002
-```
-
-默认数据库为被 Git 忽略的 `data/experience.sqlite`。Task 10 没有新增第三方依赖，SQLite
-使用 Python 3.11 标准库。首次 Task 10 运行已对 `run_task_002_r01` 完成一次结构化调用：
-输入 2,579 tokens、输出 2,389 tokens，落盘 1 条 Reflection、1 条 candidate Experience 和
-1 条 Source Provenance。五个 Evidence Reference 均可在压缩上下文中解析，未检出具体
-任务答案、期望异常文本、Gold Patch 或精确边界常量泄漏。
-
-## Experience Retrieval 与 Validation 对照实验
-
-Task 11 将已审计 Experience 晋升为 `active`，并冻结为
-`experiences/experience-v001.json`。快照包含 Structured Tags、相对 Provenance 和
-Canonical Content Hash；正式 Validation 只读取该 JSON 快照，不打开可写 SQLite Store。
-
-`RetrievalQuery` 仅由任务描述、任务类型、公开关键词和 Repository 文件上下文构造。
-Retriever 在 Python 中计算 task-type match、keyword overlap、trigger match 与 confidence，
-排除 same-task 来源，只注入实际相关的 Top-3，且总长度不超过 2,500 字符。Random 模式使用
-固定 Seed 做消融；关闭 Experience 时不产生任何额外 Prompt Section。
-
-开发阶段采用一次固定运行，对 Validation 三题比较 Baseline、Relevant 和 Random：
-
-| Arm | Resolved | Resolution Rate | Model Turns | Tokens | Hit Rate | Utilization |
-|---|---:|---:|---:|---:|---:|---:|
-| Baseline | 2 / 3 | 66.67% | 23 | 58,435 | 0% | 0% |
-| Relevant | 2 / 3 | 66.67% | 32 | 127,848 | 33.33% | 0% |
-| Random | 2 / 3 | 66.67% | 34 | 171,652 | 33.33% | 0% |
-
-Relevant 仅向 `task_008` 注入经验，三个 Arm 均在该题得到 `TARGET_TEST_FAILED`。因此本次
-开发实验验证了检索、注入、只读冻结和独立评估链路，但没有证明 Resolution Uplift 或
-Relevant 相对 Random 的优势。Utilization 要求 Treatment 行为相对 Baseline 从 false 变为
-true；目标行为在 Baseline 已存在，所以不能归因给 Experience。单次运行不作统计显著性
-声明。完整冻结产物位于 `experiments/task11-validation-v1/`。
-
-可无费用重新派生 Validation Baseline：
-
-```powershell
-evodev-prepare-validation-baseline
-```
-
-以下两个实验命令会重新产生 API 费用：
-
-```powershell
-evodev-experience-experiment --mode relevant --experiment-id exp-experience-v1
-evodev-experience-experiment --mode random --experiment-id exp-experience-random-v1
-```
-
-## Constrained Policy Space 与 Versioning
-
-Task 12 将可演化范围固定为三个字段：
-
-```yaml
-inspect_tests_before_edit: off  # off | prefer | require
-prefer_search_before_read: false
-max_react_steps: 15             # 10 | 15 | 20
-```
-
-`off` 保持原行为；`prefer` 通过独立 Policy Guidance 提示模型；`require` 在首次
-`apply_patch` 前检查 Agent 是否已读取或搜索测试。条件不满足时 Harness 返回
-`POLICY_PRECONDITION_NOT_MET`，并要求模型自行检查测试后重试，不会替模型隐藏执行。
-`prefer_search_before_read` 接入 Tool Guidance，`max_react_steps` 直接接入 ReAct Loop。
-
-Workspace Boundary、Docker Requirement、无任意 Shell、默认断网、Hidden Test 隔离、
-Split 规则、Secret Redaction、Evaluator Logic、Original Repository Protection、Docker
-Security Limits 与 MCP Permission Boundary 全部位于独立且冻结的 Schema，不能进入
-Mutation。Context Budget 继续由固定 Agent Config 管理。
-
-`PolicyMutation` 只接受 Train Evidence，并保存 Evidence、Hypothesis、Expected Effect 与
-Risk；一个 Candidate 只改变一个字段。`aggregate_failure_patterns()` 仅聚合可归因于
-Agent 策略的 Train Failure，不吸收 Environment、Timeout 或已解决运行。
-
-版本仓库位于 `policies/`。每个 YAML 快照保存 parent、status、mutation、validation
-result、canonical SHA-256 hash 与创建时间；`index.json` 只指向 champion 和 previous
-champion。`policy-v001` 冻结为 Task 12 前的默认行为，当前 Champion 为 Task 14 前置演化晋升的
-`policy-v003`。Repository 能保存
-accepted、rejected 和显式 rolled-back 状态，但 Task 12 不自行做 Validation 决策；
-自动 Proposal、Pairwise Validation Gate、Promotion 与 Rollback 属于 Task 13。
-
-## Evolution Engine 与 Validation Gate
-
-Task 13 将 Proposal 与 Evaluation 分离：Proposal 只接收出现至少两次的 Train Failure
-Pattern，只能返回单字段 `field/new_value` 和 Hypothesis/Effect/Risk；Parent、Old Value、
-Mutation ID 与 Train Evidence 均由 Harness 绑定。Validation 或 Test 数据不会进入 Proposal。
-
-Candidate 依次通过：
-
-1. Schema/Safety：三字段、单 Mutation、Parent、Hash、Frozen Invariants 和 Train Evidence；
-2. Smoke：复用 `fixtures/simple_read` 检查 Agent、Tool Calling 和 Hard Guard；
-3. Pairwise Validation：Champion/Candidate 各运行 3 个 Validation Tasks × 3 次。
-
-Pairwise 判定不使用加权 Fitness：先比较 9 次有效尝试的 Resolution；任何原先至少
-`2/3` 稳定而 Candidate 变为 `0/3` 的任务会触发 Catastrophic Regression Reject。
-Resolution 完全相同时，只有 Tokens 至少下降 10%，且 Steps/Tool Calls/Latency 中至少
-另一项也下降 10% 才可接受。条件不一致或不足 9 次有效评估返回 `inconclusive`，Candidate
-保持 pending，不把基础设施故障当作策略失败。
-
-搜索边界位于 `configs/evolution.yaml`：最多 5 Generations、每代 2 Candidates、连续 2 代
-无提升停止，Validation 重复次数固定为 3。已尝试的单字段 Transition 不会重复 Proposal。
-每组 Pairwise 实验 ID 同时包含 Evolution ID 与 Candidate ID，确保多个 Candidate 的 Champion
-重跑和 Candidate 运行互不覆盖。旧 Champion 和 Rejected Candidate 永不覆盖；Rollback 只恢复
-previous champion 指针。
-
-Generation、当前 Candidate、连续无提升次数和已尝试 Transition 持久化在
-`evolution/<evolution-id>/progress.json`。状态可由不可变 Candidate/Gate 快照免费重建；Proposal
-会先检查该状态，再要求 `--confirm-paid`，因此 Candidate 尚未验证、代内额度耗尽、Patience
-耗尽或搜索空间耗尽时，不会误发模型请求。Accept 会开始下一代并将 Patience 清零；一代达到
-2 个 Candidate 且均未提升时，也会开始下一代并将 Patience 加一。显式 Rollback 必须通过
-`--evolution-id` 绑定对应状态，且当前代没有 Candidate，才能同步恢复 Champion 指针。
-
-零费用聚合已有 Train 历史：
-
-```powershell
-evodev-evolve aggregate --experiment-ids exp-baseline-v1 `
-  --report-id failure-patterns-baseline-v1 `
-  --output evolution_runs/task13/failure-patterns-baseline-v1.json
-```
-
-当前结果只有 `task_002` 的一次 `TARGET_TEST_FAILED`，因此 Proposal Gate 会停止。以下命令
-均会产生模型 API 费用，并且缺少 `--confirm-paid` 时会拒绝执行：
-
-```powershell
-# 免费重建/检查 Generation、Patience 与剩余 Mutation
-evodev-evolve status --evolution-id evolution-v1 `
-  --pattern-report evolution/task13/failure-patterns-train-v1.json
-
-# 额外收集 Train 历史；默认 6 tasks × 2 runs
-evodev-evolve collect-train --experiment-id exp-policy-train-v1 `
-  --repetitions 2 --confirm-paid
-
-# 一次 Proposal LLM 调用并运行离线 Schema/Smoke Gate
-evodev-evolve propose --pattern-report evolution/task13/failure-patterns-train-v1.json `
-  --evolution-id evolution-v1 --confirm-paid
-
-# Champion/Candidate 各 9 个 Agent Runs
-evodev-evolve validate --candidate-id candidate-001 `
-  --evolution-id evolution-v1 --confirm-paid
-```
-
-真实 Case Study、Policy 晋升和最终 Champion 冻结均以独立付费阶段执行；下一任务名称或
-README 命令不能视为授权。
-
-Task 13 已额外完成 6 个 Train Tasks × 2 Runs：12/12 均为有效评估，10/12 Resolved，
-合计约 473,047 Tokens。与 Baseline 合并后，`task_002` 的 `TARGET_TEST_FAILED` 达到 2 次，
-形成首个可用于 Proposal 的重复模式；冻结报告位于
-`evolution/task13/failure-patterns-train-v1.json`。
-
-首次付费 Proposal 选择了 `inspect_tests_before_edit`，但返回值不属于
-`off/prefer/require`，因此 Schema 在创建 Candidate 前拒绝了它，Champion 未变化。该次旧
-CLI 尚未保存原始响应，所以 Attempt 记录明确将未知 Draft/Token 留空，不进行推测；记录位于
-`evolution/evolution-v1/proposal-attempt-001.json`。随后 Prompt 已补充每个字段的精确 JSON
-类型与 Allowed Set，CLI 也会持久化后续 Proposal 的 Draft、Token Usage、Candidate ID 或
-Reject Reason。再次 Proposal 属于新的付费调用，仍需单独授权。
-
-第二次授权的 Proposal 使用 409 Input Tokens、413 Output Tokens，提出唯一变更
-`inspect_tests_before_edit: off → prefer`。Harness 将其绑定为 `mutation-001`，Evidence 仅
-引用上述两次 Train Failure，并生成 `candidate-001`；其 Policy Hash 为
-`b1c094b6c299811e59e4a746aca8f13fc924070e607450b680f56b1ddb586df9`。8 项 Schema/Safety
-检查和 `fixtures/simple_read` Smoke Gate 均通过。Proposal Attempt 与 Pre-Validation Gate
-分别冻结在 `evolution/evolution-v1/proposal-attempt-002.json` 和
-`evolution/evolution-v1/candidate-001/gates-pre-validation.json`。
-
-`candidate-001` 的 Pairwise Validation 已完成 Champion/Candidate 各 9 次、共 18 次有效运行，
-控制条件一致。结果如下：
-
-| 指标 | Champion `policy-v001` | `candidate-001` |
-| --- | ---: | ---: |
-| Resolved | 6/9 | 4/9 |
-| `task_007` | 3/3 | 1/3 |
-| `task_008` | 0/3 | 0/3 |
-| `task_009` | 3/3 | 3/3 |
-| 平均 Tokens | 38,206.2222 | 40,356.8889 |
-| 平均 ReAct Steps | 9.7778 | 12.0000 |
-| 平均 Tool Calls | 10.5556 | 13.3333 |
-| 平均 Latency (ms) | 30,176.2222 | 29,633.2222 |
-
-Candidate 虽将 Search-before-edit 从 0.4444 提高到 0.8889、Test-inspection 从 0.7778
-提高到 1.0000，但平均 Patch Attempts 也从 3.8889 增至 5.2222，且 Resolution 明显下降，
-因此 Gate 按“效率不能覆盖解决率下降”的规则拒绝它。`task_007` 仍有 1/3 成功，所以不满足
-从 Champion 至少 2/3 降为 0/3 的 Catastrophic Regression 定义。最终 Gate 与独立 Pairwise
-报告冻结在 `evolution/evolution-v1/candidate-001/`；Candidate 保留为 rejected，Champion
-仍为 `policy-v001`。Task 13 所要求的“因解决率下降而拒绝”案例已经获得。
-
-第三次授权的 Proposal 使用 435 Input Tokens、923 Output Tokens，提出新的唯一 Transition
-`inspect_tests_before_edit: off → require`，并生成 `candidate-002` / `mutation-002`；其 Policy
-Hash 为 `013e5b7cc0f7ab6dda80a5a753ef3b978c76edaa133454264a6bb9e7cbeb92c3`。8 项
-Schema/Safety 检查全部通过，Smoke Gate 以 4 Steps、3 Tool Calls 通过；其中记录到 1 次
-Policy Precondition Failure，随后 Agent 完成了所需的测试检查并成功结束。Proposal Attempt 与
-Pre-Validation Gate 分别冻结在 `evolution/evolution-v1/proposal-attempt-003.json` 和
-`evolution/evolution-v1/candidate-002/gates-pre-validation.json`。
-
-首次启动 `candidate-002` Pairwise 时，在任何 Agent/模型调用前发现旧 Champion Workspace
-冲突。原因是 Champion 实验 ID 未包含 Candidate ID；实现已改为按
-`Evolution ID + Candidate ID + Arm` 隔离，旧案例没有删除或覆盖。修复通过定向与完整回归后，
-重新执行了 Champion/Candidate 各 9 次、共 18 次有效运行：
-
-| 指标 | Champion `policy-v001` | `candidate-002` |
-| --- | ---: | ---: |
-| Resolved | 6/9 | 5/9 |
-| `task_007` | 3/3 | 3/3 |
-| `task_008` | 0/3 | 0/3 |
-| `task_009` | 3/3 | 2/3 |
-| 平均 Tokens | 34,740.7778 | 33,957.5556 |
-| 平均 ReAct Steps | 10.1111 | 9.7778 |
-| 平均 Tool Calls | 12.2222 | 12.3333 |
-| 平均 Latency (ms) | 24,129.5556 | 27,970.1111 |
-
-强制测试检查将 Test-inspection 从 0.8889 提高到 1.0000，Search-before-edit 从 0.6667
-提高到 0.8889；但 `task_009` 少解决 1 次，总 Resolution 下降，因此 Gate 仍按优先规则拒绝。
-Candidate 没有触发 Catastrophic Regression，保留为 rejected；最终报告冻结在
-`evolution/evolution-v1/candidate-002/`，Champion 仍为 `policy-v001`。本代 2 个 Candidate
-的搜索额度已经用完，并且两者都未晋升；Task 13 的 Accepted Mutation 验收项仍未满足。
-
-免费状态重建已将上述结果固化为 Generation 1 `no_improvement`，当前进入 Generation 2：
-初始代内 Candidate 为 0/2、连续无提升为 1/2，Proposal Stop Condition 为 false。相对当前
-Champion，当时未尝试的 Transition 为 `prefer_search_before_read: false → true`、
-`max_react_steps: 15 → 10` 和 `15 → 20`。
-
-第四次授权的 Proposal 使用 458 Input Tokens、984 Output Tokens，选择此前未尝试的
-`prefer_search_before_read: false → true`，生成 `candidate-003` / `mutation-003`；Policy Hash
-为 `5f3b4c4a56c64d209acaf0ea435c0a9f001eb8bd8f6b83f30560d0442df33c41`。8 项
-Schema/Safety 检查全部通过，Smoke Gate 以 3 Steps、2 Tool Calls、0 Policy Precondition
-Failures 通过。Proposal Attempt 与 Pre-Validation Gate 分别冻结在
-`evolution/evolution-v1/proposal-attempt-004.json` 和
-`evolution/evolution-v1/candidate-003/gates-pre-validation.json`。当前 Generation 2 为
-1/2、连续无提升仍为 1/2，`candidate-003` 是唯一 pending Candidate；在完成 Pairwise 前，
-Proposal Stop Condition 会阻止新 Proposal。Champion 仍为 `policy-v001`。
-
-`candidate-003` 的 Pairwise Validation 已完成 18/18 次有效运行，三个任务的成功分布完全
-相同，Champion 与 Candidate 均为 6/9 Resolved：
-
-| 指标 | Champion `policy-v001` | `candidate-003` |
-| --- | ---: | ---: |
-| Resolved | 6/9 | 6/9 |
-| 平均 Tokens | 33,723.4444 | 37,622.7778 |
-| 平均 ReAct Steps | 9.6667 | 11.0000 |
-| 平均 Tool Calls | 10.8889 | 13.0000 |
-| 平均 Latency (ms) | 25,476.7778 | 32,557.4444 |
-
-Search-before-edit 从 0.3333 提升到 1.0000，但 Test-inspection 从 1.0000 降到 0.8889，
-平均 Patch Attempts 从 4.2222 增至 6.1111。由于 Resolution 持平且没有显著、可佐证的
-成本下降，Gate 拒绝 Candidate；没有 Catastrophic Regression，Champion 仍为
-`policy-v001`。最终报告冻结在 `evolution/evolution-v1/candidate-003/`。Generation 2
-仍为 1/2、连续无提升为 1/2，但 pending 已清除；下一 Candidate 在预算内，剩余搜索空间
-仅为 `max_react_steps: 15 → 10` 或 `15 → 20`。Task 13 的 Accepted Mutation 验收项仍未满足。
-
-第五次授权的 Proposal 使用 479 Input Tokens、737 Output Tokens，选择
-`max_react_steps: 15 → 20`，生成 `candidate-004` / `mutation-004`；Policy Hash 为
-`45e02b910f5ed82c171da5253b0431ee27a2efee6059f85891adbfde5d276970`。8 项
-Schema/Safety 检查全部通过，Smoke Gate 以 3 Steps、2 Tool Calls、0 Policy Precondition
-Failures 通过。Proposal Attempt 与 Pre-Validation Gate 分别冻结在
-`evolution/evolution-v1/proposal-attempt-005.json` 和
-`evolution/evolution-v1/candidate-004/gates-pre-validation.json`。
-
-`candidate-004` 的 Pairwise Validation 已完成 18/18 次有效运行，控制条件一致：
-
-| 指标 | Champion `policy-v001` | `candidate-004` |
-| --- | ---: | ---: |
-| Resolved | 4/9 | 6/9 |
-| `task_007` | 3/3 | 3/3 |
-| `task_008` | 0/3 | 0/3 |
-| `task_009` | 1/3 | 3/3 |
-| 平均 Tokens | 25,801.3333 | 71,151.4444 |
-| 平均 ReAct Steps | 9.1111 | 14.3333 |
-| 平均 Tool Calls | 10.6667 | 16.5556 |
-| 平均 Latency (ms) | 18,209.4444 | 42,425.2222 |
-
-Candidate 的成本指标均明显上升，但 Gate 的固定优先级是 Resolution First：成本仅在
-Resolution 完全相同时用于判定，不能否决解决数从 4 提升到 6 的 Candidate。没有
-Catastrophic Regression，因此 `candidate-004` 被接受并晋升为 `policy-v002`；最终 Gate 与
-独立 Pairwise 报告冻结在 `evolution/evolution-v1/candidate-004/`。Generation 2 记录为
-`improved`，Generation 3 以 0/2 Candidate、0/2 Patience 开始，且没有 pending Candidate。
-至此 Task 13 所需的 Accepted Mutation 与 Rejected Mutation 案例均已获得并可从快照重建。
-
-第六次授权的 Proposal 使用 499 Input Tokens、1260 Output Tokens，基于 `policy-v002` 选择
-`max_react_steps: 20 → 15`，生成 `candidate-005` / `mutation-005`；其 Policy Hash 与历史
-`policy-v001` 一致，但这是从当前 Champion 出发的新单字段 Transition，仍按相同 Gate 独立验证。
-8 项 Schema/Safety 检查全部通过，Smoke Gate 以 3 Steps、2 Tool Calls、0 Policy
-Precondition Failures 通过。Proposal Attempt 与 Pre-Validation Gate 分别冻结在
-`evolution/evolution-v1/proposal-attempt-006.json` 和
-`evolution/evolution-v1/candidate-005/gates-pre-validation.json`。
-
-`candidate-005` 的 Pairwise Validation 已完成 18/18 次有效运行，控制条件一致：
-
-| 指标 | Champion `policy-v002` | `candidate-005` |
-| --- | ---: | ---: |
-| Resolved | 6/9 | 5/9 |
-| `task_007` | 3/3 | 2/3 |
-| `task_008` | 0/3 | 0/3 |
-| `task_009` | 3/3 | 3/3 |
-| 平均 Tokens | 28,753.1111 | 31,572.6667 |
-| 平均 ReAct Steps | 9.4444 | 9.6667 |
-| 平均 Tool Calls | 11.1111 | 11.2222 |
-| 平均 Latency (ms) | 23,769.6667 | 23,650.8889 |
-
-Candidate 的 Test-inspection 从 1.0000 降至 0.8889，Search-before-edit 从 0.7778 降至
-0.4444，平均 Patch Attempts 从 2.7778 增至 3.7778，并出现 1 次 Syntax Error。由于
-Resolution 从 6/9 降至 5/9，Gate 按固定的 Resolution-first 规则拒绝 Candidate；轻微
-Latency 变化不能覆盖 Resolution 下降。没有 Catastrophic Regression，Champion 保持
-`policy-v002`。最终报告冻结在 `evolution/evolution-v1/candidate-005/`。Generation 3
-当前为 1/2 Candidate、0/2 Patience、无 pending；剩余搜索空间仅为
-`max_react_steps: 20 → 10`。
-
-第七次授权的 Proposal 使用 519 Input Tokens、944 Output Tokens，选择唯一剩余的
-`max_react_steps: 20 → 10`，生成 `candidate-006` / `mutation-006`；Policy Hash 为
-`0444b7c0a49dd5482ee1ce2748aedab1f8b07019d6a48ca4e89ace4bc81c4a65`。8 项
-Schema/Safety 检查全部通过，Smoke Gate 以 3 Steps、2 Tool Calls、0 Policy Precondition
-Failures 通过。Proposal Attempt 与 Pre-Validation Gate 分别冻结在
-`evolution/evolution-v1/proposal-attempt-007.json` 和
-`evolution/evolution-v1/candidate-006/gates-pre-validation.json`。
-
-`candidate-006` 的 Pairwise Validation 已完成 18/18 次有效运行，控制条件一致：
-
-| 指标 | Champion `policy-v002` | `candidate-006` |
-| --- | ---: | ---: |
-| Resolved | 6/9 | 6/9 |
-| `task_007` | 3/3 | 3/3 |
-| `task_008` | 0/3 | 0/3 |
-| `task_009` | 3/3 | 3/3 |
-| 平均 Tokens | 40,251.1111 | 28,914.0000 |
-| 平均 ReAct Steps | 10.8889 | 9.2222 |
-| 平均 Tool Calls | 12.8889 | 11.2222 |
-| 平均 Latency (ms) | 28,712.2222 | 25,328.4444 |
-
-Resolution 与逐题成功分布完全持平；Tokens 下降约 28.2%，同时 Steps、Tool Calls 和 Latency
-均下降，满足固定的“Resolution 持平 + Tokens 与另一项成本指标至少下降 10%”接受规则。
-没有 Catastrophic Regression，因此 `candidate-006` 被接受并晋升为 `policy-v003`。最终 Gate
-与独立 Pairwise 报告冻结在 `evolution/evolution-v1/candidate-006/`。Generation 3 记录为
-`improved`，Generation 4 以 0/2 Candidate、0/2 Patience 开始且无 pending；Task 14 所需
-2 Accepted + 1 Rejected Case 已由 `candidate-004`、`candidate-006` 和任一 Resolution-decline
-Rejected Case 满足。后续演化停止，Final Experiment 固定使用 `policy-v003`。
-
-### Task 13 最终验收审计
-
-Task 13 的 12 项验收标准已逐项通过：
-
-| 验收项 | 结果 | 主要证据 |
-| --- | --- | --- |
-| Proposal 与 Evaluation 分离 | PASS | `evolution/proposal.py` 只生成 Mutation；`evolution/gates.py` 独立判定 |
-| Candidate 不能直接修改 Champion | PASS | Candidate 独立快照；仅 `finalize_candidate()` 可在 Gate 后调用 Repository 决策 |
-| Schema / Safety Gate 生效 | PASS | 8 项检查冻结在每个 `gates-pre-validation.json` 与 `gates-final.json` |
-| Smoke Gate 复用 Development Fixtures | PASS | `run_smoke_gate()` 固定使用 `fixtures/simple_read` |
-| Pairwise 使用相同条件和重复 Run | PASS | 每个 Arm 均为 3 Tasks × 3 Runs；Manifest 条件比较为 true |
-| Resolution Rate 优先于成本 | PASS | `candidate-004` 以 Resolution 提升接受；`candidate-006` 仅在 Resolution 持平时按成本下降接受 |
-| Catastrophic Regression Guard 生效 | PASS | `test_catastrophic_regression_overrides_aggregate_gain` 覆盖强制拒绝路径 |
-| 通过验证才 Promote | PASS | `finalize_candidate()` 要求完整 Gate；仅 `candidate-004` 与 `candidate-006` 晋升 |
-| 旧 Policy 和 Rejected Candidate 全部保留 | PASS | `policy-v001` 至 `policy-v003`、`candidate-001` 至 `candidate-006` 及最终报告均受 Git 跟踪 |
-| 可恢复 Last-Known-Good Champion | PASS | `rollback_last_known_good()` 只恢复指针，并拒绝在非空当前代回滚 |
-| Generation、Candidate、Patience Budget | PASS | `progress.json` 可重建；Generation 4 为 0/2 Candidate、0/2 Patience |
-| Validation / Test 不参与 Mutation Generation | PASS | Aggregator 跳过非 Train；`MutationEvidence.split` 只允许 `train` |
-
-跨 Artifact 回归还会逐个比较六个 Case Study 的独立 `pairwise-report.json`、最终 Gate、
-Candidate Decision、Report Path 与 Policy Hash，防止冻结结果发生漂移。Task 13 最低必做案例
-“1 个 Accepted + 1 个因 Resolution 下降而 Rejected”已满足：`candidate-004` 为 Accepted，
-`candidate-001`、`candidate-002` 和 `candidate-005` 均为 Resolution 下降的 Rejected Case。
-
-规划中的“2 Accepted + 1 Rejected”Task 14 展示验收项已经真实满足：`candidate-004` 与
-`candidate-006` 为 Accepted，`candidate-001`、`candidate-002` 和 `candidate-005` 为
-Resolution 下降的 Rejected Case。当前 Champion 固定为 `policy-v003`，Policy Hash 为
-`0444b7c0a49dd5482ee1ce2748aedab1f8b07019d6a48ca4e89ace4bc81c4a65`。CLI 状态中的后续
-搜索空间不解除阶段冻结；Task 14 正式实验必须在 Manifest 中固定当时 Git Commit 与该
-Champion Hash 后再运行。
-
-## Task 14 Final Experiment Results
-
-Task 14 使用 `configs/experiments/final-v1.yaml` 固定以下 2×2 设计：
-
-| Variant | Experience | Evolved Policy | 当前 Policy |
-| --- | ---: | ---: | --- |
-| A. Baseline | OFF | OFF | `policy-v001` |
-| B. Experience | ON | OFF | `policy-v001` |
-| C. Policy | OFF | ON | `policy-v003` |
-| D. Combined | ON | ON | `policy-v003` |
-
-冻结实验已完成，Primary Metric 与主要效率指标如下。所有数字直接来自
-`results/final-v1/summary.json`，没有选择性补跑：
-
-| Variant | Valid | Resolved | Resolution | Steps / Run | Tool Calls / Run | Tokens / Run | Latency / Run |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| A. Baseline | 9/9 | 6/9 | 66.7% | 7.78 | 9.56 | 19,852.67 | 20,259.67 ms |
-| B. Experience | 9/9 | 8/9 | 88.9% | 7.44 | 8.89 | 20,129.89 | 18,063.00 ms |
-| C. Policy | 9/9 | 8/9 | 88.9% | 7.78 | 9.00 | 19,664.44 | 18,038.22 ms |
-| D. Combined | 9/9 | 8/9 | 88.9% | 6.44 | 8.00 | 15,715.78 | 44,789.11 ms |
-
-相对 Baseline，Combined 的 Resolution 提高 22.2 个百分点（相对提升 33.3%），Overall
-Steps、Tool Calls 和 Tokens 分别减少 17.1%、16.3% 和 20.8%。但 B、C、D 的 Resolution
-相同，因此本次小规模 Benchmark 支持 Experience 与 Policy 各自有效，不足以证明二者在
-Primary Metric 上存在额外互补增益。D 的一次 `task_010` 运行因模型返回截断 JSON 形成
-`AGENT_ERROR`；冻结协议将其作为有效失败保留且没有补跑，使 D 的 Overall Latency 明显升高。
-后续代码已为同类畸形工具参数增加一次有限重试；`final-v1` 作为冻结历史实验保持原样，
-其指标不会被修复后的行为回填或改写。
-仅看 Resolved Runs 时，D 的平均 Tokens 为 17,169.63，与 Baseline 的 17,376.67 接近。
-
-![Final resolution rate](results/final-v1/figures/resolution_rate.png)
-
-![Final efficiency](results/final-v1/figures/efficiency.png)
-
-Test Set 固定为 `task_010`、`task_011`、`task_012`，每个 Variant 对每题运行 3 次，因此
-正式实验总计固定为 36 Agent Runs。Preflight 会读取并验证 Git Commit、模型与温度、Benchmark
-Version/Hash、Experience Snapshot、Baseline/Champion Policy Version/Hash、Docker Image
-Digest、Evaluator Version 以及 MCP Tool Catalog Version/Hash。它同时固化以下约束：Code、
-Benchmark、Experience、Policy 和 Sandbox 只读，禁止 Test 阶段生成 Experience、继续 Policy
-Evolution 或选择性补跑。
-
-零费用计划检查：
-
-```powershell
-evodev-final --project-root . --config configs/experiments/final-v1.yaml plan
-```
-
-该命令只读取本地身份并发现 MCP Catalog，不解析、打印或发送 API Key，不调用模型，也不运行 Agent。
-冻结前真实 Preflight 正确计算出 36 Runs；在 Git 干净且 Docker/MCP 身份一致时，Accepted
-Case Study 为 2/2，`ready_to_freeze=true`。
-
-正式 Manifest 只能在所有阻塞消失后显式冻结：
-
-```powershell
-evodev-final --project-root . --config configs/experiments/final-v1.yaml `
-  freeze --confirm-freeze
-```
-
-冻结会写入 `results/final-v1/experiment_manifest.json`；相同条件可重复验证，不同条件禁止覆盖。
-`final-v1` 已冻结在 Git Commit `f961eced94e6b4c43254e18a953a99c9a22b273c`，Manifest
-SHA-256 为 `9efe0c2f53a54a4b246c44275319d0ed8733f11189a7d75936641c29e183b9fc`。
-结果契约要求每个 Variant 恰好 9 次、每题恰好 3 次且 Run ID 唯一；自动汇总以 Resolution
-Rate 为唯一 Primary Metric，同时分别计算 Overall Efficiency 和 Resolved-run Efficiency。
-
-真实执行入口：
-
-```powershell
-evodev-final --project-root . --config configs/experiments/final-v1.yaml `
-  run --confirm-paid
-```
-
-`run` 在任何 Preflight、Docker 或模型动作前先检查 `--confirm-paid`，随后要求冻结 Manifest
-存在且所有当前身份与其一致。执行顺序固定为 A → B → C → D，每个 Variant 按三个 Test Tasks
-各运行三次。任何已有的部分轨迹、Instance 或 Summary 都会拒绝选择性续跑，必须升级
-Experiment Version 并全量重跑。`final-v1` 已经完成，不能再次执行这条命令；其产物为：
-
-```text
-results/final-v1/
-├── experiment_manifest.json
-├── run_results.json
-├── summary.json
-├── summary.csv
-├── instances/<variant>/<task>/attempt_<NN>/
-└── figures/
-    ├── resolution_rate.png
-    ├── efficiency.png
-    ├── behavior_change.png
-    ├── policy_generation.png
-    └── figure_manifest.json
-```
-
-四张 PNG 只读取 `summary.json` 生成。`figure_manifest.json` 固定记录 Summary SHA-256
-和每张 PNG 的 SHA-256；`policy_generation.png` 只比较 Experience 都关闭的 A/C 两组，避免
-把 Experience 效果误记为 Policy 效果。若 Final 数据已存在但图表尚未生成，可单独运行：
-
-```powershell
-evodev-final --project-root . --config configs/experiments/final-v1.yaml figures
-```
-
-CLI Demo 不运行 Agent，只读取现有的公开轨迹、Final Patch 和独立评估报告：
-
-```powershell
-evodev-final demo `
-  --run-path runs/final-v1/final-v1-D-task_010-r01 `
-  --evaluation-report results/final-v1/instances/D/task_010/attempt_01/report.json
-```
-
-输出为精简的 `[SEARCH] → [READ] → [PATCH] → [TEST] → [FINAL PATCH] → [EVAL]` 日志，
-不包含私有推理。Final Results 生成后可执行完全离线的证据一致性校验：
-
-```powershell
 evodev-final --project-root . --config configs/experiments/final-v1.yaml verify
 ```
 
-该命令会从 `run_results.json` 重新计算 Summary，核对 CSV，逐项关联 36 份独立评估报告，
-并校验 Summary 与四张 PNG 的 Hash 链；不读取 `.env`，也不访问 Docker 或模型。真实结果的
-校验结论为 `valid=true`、`verified_runs=36`、`verified_instances=36`、
-`verified_figures=4`、`summary_matches=true`、`csv_matches=true`。本阶段新增
-`matplotlib>=3.8,<4` 作为唯一图表依赖。
+预期输出：
 
-独立于 Final 数据的 Single Task 演示命令为：
-
-```powershell
-python -m evodev.run `
-  --task benchmarks/test/task_010 `
-  --policy policy-v003 `
-  --confirm-paid
+```json
+{
+  "experiment_id": "final-v1",
+  "verified_runs": 36,
+  "verified_instances": 36,
+  "verified_figures": 4,
+  "summary_matches": true,
+  "csv_matches": true,
+  "valid": true
+}
 ```
 
-该命令必须显式确认付费，且结果只写入 `runs/single/` 与 `evaluation_runs/single/`，不会混入
-冻结的 Final 36-run 结果。重复相同 Task 时需用 `--run-id` 指定新的唯一 ID；可选参数
-`--experience-snapshot experiences/experience-v001.json` 用于启用冻结 Experience。
-
-## 配置
-
-普通配置位于 `configs/`：
-
-- `configs/model.yaml`：模型提供方、模型名、温度和 API 地址；
-- `configs/agent.yaml`：Agent 步数、工具重试和字符上下文预算；
-- `configs/experience.yaml`：Experience 开关、Top-K 和字符预算；
-- `configs/sandbox.yaml`：Docker 安全与资源限制；
-- `configs/evolution.yaml`：Policy Evolution 搜索与验证预算；
-- `configs/experiments/final-v1.yaml`：Task 14 固定 2×2 Final Experiment 设计。
-
-密钥只从环境变量或本地 `.env` 读取：
-
-```powershell
-Copy-Item .env.example .env
-```
-
-随后填写：
-
-```text
-LLM_API_KEY=your-key
-LLM_BASE_URL=https://api.deepseek.com
-LLM_MODEL=deepseek-chat
-```
-
-`.env` 已被 Git 忽略。`LLM_MODEL` 与 `LLM_BASE_URL` 会覆盖 YAML 默认值；配置对象只保存
-密钥环境变量名，不保存密钥值。
-
-## 验证
+运行自动化测试与静态检查：
 
 ```powershell
 python -m pytest
 python -m ruff check .
+python -m pip check
 ```
 
-当前离线测试覆盖：
-
-- 配置与 Canonical Schema；
-- LLM Provider Adapter；
-- Native Tool 发现、调用和错误结果；
-- 文件列表、分段读取、代码搜索和 workspace 逃逸防护；
-- 直接回答、连续工具调用、同轮多工具调用和 Max Steps；
-- Tool Failure 返回模型继续修正；
-- EventSink Hook；
-- AgentState 的文件、Patch、测试和错误状态更新；
-- 上下文超预算后的确定性裁剪和旧 Observation 元数据压缩；
-- 只读幂等 Retry、非幂等禁止 Retry、Tool/LLM Exception 状态化；
-- FakeLLM 的确定性请求记录和错误路径；
-- 六个 DevTools 的风险元数据、参数校验和归一化错误；
-- Patch → Git Diff → pytest 的成功/失败/超时路径；
-- MCP 进程内组件调用与真实 stdio 子进程传输；
-- MCP Client connect/disconnect、分页终止、Catalog 缓存与手动刷新；
-- Native/MCP Provider 语义一致性与 ReAct Agent 零修改替换；
-- MCP Transport Error 与 Tool Execution Error 分层归一化和统计；
-- Disposable Workspace create/reset/cleanup 与 Original Repository 不变性；
-- Docker 参数边界、Artifact、输出截断、失败和超时清理语义；
-- Simple Bug、Patch Failure、Test Failure、Infinite Test 四类多轮 Coding Loop；
-- Run Metadata、事件顺序与 `call_id` 关联、Artifact 完整性和落盘脱敏；
-- JSONL 尾部崩溃恢复、最终 Patch/Diff 脱敏及五项 Trace Feature 复算；
-- Benchmark 固定规模与类别、Manifest 完整性和近重复 split 防泄漏；
-- Agent Workspace 私有资产隔离及 12 题 Before-Fail / After-Gold-Pass QA；
-- Gold、Empty、Invalid、Syntax 与 Regression Break 五类独立评估路径；
-- Fresh Evaluation Workspace、分层 Grade、实验汇总与冻结 Baseline 一致性；
-- Reflection Eligibility、压缩 Evidence Context 与一次调用双对象校验；
-- Train-only Experience Store、相似经验合并、生命周期与 Provenance；
-- Frozen Experience Snapshot、Metadata/Keyword Retrieval 与 same-task 排除；
-- 独立 Experience Prompt Section、Relevant/Random 消融和受控 Manifest；
-- Retrieval Hit Rate 与相对 Baseline 的 Experience Utilization Rate。
-- 三字段 Policy Schema、冻结安全边界、严格取值与 Canonical Hash；
-- Policy Guidance、测试前编辑 Hard Guard 和 Policy Step Limit；
-- Train-only Mutation Evidence 与重复 Failure Pattern Aggregation；
-- Candidate 单字段变更、Accepted/Rejected 保存、Parent Chain 与显式 Rollback。
-- Train-only Proposal Provenance、重复模式门槛与重复 Transition 拒绝；
-- Schema/Smoke Gate、3×3 Pairwise Resolution-first 判定与 Catastrophic Guard；
-- Inconclusive 基础设施路径、Generation/Candidate/Patience/API Budget 停止条件；
-- 付费 CLI 显式确认、旧 Champion 保留和 Last-Known-Good Pointer Rollback。
-- Final Manifest 身份冻结、36-run 平衡性、禁止选择性续跑与付费确认顺序；
-- Final Summary/CSV 复算、36 份 Instance 证据关联和四张 PNG Hash 校验。
-
-Docker 可用且镜像构建完成后，真实隔离验收为：
-
-```powershell
-python -m pytest tests/test_docker_integration.py -v
-```
-
-配置好密钥后，可执行一次真实模型调用：
-
-```powershell
-evodev-smoke-llm
-```
-
-预期模型回复：
+## 项目结构
 
 ```text
-EvoDev ready
+EvoDev/
+├── src/evodev/          # ReAct Agent、LLM、Policy、Experience、Evaluation
+├── mcp_servers/         # DevTools MCP stdio Server
+├── benchmarks/          # 6 Train + 3 Validation + 3 Test
+├── docker/sandbox/      # 隔离测试镜像
+├── policies/            # Candidate、Champion 与版本索引
+├── evolution/           # Proposal、Gate 与 Generation 状态
+├── experiences/         # 冻结 Experience 快照
+├── results/final-v1/    # 36-run 最终结果、实例证据与图表
+├── tests/               # 自动化测试
+└── docs/                # 完整技术报告
 ```
 
-真实调用会产生 API 费用，因此不属于默认单元测试。
+## 关键设计
 
-## Limitations
+### Resolution-first Gate
 
-- Final Benchmark 只有 3 个 Python Test Tasks、每组 9 次运行，不能外推为通用 Coding 能力，
-  也不宣称统计显著性；
-- 当前没有评测完整 SWE-bench，也没有覆盖多语言或大型真实仓库；
-- Policy Search Space 由人工限制为三个字段，系统没有进行模型微调；
-- MCP 仅使用本地 stdio，Docker Sandbox 面向受控 Coding Task，不是恶意代码安全边界；
-- Experience Retrieval 是结构化与词法匹配；B、C、D 在本次 Primary Metric 上并列，尚无
-  Experience 与 Policy 额外互补增益的证据；
-- `final-v1-D-task_010-r02` 因模型响应 JSON 截断产生一次 `AGENT_ERROR`，未进行选择性补跑。
+候选策略必须先通过 Schema 和 Smoke Gate。Pairwise Validation 要求 Champion/Candidate
+在相同条件下各完成 9 次有效运行：解决率优先于效率；成功率下降时，Token 节省不能推动晋升；
+成功率持平时，只有 Token 与至少一项辅助成本指标都显著改善才可接受。
 
-## v1.0 实施路线
+### Frozen Final Experiment
 
-1. ReAct Core：Task 1–3
-2. MCP Coding Agent：Task 4–6
-3. Trajectory 与 Independent Evaluation：Task 7–9
-4. Experience Evolution：Task 10–11
-5. Constrained Policy Evolution：Task 12–13
-6. Final Controlled Experiment 与 CLI Demo：Task 14
+最终实验固定模型、温度、Benchmark Hash、Sandbox Digest、工具目录、Policy/Experience Hash
+和 36 个唯一 Run ID。已有部分结果时拒绝续跑，必须升级 Experiment Version 后全量执行。
+所有已提交结果可由 `verify` 从原始产物重新计算。
 
-项目严格遵循 Final v3.0 Scope Freeze，不在真实 Trace 和 Evaluation 证明需要前扩展范围。
+### Failure-aware Engineering
+
+`final-v1` 中一次模型工具参数 JSON 截断被保留为 `AGENT_ERROR`，没有人工补跑。后续代码为
+同类错误增加了一次有限重试并累计重试 Token；冻结历史数据不被修复后的行为改写。
+
+## 局限性
+
+- Final Test Set 只有 3 个 Python 任务，不宣称统计显著性或通用 Coding 能力；
+- 成功率改善集中在 `task_010`，尚未完成 SWE-bench 或大型真实仓库评测；
+- Experience 快照当前只有一个 Train 来源经验，检索采用结构化与词法匹配；
+- Policy Search Space 人工限制为三个字段，没有进行模型微调；
+- B、C、D 在 Primary Metric 上并列，尚无 Experience 与 Policy 额外互补增益的证据；
+- Docker Sandbox 面向受控 Coding Task，不应视为恶意代码的完整安全边界。
+
+## 进一步阅读
+
+- [完整 Task 1–14 技术报告](docs/TECHNICAL_REPORT.md)
+- [最终结果 Summary](results/final-v1/summary.json)
+- [逐次运行数据](results/final-v1/summary.csv)
+- [Benchmark Manifest](benchmarks/manifest.json)
+- [当前 Champion Policy](policies/policy-v003.yaml)
+- [Evolution State](evolution/evolution-v1/progress.json)
+
+真实模型运行会产生 API 费用，必须显式确认；默认测试和上述离线验证不会调用模型。
