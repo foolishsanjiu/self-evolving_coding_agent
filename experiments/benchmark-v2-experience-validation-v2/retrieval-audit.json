@@ -1,0 +1,105 @@
+{
+  "benchmark_root": "benchmarks-v2",
+  "benchmark_version": "2.0",
+  "benchmark_hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6",
+  "snapshot_path": "experiences/experience-v003.json",
+  "experience_version": "experience-v003",
+  "experience_hash": "53f8ce05c569b94f2969aacff64c43a799b19adec52cdad07a1f59611f1006e9",
+  "split": "validation",
+  "public_metadata_only": true,
+  "task_count": 5,
+  "hit_tasks": 4,
+  "hit_rate": 0.8,
+  "average_prompt_chars": 1122.4,
+  "unique_selected_experiences": [
+    "exp_242f9076fcdd413085a70c719c9a07fc",
+    "exp_550ea328a87b488bbed05cae71d5c263",
+    "exp_6454167886074dad967e4b4486bf483c",
+    "exp_975124e62db3481c8d106a0fedfe8bd4",
+    "exp_ea8b144e5c3f462a8b9e0f5c99a4772d",
+    "exp_fd35be210da44269ba9f10fd1e65a8c4"
+  ],
+  "tasks": [
+    {
+      "task_id": "task_109",
+      "category": "cross_module_bug",
+      "hit": true,
+      "prompt_chars": 1888,
+      "selected": [
+        {
+          "experience_id": "exp_975124e62db3481c8d106a0fedfe8bd4",
+          "score": 1.8422,
+          "task_type_match": 1.0,
+          "keyword_overlap": 0.0222,
+          "trigger_match": 0.0
+        },
+        {
+          "experience_id": "exp_242f9076fcdd413085a70c719c9a07fc",
+          "score": 1.8196,
+          "task_type_match": 1.0,
+          "keyword_overlap": 0.0196,
+          "trigger_match": 0.0
+        }
+      ]
+    },
+    {
+      "task_id": "task_110",
+      "category": "state_data_flow",
+      "hit": false,
+      "prompt_chars": 0,
+      "selected": []
+    },
+    {
+      "task_id": "task_111",
+      "category": "feature",
+      "hit": true,
+      "prompt_chars": 1913,
+      "selected": [
+        {
+          "experience_id": "exp_6454167886074dad967e4b4486bf483c",
+          "score": 1.8417,
+          "task_type_match": 1.0,
+          "keyword_overlap": 0.0217,
+          "trigger_match": 0.0
+        },
+        {
+          "experience_id": "exp_550ea328a87b488bbed05cae71d5c263",
+          "score": 1.8,
+          "task_type_match": 1.0,
+          "keyword_overlap": 0.0,
+          "trigger_match": 0.0
+        }
+      ]
+    },
+    {
+      "task_id": "task_112",
+      "category": "error_resilience",
+      "hit": true,
+      "prompt_chars": 819,
+      "selected": [
+        {
+          "experience_id": "exp_fd35be210da44269ba9f10fd1e65a8c4",
+          "score": 1.9425,
+          "task_type_match": 1.0,
+          "keyword_overlap": 0.04,
+          "trigger_match": 0.0625
+        }
+      ]
+    },
+    {
+      "task_id": "task_113",
+      "category": "test_repair_compatibility",
+      "hit": true,
+      "prompt_chars": 992,
+      "selected": [
+        {
+          "experience_id": "exp_ea8b144e5c3f462a8b9e0f5c99a4772d",
+          "score": 1.79,
+          "task_type_match": 1.0,
+          "keyword_overlap": 0.0,
+          "trigger_match": 0.0
+        }
+      ]
+    }
+  ]
+}

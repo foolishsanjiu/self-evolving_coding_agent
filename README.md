@@ -86,10 +86,11 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 起点与失败证据，不构成演化收益或最终测试结论。9 个 eligible 失败已完成一次一 Run
 一调用的 Reflection：8 条通过安全校验，1 条因复制 evaluator-specific literals 被拒绝且
 未重试；经去重后冻结为 7 条 active Experience 的 `experience-v002`。其是否带来收益仍需
-后续 Validation 对照实验验证。公开元数据离线预检显示当前快照只命中 1/5 Validation 任务，
-因此付费对照实验已在 API 前阻断。随后仅用 Train 来源修复了元数据契约：`experience-v003`
-为 7/7 经验追加可信源 category，并在唯一具备跨任务同类 Experience 的 Train holdout 上从
-0/1 提升到 1/1；Validation 尚未用新快照重放。
+后续 Validation 对照实验验证。`experience-v002` 的首次公开元数据预检只命中 1/5，因此付费
+实验在 API 前阻断；随后仅用 Train 来源修复元数据契约并冻结 `experience-v003`。在审计门槛与
+Retriever 身份预先提交后，v003 的唯一一次 Validation 公开元数据审计命中 4/5、使用 6 条不同
+Experience，单题最大注入 1,913 字符，达到预设门槛。Retriever 与快照现已锁定；该结果只允许
+申请后续 20-call 付费对照授权，尚无 Validation 性能结论。
 
 ## 工程亮点
 
@@ -100,7 +101,7 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：316 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：318 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -147,11 +148,10 @@ evodev-baseline --project-root . --benchmark-root benchmarks-v2 `
 
 真实执行还必须增加 `--confirm-paid`，且只有收到单独的付费授权后才会进行。
 
-离线重放 V2 Experience 的 Validation 公共元数据检索，不调用模型或 Docker：
+查看已冻结的 v003 Validation 公开元数据审计，不调用模型或 Docker，也不要重复该决策审计：
 
 ```powershell
-evodev-experience-audit --project-root . --benchmark-root benchmarks-v2 `
-  --snapshot experiences/experience-v002.json
+Get-Content experiments/benchmark-v2-experience-validation-v2/manifest.json
 ```
 
 ## 项目结构
@@ -226,6 +226,7 @@ EvoDev/
 - [Benchmark v2 Experience Validation 预检](experiments/benchmark-v2-experience-validation-plan-v1/README.md)
 - [Benchmark v2 Train Experience 元数据修复](experiments/benchmark-v2-experience-metadata-v1/README.md)
 - [Benchmark v2 Experience v003 快照](experiences/experience-v003.json)
+- [Benchmark v2 Experience v003 Validation Gate](experiments/benchmark-v2-experience-validation-v2/README.md)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

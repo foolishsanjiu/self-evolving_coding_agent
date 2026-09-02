@@ -28,5 +28,6 @@ same-task 防泄漏规则排除。报告同时保留 1/8 和 1/1 两种分母，
 `53f8ce05c569b94f2969aacff64c43a799b19adec52cdad07a1f59611f1006e9`。
 
 审计只读取 Train 公开任务元数据和公开仓库文件名；Validation/Test、hidden tests 与 Gold Patch
-均未读取。下一阶段可以用 v003 执行一次此前已经冻结的 Validation 公共元数据预检，但在看到
-结果后不得继续调节检索器；付费 Validation 仍需新的明确授权。
+均未读取。后续 v003 唯一一次 Validation 公开元数据审计已冻结在
+[`benchmark-v2-experience-validation-v2`](../benchmark-v2-experience-validation-v2/README.md)：命中
+4/5 并达到预设门槛，Retriever 随即锁定。付费 Validation 仍需新的明确授权。

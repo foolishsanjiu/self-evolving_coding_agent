@@ -38,4 +38,6 @@ category，并以 Train leave-one-task-out 覆盖率验证。不能根据本次 
 
 后续状态：Train-only 元数据契约已在
 [`benchmark-v2-experience-metadata-v1`](../benchmark-v2-experience-metadata-v1/README.md) 修复并冻结为
-`experience-v003`。本目录对 v002 的 1/5 结果保持不变；尚未用 v003 重新读取 Validation。
+`experience-v003`。本目录对 v002 的 1/5 结果保持不变；v003 的唯一一次后续审计已独立冻结在
+[`benchmark-v2-experience-validation-v2`](../benchmark-v2-experience-validation-v2/README.md)，
+达到预设处理覆盖门槛并锁定 Retriever，但尚未执行付费 Validation。

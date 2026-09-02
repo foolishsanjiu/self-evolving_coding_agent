@@ -494,6 +494,24 @@ Train leave-one-task-out 审计中，v002 为 0/8、v003 为 1/8。总体比例�
 `experiments/benchmark-v2-experience-metadata-v1/train-retrieval-audit.json`；文件读取测试确认
 本阶段没有访问 Validation/Test、hidden tests 或 Gold Patch，也没有模型调用与新增费用。
 
+### Benchmark v2 Experience v003 Validation Gate
+
+为避免看到 Validation 处理覆盖后继续调参，v003 的审计规则、输入 Hash、Retriever Git Blob、
+规范化 SHA-256 与参数先提交于 Git `9224f0a`，随后才执行唯一一次决策型公开元数据审计。预设
+通过条件为命中不少于 4/5 任务、至少选择 3 条不同 Experience、单题注入不超过 2,500 字符，
+且数据边界检查全部通过。
+
+实际结果命中 4/5，选择 6 条不同 Experience，单题最大注入 1,913 字符；task_110 因冻结库存
+没有 `state_data_flow` 来源经验而未命中。结果满足全部预设条件，状态记为
+`ready_for_paid_authorization`。这只证明 Relevant arm 相对 Baseline 具有足够的处理差异，不证明
+Experience 改善了 Agent 成功率。
+
+从该 Gate 起，Retriever、v003 快照、任务类别、阈值和排序参数全部锁定；任何修改都必须创建
+新的实验版本，不能复用本次判定。审计原始输出和机器可读清单位于
+`experiments/benchmark-v2-experience-validation-v2/`。本阶段模型调用与付费调用均为 0，未启动
+Docker，也未访问 hidden tests、Gold Patch 或 Test split。若另行获得明确付费授权，后续固定为
+5 题 × 2 repetitions × Baseline/Relevant 两个 arms，共 20 次调用，禁止选择性补跑。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和
