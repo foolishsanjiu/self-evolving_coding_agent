@@ -83,7 +83,10 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 已冻结。正式 Baseline 预案已固定为仅运行 8 道 Train、每题重复 2 次，共 16 次付费调用；
 该轮现已完整执行并独立评测，6/16 Resolved（37.5%）：task_101、102、104 均为 2/2，
 其余五题均为 0/2。Validation/Test 仍保持未暴露；该结果只表示固定 Baseline 的 Train
-起点与失败证据，不构成演化收益或最终测试结论。
+起点与失败证据，不构成演化收益或最终测试结论。9 个 eligible 失败已完成一次一 Run
+一调用的 Reflection：8 条通过安全校验，1 条因复制 evaluator-specific literals 被拒绝且
+未重试；经去重后冻结为 7 条 active Experience 的 `experience-v002`。其是否带来收益仍需
+后续 Validation 对照实验验证。
 
 ## 工程亮点
 
@@ -94,7 +97,7 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：307 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：310 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -154,7 +157,7 @@ EvoDev/
 ├── policies/            # Candidate、Champion 与版本索引
 ├── evolution/           # Proposal、Gate 与 Generation 状态
 ├── experiences/         # 冻结 Experience 快照
-├── experiments/         # 开发实验与 Benchmark v2 Pilot 审计摘要
+├── experiments/         # 开发实验与 Benchmark v2 运行审计摘要
 ├── results/final-v1/    # 36-run 最终结果、实例证据与图表
 ├── tests/               # 自动化测试
 └── docs/                # 完整技术报告
@@ -184,7 +187,8 @@ EvoDev/
 - Final Test Set 只有 3 个 Python 任务，不宣称统计显著性或通用 Coding 能力；
 - V2 Pilot 只有 4 题 × 2 Policy × 1 次重复，不能作为策略优劣或能力提升证据；
 - 成功率改善集中在 `task_010`，尚未完成 SWE-bench 或大型真实仓库评测；
-- Experience 快照当前只有一个 Train 来源经验，检索采用结构化与词法匹配；
+- v1 Final 使用的 Experience 快照只有一个 Train 来源；新 V2 快照含 7 条经验，但尚未通过
+  Validation 对照验证其净收益；
 - Policy Search Space 人工限制为三个字段，没有进行模型微调；
 - B、C、D 在 Primary Metric 上并列，尚无 Experience 与 Policy 额外互补增益的证据；
 - Docker Sandbox 面向受控 Coding Task，不应视为恶意代码的完整安全边界。
@@ -207,6 +211,8 @@ EvoDev/
 - [Benchmark v2 Train Baseline 配置](configs/experiments/benchmark-v2-train-baseline-v1.yaml)
 - [Benchmark v2 Train Baseline 结果](experiments/benchmark-v2-train-baseline-v1/README.md)
 - [Benchmark v2 Train Failure Evidence](evolution/benchmark-v2/README.md)
+- [Benchmark v2 Train Reflection 结果](experiments/benchmark-v2-reflection-v1/README.md)
+- [Benchmark v2 Experience 快照](experiences/experience-v002.json)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

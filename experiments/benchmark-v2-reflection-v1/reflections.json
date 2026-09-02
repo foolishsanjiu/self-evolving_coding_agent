@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "benchmark-v2-reflection-v1",
+  "accepted": [
+    {
+      "reflection_id": "reflection_21a6a717f7cf4347a6237df6052f6c38",
+      "task_id": "task_103",
+      "run_id": "run_task_103_r02",
+      "failure_type": "TARGET_TEST_FAILED",
+      "evidence": [
+        {"kind": "evaluator_result", "reference": "evaluator:failure_type"},
+        {"kind": "behavioral_feature", "reference": "feature:patch_attempts"},
+        {"kind": "behavioral_feature", "reference": "feature:inspected_tests_before_edit"}
+      ],
+      "root_cause": "The coercion/resolution fix for preserving false-like configuration values became too permissive: an unrecognized string that is not a valid boolean was no longer rejected at the type-coercion boundary, so the validation test received no ValueError.",
+      "bad_strategy": "Patching false-like handling by broadening the 'is present' check without first exhaustively parsing and validating the boolean domain; this focused on source precedence and ignored the need to reject invalid string values.",
+      "better_strategy": "Introduce or retain a single strict coercion function that recognizes true-like values, recognizes false-like values, and raises ValueError for every other value, then use that function consistently across CLI, environment, file, and default resolution paths.",
+      "confidence": 0.8,
+      "created_at": "2026-09-02T08:36:30.680912+00:00"
+    },
+    {
+      "reflection_id": "reflection_618ed74d8e5341a18e416853b9d353a0",
+      "task_id": "task_105",
+      "run_id": "run_task_105_r01",
+      "failure_type": "TARGET_TEST_FAILED",
+      "evidence": [
+        {"kind": "trajectory_event", "reference": "event:57"},
+        {"kind": "trajectory_event", "reference": "event:58"},
+        {"kind": "trajectory_event", "reference": "event:60"},
+        {"kind": "trajectory_event", "reference": "event:61"},
+        {"kind": "trajectory_event", "reference": "event:64"},
+        {"kind": "trajectory_event", "reference": "event:66"},
+        {"kind": "trajectory_event", "reference": "event:67"},
+        {"kind": "trajectory_event", "reference": "event:70"},
+        {"kind": "behavioral_feature", "reference": "feature:patch_attempts"},
+        {"kind": "behavioral_feature", "reference": "feature:test_runs"},
+        {"kind": "evaluator_result", "reference": "evaluator:failure_type"}
+      ],
+      "root_cause": "Completion was still tied to the current chunk's arrival position or an in-order trigger. In the failing out-of-order case, the last stored chunk was not the chunk that the existing logic expected to trigger final assembly, so add_chunk returned None even though all required indices were present in the accumulated state.",
+      "bad_strategy": "Attempting to make the order-independent assembly test pass with incremental patches layered onto the existing ordered completion path. The invariant was not re-expressed as a pure property of the accumulated chunks, leading to multiple failed patch attempts and leaving an order-sensitive completion condition in place.",
+      "better_strategy": "After every accepted chunk, update a per-upload accumulator keyed by chunk index, then recompute completion from that accumulator by checking whether every index from 0 to total-1 is present. Return the joined result only when that completeness predicate is true; otherwise return None. Keep insertion and completion detection separate so arrival order cannot affect the result.",
+      "confidence": 0.62,
+      "created_at": "2026-09-02T08:37:27.875841+00:00"
+    },
+    {
+      "reflection_id": "reflection_0cbf659e4d8e4ebebe94d9ee7fd89cc6",
+      "task_id": "task_105",
+      "run_id": "run_task_105_r02",
+      "failure_type": "REGRESSION_FAILED",
+      "evidence": [
+        {"kind": "evaluator_result", "reference": "evaluator:failure_type"},
+        {"kind": "behavioral_feature", "reference": "feature:test_runs"},
+        {"kind": "behavioral_feature", "reference": "feature:patch_attempts"},
+        {"kind": "trajectory_event", "reference": "event:58"}
+      ],
+      "root_cause": "The implementation focused on making assembly completion order-independent and inadvertently changed how duplicate and out-of-range chunks were handled, causing previously guaranteed conflict-error cases to become silent successes. Only two test runs were performed while iterating six patch attempts, so the preserved error contract was not verified against regression expectations before the run ended.",
+      "bad_strategy": "Relaxed conflict detection for duplicate and invalid chunks in service of order-independent assembly, then validated mainly with narrow local test runs rather than checking existing error-contract behavior.",
+      "better_strategy": "Separate per-chunk validation and conflict checks from the order-independent completion state: reject duplicate or out-of-range chunks exactly as before, while changing only the completion condition to wait for every required chunk. Run regression tests covering duplicate and invalid inputs whenever modifying assembler semantics.",
+      "confidence": 0.84,
+      "created_at": "2026-09-02T08:38:00.261464+00:00"
+    },
+    {
+      "reflection_id": "reflection_b382b4843d4c4e7aaeb498a86ee93c4a",
+      "task_id": "task_106",
+      "run_id": "run_task_106_r01",
+      "failure_type": "TARGET_TEST_FAILED",
+      "evidence": [
+        {"kind": "evaluator_result", "reference": "evaluator:failure_type"},
+        {"kind": "behavioral_feature", "reference": "feature:test_runs"},
+        {"kind": "behavioral_feature", "reference": "feature:patch_attempts"},
+        {"kind": "trajectory_event", "reference": "event:58"},
+        {"kind": "trajectory_event", "reference": "event:60"},
+        {"kind": "trajectory_event", "reference": "event:65"}
+      ],
+      "root_cause": "The final patch still encoded an incorrect proration formula: it produced a tiny token-level adjustment instead of computing the remaining-value delta between the current and target plans over the inclusive service period. The agent iterated on patch application without running the target tests after the final edit, so the semantic error in the proration calculation was never caught.",
+      "bad_strategy": "Making narrow arithmetic edits to the proration adjustment without first deriving a complete model from the date range and catalog prices, and without running the target tests after applying the final patch. This allowed an obviously small adjustment to be accepted as the answer.",
+      "better_strategy": "Before editing, derive the expected proration from first principles: count inclusive remaining service days, compute the remaining value on the current and target plans in integer cents using catalog prices, calculate the signed difference, and apply half-up rounding for credits. Then run the target tests immediately after the patch and verify both upgrade and downgrade directions.",
+      "confidence": 0.85,
+      "created_at": "2026-09-02T08:38:23.712486+00:00"
+    },
+    {
+      "reflection_id": "reflection_d5c359bf88c34ca4beb94549eaf0253d",
+      "task_id": "task_106",
+      "run_id": "run_task_106_r02",
+      "failure_type": "AGENT_MAX_STEPS",
+      "evidence": [
+        {"kind": "trajectory_event", "reference": "event:43"},
+        {"kind": "trajectory_event", "reference": "event:46"},
+        {"kind": "behavioral_feature", "reference": "feature:patch_attempts"},
+        {"kind": "evaluator_result", "reference": "evaluator:failure_type"}
+      ],
+      "root_cause": "The agent exhausted its step budget because no code change was ever successfully applied. apply_patch failed with PATCH_APPLY_FAILED on the first attempt and continued failing on retries while the agent kept using the same approach. With final_patch_summary reporting zero additions and deletions, all remaining steps were consumed by repeated unsuccessful patch attempts rather than by making progress on the fix.",
+      "bad_strategy": "Repeatedly invoking apply_patch after the same PATCH_APPLY_FAILED result, making 8 patch attempts without pausing to inspect the exact failure details or verifying the current file content required for a valid patch. The agent therefore burned its finite step budget while producing no edits and leaving too little time for running tests or iterating.",
+      "better_strategy": "After the first apply_patch failure, stop and inspect the actual error message and the relevant file context. Create a minimal patch with exact surrounding context and correct paths; confirm the patch was applied before running tests. If a second patch attempt fails, immediately switch to another supported editing strategy instead of repeating the same failing tool call format.",
+      "confidence": 0.78,
+      "created_at": "2026-09-02T08:38:44.698713+00:00"
+    },
+    {
+      "reflection_id": "reflection_c52a45f6e7dc458a9cb0e82bbd9e4ec3",
+      "task_id": "task_107",
+      "run_id": "run_task_107_r01",
+      "failure_type": "REGRESSION_FAILED",
+      "evidence": [
+        {"kind": "evaluator_result", "reference": "evaluator:failure_type"},
+        {"kind": "trajectory_event", "reference": "event:48"},
+        {"kind": "behavioral_feature", "reference": "feature:patch_attempts"}
+      ],
+      "root_cause": "The patch tightly coupled executor lifecycle handling to the context manager protocol by using `with executor_factory(...) as executor`. The hidden regression test injects a RecordingExecutor that implements only `submit` and `shutdown`, not `__enter__`/`__exit__`, so execution fails with TypeError before any ordering or cancellation logic can run. The fix overfit to ThreadPoolExecutor's context-manager convenience instead of respecting the minimal executor-like interface supplied by the injected factory.",
+      "bad_strategy": "Assuming the injected `executor_factory` must return a context manager because the standard-library default `ThreadPoolExecutor` happens to support `with`. This adds an accidental API requirement that breaks lightweight fakes and dependency-injected executors.",
+      "better_strategy": "Use the minimal executor contract explicitly: create the executor with `executor_factory(max_workers=max_workers)`, keep the result paths ordered and bounded, and always call `executor.shutdown(wait=True, cancel_futures=True)` in a `finally` block so pending futures are canceled on failure. Only treat context manager support as required if it is part of the stated contract.",
+      "confidence": 0.9,
+      "created_at": "2026-09-02T08:39:05.112598+00:00"
+    },
+    {
+      "reflection_id": "reflection_4fc4613c56e24a8aa42815b0ca88c1b0",
+      "task_id": "task_107",
+      "run_id": "run_task_107_r02",
+      "failure_type": "REGRESSION_FAILED",
+      "evidence": [
+        {"kind": "trajectory_event", "reference": "event:44"},
+        {"kind": "trajectory_event", "reference": "event:55"},
+        {"kind": "evaluator_result", "reference": "evaluator:failure_type"}
+      ],
+      "root_cause": "The implementation of ordered_parallel_map used executor_factory inside a `with` statement, assuming every executor supports the context-manager protocol. The hidden regression RecordingExecutor only exposes the executor submission/shutdown interface, not `__enter__`/`__exit__`, so execution fails immediately with TypeError before any ordered work is attempted.",
+      "bad_strategy": "Treating the executor returned by executor_factory as always context-manager compatible and relying on `with` to perform cleanup and cancellation.",
+      "better_strategy": "Use explicit lifecycle management after creating the executor: store the executor in a variable, call cleanup/cancellation of pending futures inside an except path when worker failures occur, and always call executor.shutdown(wait=True) in a finally block. Avoid imposing `__enter__`/`__exit__` requirements on caller-provided executors.",
+      "confidence": 0.9,
+      "created_at": "2026-09-02T08:39:30.353483+00:00"
+    },
+    {
+      "reflection_id": "reflection_aa2576e5449c4ffea63a91ead7365fe0",
+      "task_id": "task_108",
+      "run_id": "run_task_108_r02",
+      "failure_type": "REGRESSION_FAILED",
+      "evidence": [
+        {"kind": "trajectory_event", "reference": "event:67"},
+        {"kind": "behavioral_feature", "reference": "feature:patch_attempts"},
+        {"kind": "evaluator_result", "reference": "evaluator:failure_type"}
+      ],
+      "root_cause": "The transport dispatcher was made compatible with legacy positional transports by adding a fallback that invokes any non-keyword-only send with four positional arguments. This fallback did not validate whether the transport actually accepts those positional parameters, so an unsupported signature reached invocation and raised a raw TypeError instead of the required descriptive rejection error.",
+      "bad_strategy": "Treating the keyword-only protocol check as the only gate and assuming every non-keyword-only callable is a valid legacy positional transport. This caused unsupported callables to be invoked too late, masking the intended validation failure.",
+      "better_strategy": "Before invoking the transport, inspect its actual signature with inspect.signature. Explicitly verify that it supports either the keyword-only protocol or the required positional parameters. If it supports neither, raise the controlled 'unsupported transport.send signature' TypeError before any invocation attempt.",
+      "confidence": 0.82,
+      "created_at": "2026-09-02T08:39:41.991748+00:00"
+    }
+  ]
+}

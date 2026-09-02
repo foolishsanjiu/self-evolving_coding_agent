@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "benchmark-v2-reflection-v1",
+  "call_accounting": {
+    "authorized": 9,
+    "completed": 9,
+    "accepted": 8,
+    "rejected": 1,
+    "retried": 0
+  },
+  "accepted_batch_usage": {
+    "calls": 8,
+    "input_tokens": 18956,
+    "output_tokens": 28806,
+    "total_tokens": 47762,
+    "off_peak_all_cache_miss_estimate_usd": 0.0232,
+    "peak_all_cache_miss_estimate_usd": 0.0464
+  },
+  "rejected_call": {
+    "run_id": "run_task_103_r01",
+    "reason": "Experience candidate copies evaluator-specific literals",
+    "input_tokens": null,
+    "output_tokens": null,
+    "usage_note": "The original batch runner stopped on local validation and did not persist this call's token usage. The call was not retried."
+  },
+  "total_usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "actual_billed_cost": null,
+    "known_usage_lower_bound_tokens": 47762,
+    "known_peak_cost_lower_bound_usd": 0.0464,
+    "note": "A precise nine-call total cannot be reconstructed without provider billing data because the rejected call usage was not retained."
+  },
+  "curation": {
+    "generated_candidates": 8,
+    "active_experiences": 7,
+    "deprecated_duplicates": 1,
+    "source_reflections": 8,
+    "merge": {
+      "canonical_experience_id": "exp_498fc99571d64663b5b8d975a4fb5a65",
+      "deprecated_experience_id": "exp_783436101b9e4b91befeebb03d35b369",
+      "reason": "Both task_107 repetitions identified the same injected-executor lifecycle contract failure."
+    }
+  },
+  "snapshot": {
+    "version": "experience-v002",
+    "path": "experiences/experience-v002.json",
+    "content_hash": "8eb3a05d7a1c7aa655688b74f050951234fb2133dc8183b1c2566c05aa1ae5dd",
+    "active_experiences": 7,
+    "sources": 8,
+    "relative_paths_only": true
+  },
+  "interpretation_boundary": "These are Train-derived candidate memories. No Validation/Test run has measured whether experience-v002 improves the agent."
+}

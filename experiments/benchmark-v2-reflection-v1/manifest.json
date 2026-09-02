@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "benchmark-v2-reflection-v1",
+  "purpose": "Generate and curate reusable Experience from eligible Benchmark v2 Train baseline failures",
+  "execution_git_commit": "3c7c76c473d199f293466d6cfb4263454a7c713c",
+  "preflight_git_commit": "ad068cf7cf0c77e533d1add2e065621b132242b9",
+  "source": {
+    "experiment_id": "exp-baseline-v2-train-v1",
+    "baseline_git_commit": "58f3c422d9bf8191be131623e762fbebf2fc5718",
+    "benchmark_root": "benchmarks-v2",
+    "benchmark_version": "2.0",
+    "benchmark_hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6",
+    "split": "train",
+    "eligible_runs": 9,
+    "excluded_run": {
+      "run_id": "run_task_108_r01",
+      "failure_type": "SYNTAX_ERROR",
+      "reason": "failure_not_reflection_eligible"
+    }
+  },
+  "runtime": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "temperature": 0.1,
+    "database": "data/experience-v2.sqlite",
+    "database_tracked": false,
+    "docker_required": false
+  },
+  "execution": {
+    "paid_calls": 9,
+    "accepted_calls": 8,
+    "rejected_calls": 1,
+    "retried_calls": 0,
+    "validation_access": false,
+    "test_access": false,
+    "first_persisted_at": "2026-09-02T08:36:30.680912+00:00",
+    "last_persisted_at": "2026-09-02T08:39:41.991748+00:00",
+    "note": "The rejected call occurred before the first persisted record; its exact timestamp was not retained by the pre-recovery runner."
+  },
+  "pricing_snapshot": {
+    "checked_on": "2026-09-02",
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "currency": "USD",
+    "peak_cache_miss_input_per_million": 0.44,
+    "peak_output_per_million": 1.32,
+    "authorization_ceiling_usd": 0.25,
+    "actual_billed_cost": null
+  },
+  "output": {
+    "accepted_reflections": "experiments/benchmark-v2-reflection-v1/reflections.json",
+    "summary": "experiments/benchmark-v2-reflection-v1/summary.json",
+    "experience_snapshot": "experiences/experience-v002.json",
+    "experience_version": "experience-v002",
+    "experience_hash": "8eb3a05d7a1c7aa655688b74f050951234fb2133dc8183b1c2566c05aa1ae5dd"
+  }
+}

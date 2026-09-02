@@ -40,5 +40,8 @@ Experience 的优先方向应是跨任务策略，而不是题目答案：编辑
 ## 边界与下一阶段
 
 这些根因是基于 Patch、Trajectory Feature 和 Evaluator Output 的工程推断，不是付费 Reflection
-模型的输出，也不证明任何候选策略必然提升成功率。下一阶段若要为 9 个 eligible Run 生成结构化
-Reflection/Experience，将产生最多 9 次模型调用，必须重新获得单独付费授权。
+模型的输出，也不证明任何候选策略必然提升成功率。后续已对 9 个 eligible Run 各执行一次付费
+Reflection 调用：8 条通过安全校验，1 条被拒绝且未重试；经内容审计和一次重复归并，冻结为
+7 条 active Experience。调用记账、结构化输出与边界见
+[`experiments/benchmark-v2-reflection-v1`](../../experiments/benchmark-v2-reflection-v1/README.md)。
+Validation/Test 在该阶段仍未访问。

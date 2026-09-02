@@ -441,13 +441,23 @@ input cache miss 保守估算为 1.3054 USD，低于 2.00 USD 授权上限，但
 `prefer_search_before_read`；`max_react_steps` 有更直接的候选依据，但仍必须经过 Validation Gate。
 详细证据与推断边界位于 `evolution/benchmark-v2/failure-audit-v1.json`。
 
-本阶段只读取 Train 轨迹并离线聚合，模型调用与新增费用均为 0。若下一阶段为 9 个 eligible Run
-生成结构化 Reflection/Experience，最多需要 9 次新模型调用，必须另行获得付费授权。
+本阶段只读取 Train 轨迹并离线聚合，模型调用与新增费用均为 0。其后的 Reflection 阶段在单独
+授权下对 9 个 eligible Run 各调用一次模型：8 条通过本地安全校验，首个
+`run_task_103_r01` 候选因复制 evaluator-specific literals 被拒绝且未重试。后 8 次已保留
+调用共使用 18,956 input tokens 与 28,806 output tokens；首个拒绝调用的 usage 未被旧 runner
+持久化，因此不伪造九次调用的精确 token 或账单总额。
 
 V2 Reflection 入口在正式执行前补充 `--plan` 与 `--confirm-paid`：静态计划会验证 Benchmark
 身份、独立数据库、eligible/skip 集合和最多调用数，不创建 SQLite Store，也不调用模型；真实运行
 缺少显式确认时在 API 之前拒绝。冻结执行配置位于
 `configs/experiments/benchmark-v2-reflection-v1.yaml`。
+
+合格输出经离线人工审计后，将 task_107 两次重复的 injected-executor lifecycle 经验归并为一条，
+同时保留两个 Reflection Provenance；最终冻结 7 条 active Experience 和 8 个来源到
+`experiences/experience-v002.json`，Canonical Hash 为
+`8eb3a05d7a1c7aa655688b74f050951234fb2133dc8183b1c2566c05aa1ae5dd`。快照只含相对路径，
+完整调用记账与合格 Reflection 位于 `experiments/benchmark-v2-reflection-v1/`。本结果只证明
+Train→Reflection→Experience 链路完成，尚不代表 Validation 或 Test 性能提升。
 
 ## Independent Evaluation 与 Baseline
 
