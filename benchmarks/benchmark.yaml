@@ -1,0 +1,12 @@
+benchmark_version: "1.0"
+task_count: 12
+split_counts:
+  train: 6
+  validation: 3
+  test: 3
+category_counts:
+  bug_fix: 4
+  exception_handling: 2
+  feature: 2
+  refactoring: 2
+  test_repair: 2

@@ -65,10 +65,16 @@ class SingleTaskRunner:
         *,
         experience_snapshot: Path | None = None,
         run_id: str | None = None,
+        benchmark_root: Path = Path("benchmarks"),
     ) -> None:
         self.project_root = project_root.resolve()
         self.settings = settings
-        self.loader = BenchmarkLoader(self.project_root / "benchmarks")
+        root = (
+            benchmark_root
+            if benchmark_root.is_absolute()
+            else self.project_root / benchmark_root
+        )
+        self.loader = BenchmarkLoader(root)
         self.manifest = self.loader.verify_manifest()
         self.task = _resolve_task(self.loader, task_path)
         self.policy = PolicyRepository(self.project_root / "policies").load(policy_id)
@@ -202,6 +208,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--policy", required=True)
     parser.add_argument("--experience-snapshot", type=Path)
     parser.add_argument("--run-id")
+    parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
     parser.add_argument("--confirm-paid", action="store_true")
     return parser
 
@@ -224,6 +231,7 @@ def main() -> None:
         arguments.policy,
         experience_snapshot=snapshot_path,
         run_id=arguments.run_id,
+        benchmark_root=arguments.benchmark_root,
     ).run()
     print(result.model_dump_json(indent=2))
 

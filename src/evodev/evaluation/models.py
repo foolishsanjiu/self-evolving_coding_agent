@@ -104,6 +104,7 @@ class ExperimentManifest(BaseModel):
     sandbox_digest: str = Field(min_length=1)
     benchmark_version: str = Field(min_length=1)
     benchmark_hash: str = Field(min_length=1)
+    benchmark_root: str = "benchmarks"
     benchmark_splits: list[Literal["train", "validation", "test"]] = Field(
         default_factory=lambda: ["train", "validation", "test"]
     )

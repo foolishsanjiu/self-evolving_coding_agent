@@ -74,6 +74,10 @@ flowchart LR
 - **Test（3题）**：冻结后仅用于最终 A/B/C/D 实验；
 - Repository Template 不跨 Split，Hidden Tests 与 Gold Patch 对 Agent 不可见。
 
+当前公开结果仍基于冻结的 Benchmark v1。Benchmark Loader 与 Baseline、Experience、
+Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-root` 选择独立版本；
+每个新版本使用 `benchmark.yaml` 声明版本、任务总数、Split 和类别配额，不覆盖 v1 历史数据。
+
 ## 工程亮点
 
 - **完整 Coding Loop**：读取、搜索、补丁、Git Diff、测试与多轮错误恢复；
@@ -83,7 +87,7 @@ flowchart LR
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：206 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：208 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 

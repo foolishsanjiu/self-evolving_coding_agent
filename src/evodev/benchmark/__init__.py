@@ -2,6 +2,7 @@
 
 from evodev.benchmark.loader import BenchmarkLoader
 from evodev.benchmark.models import (
+    BenchmarkDefinition,
     BenchmarkManifest,
     BenchmarkQAResult,
     BenchmarkTask,
@@ -10,6 +11,7 @@ from evodev.benchmark.models import (
 from evodev.benchmark.qa import BenchmarkQA
 
 __all__ = [
+    "BenchmarkDefinition",
     "BenchmarkLoader",
     "BenchmarkManifest",
     "BenchmarkQA",

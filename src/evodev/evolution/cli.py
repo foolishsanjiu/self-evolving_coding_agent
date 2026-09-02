@@ -78,6 +78,7 @@ def _aggregate(arguments: argparse.Namespace) -> None:
         arguments.project_root,
         arguments.experiment_ids,
         report_id=arguments.report_id,
+        benchmark_root=arguments.benchmark_root,
     )
     output = arguments.output
     if not output.is_absolute():
@@ -97,6 +98,7 @@ def _collect_train(arguments: argparse.Namespace) -> None:
         experiment_id=arguments.experiment_id,
         split="train",
         repetitions=arguments.repetitions,
+        benchmark_root=arguments.benchmark_root,
     ).run()
     print(output.summary.model_dump_json(indent=2))
 
@@ -232,6 +234,7 @@ def _validate(arguments: argparse.Namespace) -> None:
             champion,
             candidate,
             evolution_id=arguments.evolution_id,
+            benchmark_root=arguments.benchmark_root,
         )
     bundle = CandidateGateBundle(
         candidate_id=candidate.policy_id,
@@ -338,6 +341,7 @@ def _rollback(arguments: argparse.Namespace) -> None:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run bounded EvoDev Policy evolution stages.")
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
+    parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
     commands = parser.add_subparsers(dest="command", required=True)
 
     aggregate = commands.add_parser("aggregate", help="Aggregate Train-only failure evidence.")

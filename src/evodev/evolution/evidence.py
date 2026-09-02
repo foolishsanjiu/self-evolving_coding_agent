@@ -19,12 +19,16 @@ def aggregate_train_failure_report(
     experiment_ids: list[str],
     *,
     report_id: str,
+    benchmark_root: Path = Path("benchmarks"),
 ) -> FailurePatternReport:
     """Load public run evidence while rejecting non-Train provenance."""
     root = project_root.resolve()
+    resolved_benchmark_root = (
+        benchmark_root if benchmark_root.is_absolute() else root / benchmark_root
+    )
     tasks = {
         task.config.task_id: task
-        for task in BenchmarkLoader(root / "benchmarks").load_tasks()
+        for task in BenchmarkLoader(resolved_benchmark_root).load_tasks()
     }
     evidence = []
     for experiment_id in experiment_ids:

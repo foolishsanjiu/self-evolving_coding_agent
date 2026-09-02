@@ -1,6 +1,7 @@
 experiment_id: final-v1
 experiment_version: final-v1
 results_dir: results/final-v1
+benchmark_root: benchmarks
 benchmark_split: test
 runs_per_task_per_variant: 3
 baseline_policy_id: policy-v001

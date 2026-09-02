@@ -5,17 +5,39 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 BenchmarkSplit = Literal["train", "validation", "test"]
-TaskCategory = Literal[
-    "bug_fix",
-    "exception_handling",
-    "feature",
-    "refactoring",
-    "test_repair",
-]
+TaskCategory = str
 TaskDifficulty = Literal["easy", "medium", "hard"]
+
+
+class BenchmarkDefinition(BaseModel):
+    """Declared inventory contract for one versioned benchmark root."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    benchmark_version: str = Field(pattern=r"^[0-9]+\.[0-9]+$")
+    task_count: int = Field(gt=0)
+    split_counts: dict[BenchmarkSplit, int]
+    category_counts: dict[str, int]
+
+    @model_validator(mode="after")
+    def validate_counts(self) -> BenchmarkDefinition:
+        if set(self.split_counts) != {"train", "validation", "test"}:
+            raise ValueError("Benchmark split_counts must declare train, validation, and test")
+        if any(count < 1 for count in self.split_counts.values()):
+            raise ValueError("Every Benchmark split must contain at least one task")
+        if not self.category_counts or any(
+            not category or count < 1
+            for category, count in self.category_counts.items()
+        ):
+            raise ValueError("Benchmark categories must have non-empty names and positive counts")
+        if sum(self.split_counts.values()) != self.task_count:
+            raise ValueError("Benchmark split counts do not match task_count")
+        if sum(self.category_counts.values()) != self.task_count:
+            raise ValueError("Benchmark category counts do not match task_count")
+        return self
 
 
 class BenchmarkTaskConfig(BaseModel):
@@ -30,7 +52,7 @@ class BenchmarkTaskConfig(BaseModel):
     test_command: Literal["pytest -q"] = "pytest -q"
     expected_behavior: str = Field(min_length=1)
     repository_template: str = Field(min_length=1)
-    benchmark_version: Literal["1.0"] = "1.0"
+    benchmark_version: str = Field(default="1.0", pattern=r"^[0-9]+\.[0-9]+$")
 
 
 class BenchmarkTask(BaseModel):
@@ -63,8 +85,8 @@ class BenchmarkManifest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    benchmark_version: Literal["1.0"] = "1.0"
-    task_count: Literal[12] = 12
+    benchmark_version: str = Field(pattern=r"^[0-9]+\.[0-9]+$")
+    task_count: int = Field(gt=0)
     split_counts: dict[BenchmarkSplit, int]
     category_counts: dict[TaskCategory, int]
     tasks: list[TaskManifestEntry]

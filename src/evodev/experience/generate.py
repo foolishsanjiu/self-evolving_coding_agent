@@ -25,14 +25,21 @@ class ExperienceGenerationRunner:
         experiment_id: str,
         database_path: Path,
         extractor: ReflectionExtractor | None = None,
+        benchmark_root: Path = Path("benchmarks"),
     ) -> None:
         self.project_root = project_root.resolve()
         self.experiment_id = experiment_id
         self.database_path = database_path
         self.extractor = extractor
+        self.benchmark_root = benchmark_root
 
     def run(self, task_id: str | None = None) -> dict[str, object]:
-        loader = BenchmarkLoader(self.project_root / "benchmarks")
+        root = (
+            self.benchmark_root
+            if self.benchmark_root.is_absolute()
+            else self.project_root / self.benchmark_root
+        )
+        loader = BenchmarkLoader(root)
         tasks = {task.config.task_id: task for task in loader.load_tasks()}
         extractor = self.extractor
         if extractor is None:
@@ -110,13 +117,17 @@ def main() -> None:
     parser.add_argument("--experiment-id", default="exp-baseline-v1")
     parser.add_argument("--task-id")
     parser.add_argument("--database", type=Path, default=Path("data/experience.sqlite"))
+    parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
     arguments = parser.parse_args()
     project_root = arguments.project_root.resolve()
     database = arguments.database
     if not database.is_absolute():
         database = project_root / database
     summary = ExperienceGenerationRunner(
-        project_root, arguments.experiment_id, database
+        project_root,
+        arguments.experiment_id,
+        database,
+        benchmark_root=arguments.benchmark_root,
     ).run(task_id=arguments.task_id)
     print(json.dumps(summary, indent=2))
 

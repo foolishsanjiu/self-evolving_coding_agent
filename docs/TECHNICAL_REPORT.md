@@ -244,6 +244,29 @@ Original Repository + Hidden Evaluation -> FAIL
 Original Repository + Gold Patch + Hidden Evaluation -> PASS
 ```
 
+### Versioned Benchmark Root
+
+Benchmark v1 的声明式库存合同位于 `benchmarks/benchmark.yaml`，其内容与原冻结的
+12 题、6/3/3 Split 和类别配额一致，因此 `benchmarks/manifest.json` 的历史 Hash 不变。
+Loader 不再把版本、任务总数和类别写死在 Schema 中，而是从所选 Benchmark Root 的
+`benchmark.yaml` 读取并验证；缺少该文件的旧 v1 副本仍使用原 12 题合同兼容加载。
+
+Baseline、Reflection、Experience、Evolution Evidence/Train/Pairwise Validation、Single
+Task 和 Final Experiment 均接受独立的 Benchmark Root。命令行入口使用：
+
+```powershell
+evodev-benchmark-qa --benchmark-root benchmarks
+evodev-baseline --benchmark-root benchmarks --experiment-id exp-baseline-v1
+evodev-evolve --benchmark-root benchmarks collect-train `
+  --experiment-id exp-policy-train-v1 --repetitions 2 --confirm-paid
+```
+
+Final Experiment 在配置文件中使用 `benchmark_root`；该逻辑路径同时进入新实验 Manifest。
+旧 Manifest 缺少该字段时按 `benchmarks` 解析，因此已冻结的 `final-v1` 仍可离线复核。
+Final Runner 的计划长度由冻结 Test Task 数量计算，不再写死为三题或 36 次运行；v1 仍自然
+产生 36 次，计划中的 v2 五题在三次重复、四个 Variant 下产生 60 次。以上兼容层不引入
+新依赖，Benchmark v2 题目与 Pilot 运行属于下一独立阶段。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

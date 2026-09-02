@@ -45,6 +45,7 @@ def test_final_config_is_the_exact_fixed_2x2_matrix() -> None:
     config = load_final_experiment_config(CONFIG_PATH)
 
     assert config.benchmark_split == "test"
+    assert config.benchmark_root == "benchmarks"
     assert config.runs_per_task_per_variant == 3
     assert {
         item.variant_id: (
@@ -77,6 +78,7 @@ def test_preflight_pins_all_identities_and_is_ready_with_two_accepted_cases() ->
     assert preflight.expected_agent_runs == 36
     assert manifest.git_commit == "a" * 40
     assert manifest.benchmark_task_ids == ["task_010", "task_011", "task_012"]
+    assert manifest.benchmark_root == "benchmarks"
     assert manifest.tool_catalog_hash == "b" * 64
     assert variants[FinalVariantId.BASELINE].policy_version == "policy-v001"
     assert variants[FinalVariantId.EXPERIENCE].experience_version == "experience-v001"

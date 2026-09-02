@@ -138,6 +138,23 @@ def test_final_run_plan_is_fixed_balanced_and_unique() -> None:
     }
 
 
+def test_final_run_plan_scales_to_five_v2_test_tasks() -> None:
+    _, _, preflight = _preflight()
+    task_ids = [f"task_{number}" for number in range(114, 119)]
+    variants = [
+        variant.model_copy(update={"expected_attempts": 15})
+        for variant in preflight.manifest.variants
+    ]
+    manifest = preflight.manifest.model_copy(
+        update={"benchmark_task_ids": task_ids, "variants": variants}
+    )
+
+    plan = build_final_run_plan(manifest)
+
+    assert len(plan) == 60
+    assert len({item.agent_run_id for item in plan}) == 60
+
+
 def test_final_runner_requires_paid_confirmation_and_matching_freeze() -> None:
     with pytest.raises(PermissionError, match="--confirm-paid"):
         require_final_paid_confirmation(False)

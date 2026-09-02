@@ -4,6 +4,7 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
+import yaml
 
 from evodev.benchmark import BenchmarkLoader, BenchmarkQA
 from evodev.sandbox import WorkspaceManager
@@ -34,7 +35,56 @@ def test_manifest_matches_every_frozen_task_checksum() -> None:
 
     assert manifest.task_count == 12
     assert len({entry.checksum for entry in manifest.tasks}) == 12
-    assert len(manifest.manifest_hash) == 64
+    assert manifest.manifest_hash == (
+        "5d22632e017efeea07cde1f52c948aca03337df6314f6289e2393aec2558b453"
+    )
+
+
+def test_declared_v2_inventory_is_not_limited_to_v1_counts(tmp_path: Path) -> None:
+    definition = {
+        "benchmark_version": "2.0",
+        "task_count": 18,
+        "split_counts": {"train": 8, "validation": 5, "test": 5},
+        "category_counts": {
+            "cross_module_bug": 4,
+            "state_data_flow": 3,
+            "feature": 3,
+            "error_resilience": 3,
+            "concurrency_resource": 2,
+            "test_repair_compatibility": 3,
+        },
+    }
+    (tmp_path / "benchmark.yaml").write_text(
+        yaml.safe_dump(definition, sort_keys=False), encoding="utf-8"
+    )
+    loader = BenchmarkLoader(tmp_path)
+    splits = ["train"] * 8 + ["validation"] * 5 + ["test"] * 5
+    categories = [
+        "cross_module_bug",
+    ] * 4 + [
+        "state_data_flow",
+    ] * 3 + [
+        "feature",
+    ] * 3 + [
+        "error_resilience",
+    ] * 3 + [
+        "concurrency_resource",
+    ] * 2 + [
+        "test_repair_compatibility",
+    ] * 3
+    tasks = []
+    for number, (split, category) in enumerate(zip(splits, categories), start=101):
+        config = TASKS[0].config.model_copy(
+            update={
+                "task_id": f"task_{number}",
+                "category": category,
+                "repository_template": f"v2_template_{number}",
+                "benchmark_version": "2.0",
+            }
+        )
+        tasks.append(TASKS[0].model_copy(update={"split": split, "config": config}))
+
+    loader._validate_inventory(tasks)
 
 
 def test_repository_template_cannot_cross_splits() -> None:

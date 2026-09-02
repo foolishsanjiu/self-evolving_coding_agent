@@ -56,6 +56,7 @@ class FixedPolicyBaselineRunner:
         settings: AppSettings,
         experiment_id: str = "exp-baseline-v1",
         repetitions: int = 1,
+        benchmark_root: Path = Path("benchmarks"),
     ) -> None:
         if repetitions < 1:
             raise ValueError("repetitions must be positive")
@@ -63,7 +64,11 @@ class FixedPolicyBaselineRunner:
         self.settings = settings
         self.experiment_id = experiment_id
         self.repetitions = repetitions
-        self.loader = BenchmarkLoader(self.project_root / "benchmarks")
+        if benchmark_root.is_absolute():
+            self.benchmark_root = benchmark_root.resolve()
+        else:
+            self.benchmark_root = (self.project_root / benchmark_root).resolve()
+        self.loader = BenchmarkLoader(self.benchmark_root)
         self.benchmark_manifest = self.loader.verify_manifest()
         self.runs_root = self.project_root / "runs" / experiment_id
         self.experiment_path = self.project_root / "evaluation_runs" / experiment_id
@@ -165,7 +170,7 @@ class FixedPolicyBaselineRunner:
         assert catalog_hash is not None
         manifest = ExperimentManifest(
             experiment_id=self.experiment_id,
-            experiment_version="exp-baseline-v1",
+            experiment_version=self.experiment_id,
             repetitions=self.repetitions,
             agent_release=__version__,
             policy_version="fixed-react-v1",
@@ -183,6 +188,7 @@ class FixedPolicyBaselineRunner:
             sandbox_digest=sandbox_digest,
             benchmark_version=self.benchmark_manifest.benchmark_version,
             benchmark_hash=self.benchmark_manifest.manifest_hash,
+            benchmark_root=self.benchmark_root.relative_to(self.project_root).as_posix(),
         )
         summary = ExperimentReporter(self.experiment_path, manifest).summarize(
             results, trajectory_paths
@@ -195,6 +201,7 @@ def main() -> None:
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--experiment-id", default="exp-baseline-v1")
     parser.add_argument("--repetitions", type=int, default=1)
+    parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
     arguments = parser.parse_args()
     project_root = arguments.project_root.resolve()
     settings = load_settings(project_root / "configs", project_root / ".env")
@@ -203,6 +210,7 @@ def main() -> None:
         settings,
         experiment_id=arguments.experiment_id,
         repetitions=arguments.repetitions,
+        benchmark_root=arguments.benchmark_root,
     ).run()
     print(summary.model_dump_json(indent=2))
 

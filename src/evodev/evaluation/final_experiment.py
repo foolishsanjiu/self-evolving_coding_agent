@@ -49,6 +49,7 @@ class FinalExperimentConfig(BaseModel):
     experiment_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
     experiment_version: str = Field(min_length=1)
     results_dir: str = Field(min_length=1)
+    benchmark_root: str = "benchmarks"
     benchmark_split: Literal["test"] = "test"
     runs_per_task_per_variant: Literal[3] = 3
     baseline_policy_id: str = Field(pattern=r"^policy-v[0-9]{3}$")
@@ -76,7 +77,7 @@ class FinalExperimentConfig(BaseModel):
         }
         if observed != expected or len(observed) != len(self.variants):
             raise ValueError("Final variants must be the exact A/B/C/D 2x2 matrix")
-        for value in (self.results_dir, self.experience_snapshot):
+        for value in (self.results_dir, self.benchmark_root, self.experience_snapshot):
             path = Path(value)
             if path.is_absolute() or ".." in path.parts:
                 raise ValueError("Final experiment paths must be project-relative")
@@ -126,6 +127,7 @@ class FinalExperimentManifest(BaseModel):
     temperature: float = Field(ge=0, le=2)
     benchmark_version: str
     benchmark_hash: str
+    benchmark_root: str = "benchmarks"
     benchmark_split: Literal["test"] = "test"
     benchmark_task_ids: list[str] = Field(min_length=1)
     sandbox_image: str
@@ -225,7 +227,7 @@ class FinalRunResultsArtifact(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     experiment_id: str
-    results: list[FinalRunResult] = Field(min_length=36, max_length=36)
+    results: list[FinalRunResult] = Field(min_length=1)
     created_at: str = Field(default_factory=utc_now)
 
 
@@ -292,7 +294,7 @@ class FinalExperimentPlanner:
         self.project_root = project_root.resolve()
         self.settings = settings
         self.config = config
-        self.loader = BenchmarkLoader(self.project_root / "benchmarks")
+        self.loader = BenchmarkLoader(self.project_root / config.benchmark_root)
         self.benchmark_manifest = self.loader.verify_manifest()
         self.repository = PolicyRepository(self.project_root / "policies")
         self.snapshot = load_snapshot(self.project_root / config.experience_snapshot)
@@ -310,8 +312,8 @@ class FinalExperimentPlanner:
         blockers = []
         if self.repository.champion().policy_id != champion.policy_id:
             blockers.append("Configured Champion does not match policies/index.json")
-        if len(test_tasks) != 3:
-            blockers.append("Final benchmark must contain exactly three Test tasks")
+        if not test_tasks:
+            blockers.append("Final benchmark must contain at least one Test task")
         if any(
             task_splits.get(source.task_id) != "train"
             for source in self.snapshot.sources
@@ -365,6 +367,7 @@ class FinalExperimentPlanner:
             temperature=self.settings.model.temperature,
             benchmark_version=self.benchmark_manifest.benchmark_version,
             benchmark_hash=self.benchmark_manifest.manifest_hash,
+            benchmark_root=self.config.benchmark_root,
             benchmark_task_ids=test_tasks,
             sandbox_image=self.settings.sandbox.image,
             sandbox_digest=identity.sandbox_digest,
@@ -506,7 +509,7 @@ def _parser():
     commands.add_parser("plan", help="Run a no-cost Final Experiment preflight.")
     freeze = commands.add_parser("freeze", help="Write the immutable Final Manifest.")
     freeze.add_argument("--confirm-freeze", action="store_true")
-    run = commands.add_parser("run", help="Execute the paid frozen 36-run experiment.")
+    run = commands.add_parser("run", help="Execute the paid frozen Final experiment.")
     run.add_argument("--confirm-paid", action="store_true")
     demo = commands.add_parser("demo", help="Render an existing run as concise CLI logs.")
     demo.add_argument("--run-path", type=Path, required=True)

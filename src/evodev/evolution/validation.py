@@ -39,6 +39,7 @@ class PolicyExperimentRunner:
         experiment_id: str,
         split: Literal["train", "validation"],
         repetitions: int,
+        benchmark_root: Path = Path("benchmarks"),
     ) -> None:
         if repetitions < 1:
             raise ValueError("repetitions must be positive")
@@ -48,7 +49,13 @@ class PolicyExperimentRunner:
         self.experiment_id = experiment_id
         self.split = split
         self.repetitions = repetitions
-        self.loader = BenchmarkLoader(self.project_root / "benchmarks")
+        resolved_benchmark_root = (
+            benchmark_root
+            if benchmark_root.is_absolute()
+            else self.project_root / benchmark_root
+        ).resolve()
+        self.benchmark_root = resolved_benchmark_root.relative_to(self.project_root).as_posix()
+        self.loader = BenchmarkLoader(resolved_benchmark_root)
         self.benchmark_manifest = self.loader.verify_manifest()
         self.runs_root = self.project_root / "runs" / experiment_id
         self.experiment_path = self.project_root / "evaluation_runs" / experiment_id
@@ -179,6 +186,7 @@ class PolicyExperimentRunner:
             sandbox_digest=sandbox_digest,
             benchmark_version=self.benchmark_manifest.benchmark_version,
             benchmark_hash=self.benchmark_manifest.manifest_hash,
+            benchmark_root=self.benchmark_root,
             benchmark_splits=[self.split],
         )
 
@@ -231,6 +239,7 @@ def run_pairwise_validation(
     candidate: VersionedPolicy,
     *,
     evolution_id: str,
+    benchmark_root: Path = Path("benchmarks"),
 ) -> PairwiseGateReport:
     """Run the required nine attempts per arm, then persist a deterministic report."""
     repetitions = settings.evolution.validation_repetitions
@@ -244,6 +253,7 @@ def run_pairwise_validation(
         experiment_id=champion_experiment_id,
         split="validation",
         repetitions=repetitions,
+        benchmark_root=benchmark_root,
     ).run()
     candidate_output = PolicyExperimentRunner(
         project_root,
@@ -252,6 +262,7 @@ def run_pairwise_validation(
         experiment_id=candidate_experiment_id,
         split="validation",
         repetitions=repetitions,
+        benchmark_root=benchmark_root,
     ).run()
     report = compare_pairwise_validation(
         arm_metrics(champion_output),

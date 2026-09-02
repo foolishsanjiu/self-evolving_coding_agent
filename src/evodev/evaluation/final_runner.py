@@ -61,7 +61,7 @@ class FinalExperimentRunner:
 
         self.results_root = self.project_root / config.results_dir
         self.runs_root = self.project_root / "runs" / config.experiment_id
-        self.loader = BenchmarkLoader(self.project_root / "benchmarks")
+        self.loader = BenchmarkLoader(self.project_root / config.benchmark_root)
         self.repository = PolicyRepository(self.project_root / "policies")
         snapshot = load_snapshot(self.project_root / config.experience_snapshot)
         self.retriever = ExperienceRetriever(
@@ -77,8 +77,9 @@ class FinalExperimentRunner:
             if task.split == "test"
         }
         self.plan = build_final_run_plan(manifest)
-        if len(self.plan) != 36:
-            raise ValueError("Final Experiment must contain exactly 36 Agent Runs")
+        expected_runs = sum(item.expected_attempts for item in manifest.variants)
+        if len(self.plan) != expected_runs:
+            raise ValueError("Final Experiment run plan does not match the frozen Manifest")
 
     def _server(self, workspace: Path, artifacts: Path) -> StdioServerParameters:
         return StdioServerParameters(

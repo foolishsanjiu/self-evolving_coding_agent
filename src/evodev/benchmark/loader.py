@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 
 from evodev.benchmark.models import (
+    BenchmarkDefinition,
     BenchmarkManifest,
     BenchmarkSplit,
     BenchmarkTask,
@@ -20,14 +21,18 @@ from evodev.benchmark.models import (
 from evodev.sandbox import WorkspaceManager, WorkspaceRun
 from evodev.schemas import TaskSpec
 
-EXPECTED_SPLITS = {"train": 6, "validation": 3, "test": 3}
-EXPECTED_CATEGORIES = {
-    "bug_fix": 4,
-    "exception_handling": 2,
-    "feature": 2,
-    "refactoring": 2,
-    "test_repair": 2,
-}
+LEGACY_V1_DEFINITION = BenchmarkDefinition(
+    benchmark_version="1.0",
+    task_count=12,
+    split_counts={"train": 6, "validation": 3, "test": 3},
+    category_counts={
+        "bug_fix": 4,
+        "exception_handling": 2,
+        "feature": 2,
+        "refactoring": 2,
+        "test_repair": 2,
+    },
+)
 
 
 def _canonical_hash(value: Any) -> str:
@@ -52,6 +57,12 @@ class BenchmarkLoader:
 
     def __init__(self, benchmark_root: Path) -> None:
         self.root = benchmark_root.resolve(strict=True)
+        definition_path = self.root / "benchmark.yaml"
+        if definition_path.is_file():
+            raw = yaml.safe_load(definition_path.read_text(encoding="utf-8"))
+            self.definition = BenchmarkDefinition.model_validate(raw)
+        else:
+            self.definition = LEGACY_V1_DEFINITION
 
     @staticmethod
     def _files_exist(path: Path, pattern: str) -> bool:
@@ -79,6 +90,10 @@ class BenchmarkLoader:
         config = BenchmarkTaskConfig.model_validate(raw)
         if config.task_id != task_path.name:
             raise ValueError(f"Task directory and task_id differ: {task_path}")
+        if config.benchmark_version != self.definition.benchmark_version:
+            raise ValueError(
+                f"Task {config.task_id} benchmark_version does not match benchmark.yaml"
+            )
         return BenchmarkTask(
             split=split,
             config=config,
@@ -104,18 +119,25 @@ class BenchmarkLoader:
         self._validate_inventory(tasks)
         return tasks
 
-    @staticmethod
-    def _validate_inventory(tasks: list[BenchmarkTask]) -> None:
+    def _validate_inventory(self, tasks: list[BenchmarkTask]) -> None:
         identifiers = [task.config.task_id for task in tasks]
         if len(identifiers) != len(set(identifiers)):
             raise ValueError("Benchmark task_id values must be unique")
         split_counts = Counter(task.split for task in tasks)
         category_counts = Counter(task.config.category for task in tasks)
-        if dict(split_counts) != EXPECTED_SPLITS:
-            raise ValueError(f"Expected split counts {EXPECTED_SPLITS}, got {dict(split_counts)}")
-        if dict(category_counts) != EXPECTED_CATEGORIES:
+        expected_splits = self.definition.split_counts
+        expected_categories = self.definition.category_counts
+        if len(tasks) != self.definition.task_count:
             raise ValueError(
-                f"Expected category counts {EXPECTED_CATEGORIES}, got {dict(category_counts)}"
+                f"Expected {self.definition.task_count} tasks, got {len(tasks)}"
+            )
+        if dict(split_counts) != expected_splits:
+            raise ValueError(
+                f"Expected split counts {expected_splits}, got {dict(split_counts)}"
+            )
+        if dict(category_counts) != expected_categories:
+            raise ValueError(
+                f"Expected category counts {expected_categories}, got {dict(category_counts)}"
             )
         template_splits: dict[str, set[str]] = defaultdict(set)
         for task in tasks:
@@ -137,7 +159,7 @@ class BenchmarkLoader:
             for task in loaded
         ]
         payload = {
-            "benchmark_version": "1.0",
+            "benchmark_version": self.definition.benchmark_version,
             "task_count": len(entries),
             "split_counts": dict(Counter(task.split for task in loaded)),
             "category_counts": dict(Counter(task.config.category for task in loaded)),

@@ -266,7 +266,9 @@ def test_validation_baseline_derivation_is_offline_and_reproducible(
             encoding="utf-8",
         )
 
-    manifest, summary = prepare_validation_baseline(retrieval_root)
+    manifest, summary = prepare_validation_baseline(
+        retrieval_root, benchmark_root=Path("benchmarks").resolve()
+    )
 
     assert manifest.benchmark_splits == ["validation"]
     assert summary.total_attempts == 3
