@@ -1,0 +1,52 @@
+schema_version: "1.0"
+experiment_id: benchmark-v2-reflection-v1
+purpose: Generate one structured Train-only Reflection for each eligible formal V2 baseline failure.
+source:
+  experiment_id: exp-baseline-v2-train-v1
+  benchmark_root: benchmarks-v2
+  benchmark_version: "2.0"
+  benchmark_hash: c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6
+  split: train
+  failure_report: evolution/benchmark-v2/failure-patterns-baseline-v2-train-v1.json
+runtime:
+  provider: deepseek
+  model: deepseek-v4-flash
+  temperature: 0.1
+  database: data/experience-v2.sqlite
+design:
+  eligible_runs: 9
+  expected_paid_calls: 9
+  one_call_per_previously_unseen_run: true
+  selective_reruns_allowed: false
+  validation_access: forbidden
+  test_access: forbidden
+  excluded_run:
+    run_id: run_task_108_r01
+    failure_type: SYNTAX_ERROR
+    reason: failure_not_reflection_eligible
+execution:
+  plan_command: >-
+    evodev-reflect --project-root . --experiment-id exp-baseline-v2-train-v1
+    --database data/experience-v2.sqlite --benchmark-root benchmarks-v2 --plan
+  paid_command_requires_authorization: >-
+    evodev-reflect --project-root . --experiment-id exp-baseline-v2-train-v1
+    --database data/experience-v2.sqlite --benchmark-root benchmarks-v2 --confirm-paid
+  explicit_paid_authorization_required: true
+pricing_snapshot:
+  checked_on: "2026-09-02"
+  source: https://api-docs.deepseek.com/quick_start/pricing/
+  currency: USD
+  model: deepseek-v4-flash
+  peak_cache_miss_input_per_million: 0.44
+  peak_output_per_million: 1.32
+historical_single_reflection_basis:
+  source: docs/TECHNICAL_REPORT.md
+  input_tokens: 2579
+  output_tokens: 2389
+projection_for_9_calls:
+  input_tokens: 23211
+  output_tokens: 21501
+  peak_cache_miss_usd: 0.0386
+  double_token_peak_usd: 0.0772
+  authorization_ceiling_usd: 0.25
+  note: Actual billing follows provider-reported usage and the current official price table.

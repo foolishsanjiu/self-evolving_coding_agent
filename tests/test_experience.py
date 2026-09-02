@@ -4,11 +4,13 @@ import json
 import shutil
 from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
 
 from evodev.benchmark import BenchmarkLoader, BenchmarkTask, BenchmarkTaskConfig
+from evodev.config import load_settings
 from evodev.evaluation import EvaluationGrades, EvaluationResult, FailureType
 from evodev.experience import (
     EvidenceKind,
@@ -25,7 +27,11 @@ from evodev.experience import (
     can_write_experience,
     is_reflection_eligible,
 )
-from evodev.experience.generate import ExperienceGenerationRunner
+from evodev.experience.generate import (
+    ExperienceGenerationRunner,
+    build_experience_generation_plan,
+    require_reflection_paid_confirmation,
+)
 from evodev.llm import ModelTurn
 from evodev.trajectory.models import utc_now
 
@@ -293,6 +299,9 @@ def test_generation_runner_writes_once_and_skips_existing_run(
         def load_tasks(self) -> list[BenchmarkTask]:
             return [task]
 
+        def verify_manifest(self):
+            return SimpleNamespace(benchmark_version="1.0", manifest_hash="b" * 64)
+
     monkeypatch.setattr("evodev.experience.generate.BenchmarkLoader", FakeLoader)
     run_path = experience_root / "runs" / "exp-test" / "run_task_002_r01"
     report_path = experience_root / "evaluation_runs" / "exp-test" / "instances" / "task_002"
@@ -315,12 +324,22 @@ def test_generation_runner_writes_once_and_skips_existing_run(
     )
     (report_path / "report.json").write_text(result.model_dump_json(), encoding="utf-8")
     model = FakeReflectionModel(_output())
+    plan = build_experience_generation_plan(
+        experience_root,
+        load_settings(Path("configs")),
+        experiment_id="exp-test",
+        database_path=experience_root / "experience.sqlite",
+        benchmark_root=experience_root / "benchmark",
+    )
     runner = ExperienceGenerationRunner(
         experience_root,
         "exp-test",
         experience_root / "experience.sqlite",
         extractor=ReflectionExtractor(model),
     )
+
+    assert plan.expected_paid_calls == 1
+    assert [run.run_id for run in plan.runs] == ["run_task_002_r01"]
 
     first = runner.run(task_id="task_002")
     second = runner.run(task_id="task_002")
@@ -330,3 +349,10 @@ def test_generation_runner_writes_once_and_skips_existing_run(
         {"task_id": "task_002", "reason": "already_reflected"}
     ]
     assert model.calls == 1
+
+
+def test_reflection_cli_requires_explicit_paid_confirmation() -> None:
+    with pytest.raises(PermissionError, match="--confirm-paid"):
+        require_reflection_paid_confirmation(False)
+
+    require_reflection_paid_confirmation(True)

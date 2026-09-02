@@ -444,6 +444,11 @@ input cache miss 保守估算为 1.3054 USD，低于 2.00 USD 授权上限，但
 本阶段只读取 Train 轨迹并离线聚合，模型调用与新增费用均为 0。若下一阶段为 9 个 eligible Run
 生成结构化 Reflection/Experience，最多需要 9 次新模型调用，必须另行获得付费授权。
 
+V2 Reflection 入口在正式执行前补充 `--plan` 与 `--confirm-paid`：静态计划会验证 Benchmark
+身份、独立数据库、eligible/skip 集合和最多调用数，不创建 SQLite Store，也不调用模型；真实运行
+缺少显式确认时在 API 之前拒绝。冻结执行配置位于
+`configs/experiments/benchmark-v2-reflection-v1.yaml`。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和
@@ -519,7 +524,7 @@ Trajectory/Evaluation 的 Provenance。只有 Train 可写，Validation 与 Test
 `task_002`；重复执行会跳过已经反思过的 Run：
 
 ```powershell
-evodev-reflect --experiment-id exp-baseline-v1 --task-id task_002
+evodev-reflect --experiment-id exp-baseline-v1 --task-id task_002 --confirm-paid
 ```
 
 默认数据库为被 Git 忽略的 `data/experience.sqlite`。Task 10 没有新增第三方依赖，SQLite

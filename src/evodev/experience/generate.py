@@ -5,15 +5,120 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from evodev.benchmark import BenchmarkLoader
-from evodev.config import load_settings
-from evodev.evaluation import EvaluationResult
+from evodev.config import AppSettings, load_settings
+from evodev.evaluation import EvaluationResult, FailureType
 from evodev.experience.context import ReflectionContextBuilder
 from evodev.experience.eligibility import is_reflection_eligible
 from evodev.experience.extractor import ReflectionExtractor
 from evodev.experience.store import ExperienceStore
 from evodev.llm import LLMClient
+
+
+class ReflectionRunSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    task_id: str
+    run_id: str
+    failure_type: FailureType
+
+
+class ExperienceGenerationPlan(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    experiment_id: str
+    benchmark_root: str
+    benchmark_version: str
+    benchmark_hash: str
+    benchmark_splits: list[Literal["train"]] = Field(default_factory=lambda: ["train"])
+    database: str
+    model_provider: str
+    model: str
+    temperature: float = Field(ge=0, le=2)
+    expected_paid_calls: int = Field(ge=0)
+    runs: list[ReflectionRunSpec]
+    skipped: list[dict[str, str]]
+    requires_paid_confirmation: Literal[True] = True
+
+
+def require_reflection_paid_confirmation(confirmed: bool) -> None:
+    if not confirmed:
+        raise PermissionError("Reflection generation requires --confirm-paid")
+
+
+def build_experience_generation_plan(
+    project_root: Path,
+    settings: AppSettings,
+    *,
+    experiment_id: str,
+    database_path: Path,
+    benchmark_root: Path,
+) -> ExperienceGenerationPlan:
+    root = project_root.resolve()
+    resolved_benchmark = (
+        benchmark_root.resolve()
+        if benchmark_root.is_absolute()
+        else (root / benchmark_root).resolve()
+    )
+    resolved_database = (
+        database_path.resolve()
+        if database_path.is_absolute()
+        else (root / database_path).resolve()
+    )
+    loader = BenchmarkLoader(resolved_benchmark)
+    manifest = loader.verify_manifest()
+    tasks = {task.config.task_id: task for task in loader.load_tasks()}
+    store = (
+        ExperienceStore(resolved_database, read_only=True)
+        if resolved_database.is_file()
+        else None
+    )
+    runs = []
+    skipped = []
+    try:
+        reports_root = root / "evaluation_runs" / experiment_id / "instances"
+        if not reports_root.is_dir():
+            raise FileNotFoundError(f"Evaluation experiment not found: {experiment_id}")
+        for report_path in sorted(reports_root.rglob("report.json")):
+            result = EvaluationResult.model_validate_json(
+                report_path.read_text(encoding="utf-8")
+            )
+            task = tasks.get(result.task_id)
+            if task is None:
+                raise ValueError(f"Unknown benchmark task in evaluation: {result.task_id}")
+            reason = ExperienceGenerationRunner._skip_reason(task.split, result, store)
+            if reason:
+                skipped.append(
+                    {"task_id": result.task_id, "run_id": result.agent_run_id, "reason": reason}
+                )
+                continue
+            runs.append(
+                ReflectionRunSpec(
+                    task_id=result.task_id,
+                    run_id=result.agent_run_id,
+                    failure_type=result.failure_type,
+                )
+            )
+    finally:
+        if store is not None:
+            store.close()
+    return ExperienceGenerationPlan(
+        experiment_id=experiment_id,
+        benchmark_root=resolved_benchmark.relative_to(root).as_posix(),
+        benchmark_version=manifest.benchmark_version,
+        benchmark_hash=manifest.manifest_hash,
+        database=resolved_database.relative_to(root).as_posix(),
+        model_provider=settings.model.provider,
+        model=settings.model.model,
+        temperature=settings.model.temperature,
+        expected_paid_calls=len(runs),
+        runs=runs,
+        skipped=skipped,
+    )
 
 
 class ExperienceGenerationRunner:
@@ -101,12 +206,16 @@ class ExperienceGenerationRunner:
         }
 
     @staticmethod
-    def _skip_reason(split: str, result: EvaluationResult, store: ExperienceStore) -> str | None:
+    def _skip_reason(
+        split: str,
+        result: EvaluationResult,
+        store: ExperienceStore | None,
+    ) -> str | None:
         if split != "train":
             return "memory_read_only"
         if not is_reflection_eligible(result.failure_type):
             return "failure_not_eligible"
-        if store.has_run(result.task_id, result.agent_run_id):
+        if store is not None and store.has_run(result.task_id, result.agent_run_id):
             return "already_reflected"
         return None
 
@@ -118,11 +227,25 @@ def main() -> None:
     parser.add_argument("--task-id")
     parser.add_argument("--database", type=Path, default=Path("data/experience.sqlite"))
     parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
+    parser.add_argument("--plan", action="store_true")
+    parser.add_argument("--confirm-paid", action="store_true")
     arguments = parser.parse_args()
     project_root = arguments.project_root.resolve()
+    settings = load_settings(project_root / "configs", project_root / ".env")
     database = arguments.database
     if not database.is_absolute():
         database = project_root / database
+    plan = build_experience_generation_plan(
+        project_root,
+        settings,
+        experiment_id=arguments.experiment_id,
+        database_path=database,
+        benchmark_root=arguments.benchmark_root,
+    )
+    if arguments.plan:
+        print(plan.model_dump_json(indent=2))
+        return
+    require_reflection_paid_confirmation(arguments.confirm_paid)
     summary = ExperienceGenerationRunner(
         project_root,
         arguments.experiment_id,
