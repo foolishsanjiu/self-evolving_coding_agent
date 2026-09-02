@@ -1,0 +1,8 @@
+task_id: task_112
+category: error_resilience
+difficulty: medium
+description: Fix resource execution cleanup so every acquired resource closes in reverse order while the primary acquisition or operation failure remains the raised exception.
+test_command: pytest -q
+expected_behavior: Cleanup failures are retained as chained context, all close attempts run, unacquired resources are untouched, and cleanup errors surface when no primary failure exists.
+repository_template: cleanup_exception_chain_v2
+benchmark_version: "2.0"

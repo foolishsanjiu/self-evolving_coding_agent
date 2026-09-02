@@ -1,0 +1,8 @@
+task_id: task_113
+category: test_repair_compatibility
+difficulty: medium
+description: Repair versioned profile serialization so v1 and v2 field aliases load and dump exactly according to their schemas without truthiness coercion.
+test_command: pytest -q
+expected_behavior: V1 uses displayName, v2 uses display_name, conflicting aliases and unknown versions are rejected, and null, empty, and Unicode values round-trip unchanged.
+repository_template: versioned_serializer_compat_v2
+benchmark_version: "2.0"

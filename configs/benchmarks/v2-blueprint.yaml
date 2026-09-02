@@ -1,7 +1,7 @@
 schema_version: "1.0"
 benchmark_version: "2.0"
 status: blueprint_frozen
-implementation_stage: train_qualified
+implementation_stage: validation_qualified
 inventory:
   task_count: 18
   split_counts:
@@ -208,7 +208,7 @@ tasks:
     difficulty: hard
     repository_template: timezone_token_expiry_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_validation_qa
     evaluation_usage: policy_gate_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -230,7 +230,7 @@ tasks:
     difficulty: hard
     repository_template: contiguous_checkpoint_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_validation_qa
     evaluation_usage: policy_gate_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -252,7 +252,7 @@ tasks:
     difficulty: medium
     repository_template: conditional_http_cache_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_validation_qa
     evaluation_usage: policy_gate_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -274,7 +274,7 @@ tasks:
     difficulty: medium
     repository_template: cleanup_exception_chain_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_validation_qa
     evaluation_usage: policy_gate_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -296,7 +296,7 @@ tasks:
     difficulty: medium
     repository_template: versioned_serializer_compat_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_validation_qa
     evaluation_usage: policy_gate_only
     prior_agent_runs: false
     calibration_experiment_id: null

@@ -1,0 +1,36 @@
+diff --git a/tokens/parser.py b/tokens/parser.py
+--- a/tokens/parser.py
++++ b/tokens/parser.py
+@@ -1,4 +1,4 @@
+-from datetime import datetime
++from datetime import UTC, datetime
+
+ from tokens.models import Token
+
+@@ -9,4 +9,8 @@ def parse_token(payload: dict[str, str]) -> Token:
+         token_id = payload["token_id"]
+     except (KeyError, ValueError) as exc:
+         raise ValueError("invalid token payload") from exc
+-    return Token(token_id=token_id, expires_at=expires_at.replace(tzinfo=None))
++    if expires_at.tzinfo is None or expires_at.utcoffset() is None:
++        raise ValueError("token expiry requires a timezone offset")
++    return Token(
++        token_id=token_id, expires_at=expires_at.astimezone(UTC)
++    )
+diff --git a/tokens/service.py b/tokens/service.py
+--- a/tokens/service.py
++++ b/tokens/service.py
+@@ -1,7 +1,11 @@
+-from datetime import datetime
++from datetime import UTC, datetime
+
+ from tokens.models import Token
+
+
+ def is_expired(token: Token, now: datetime) -> bool:
+-    return token.expires_at < now.replace(tzinfo=None)
++    if now.tzinfo is None or now.utcoffset() is None:
++        raise ValueError("expiry comparison requires an aware clock")
++    if token.expires_at.tzinfo is None or token.expires_at.utcoffset() is None:
++        raise ValueError("token expiry requires a timezone offset")
++    return token.expires_at.astimezone(UTC) <= now.astimezone(UTC)

@@ -1,0 +1,8 @@
+task_id: task_111
+category: feature
+difficulty: medium
+description: Add conditional HTTP cache refresh so ETag-backed entries send If-None-Match, reuse cached content on 304, and update content and metadata together on 200.
+test_command: pytest -q
+expected_behavior: Conditional headers are added only for matching cache entries, errors are never cached, and cache identity includes method, URL, and representation-changing Accept headers.
+repository_template: conditional_http_cache_v2
+benchmark_version: "2.0"

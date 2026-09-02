@@ -1,0 +1,29 @@
+diff --git a/http_cache/client.py b/http_cache/client.py
+--- a/http_cache/client.py
++++ b/http_cache/client.py
+@@ -14,7 +14,23 @@ class CachingClient:
+         self.cache = cache
+
+     def fetch(self, request: Request) -> Response:
+-        response = self.transport.send(request)
++        existing = self.cache.get(request)
++        outbound = request
++        if existing is not None:
++            headers = dict(request.headers)
++            headers["If-None-Match"] = existing.etag
++            outbound = Request(
++                method=request.method,
++                url=request.url,
++                headers=headers,
++            )
++        response = self.transport.send(outbound)
++        if response.status_code == 304 and existing is not None:
++            return Response(
++                status_code=200,
++                body=existing.body,
++                headers={"ETag": existing.etag},
++            )
+         etag = response.headers.get("ETag")
+         if response.status_code == 200 and etag:
+             self.cache.put(request, CacheEntry(body=response.body, etag=etag))
+         return response

@@ -1,0 +1,35 @@
+diff --git a/resources/manager.py b/resources/manager.py
+--- a/resources/manager.py
++++ b/resources/manager.py
+@@ -13,10 +13,28 @@ def run_with_resources(
+     operation: Callable[[list[Resource]], ResultT],
+ ) -> ResultT:
+     resources: list[Resource] = []
++    result: ResultT | None = None
++    primary: BaseException | None = None
+     try:
+         for acquire in acquirers:
+             resources.append(acquire())
+-        return operation(resources)
+-    finally:
+-        for resource in reversed(resources):
++        result = operation(resources)
++    except BaseException as exc:
++        primary = exc
++
++    cleanup_errors: list[BaseException] = []
++    for resource in reversed(resources):
++        try:
+             resource.close()
++        except BaseException as exc:
++            cleanup_errors.append(exc)
++
++    if primary is not None:
++        if cleanup_errors:
++            raise primary from ExceptionGroup("resource cleanup failed", cleanup_errors)
++        raise primary
++    if cleanup_errors:
++        if len(cleanup_errors) == 1:
++            raise cleanup_errors[0]
++        raise ExceptionGroup("resource cleanup failed", cleanup_errors)
++    return result

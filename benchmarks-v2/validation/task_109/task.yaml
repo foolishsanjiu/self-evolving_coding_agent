@@ -1,0 +1,8 @@
+task_id: task_109
+category: cross_module_bug
+difficulty: hard
+description: Fix token expiry handling so parsed offset timestamps and the injected clock are compared as aware UTC instants, including the exact expiry boundary.
+test_command: pytest -q
+expected_behavior: Offset and Z timestamps normalize to UTC, expiry is inclusive at the boundary, and naive token or clock datetimes are rejected explicitly.
+repository_template: timezone_token_expiry_v2
+benchmark_version: "2.0"

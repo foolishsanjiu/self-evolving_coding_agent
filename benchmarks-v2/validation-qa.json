@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "benchmark_version": "2.0",
+  "stage": "validation_qualified",
+  "formal_manifest_created": false,
+  "task_count": 5,
+  "agent_runs": 0,
+  "paid_debugging": false,
+  "qa": {
+    "independent_rounds": 5,
+    "public_original_passed": 5,
+    "hidden_original_failed": 5,
+    "hidden_gold_passed": 5,
+    "incomplete_fixes_rejected": 10
+  },
+  "checksum_algorithm": "BenchmarkLoader tree SHA-256 with normalized LF content",
+  "tasks": [
+    {
+      "task_id": "task_109",
+      "source": "new_unseen",
+      "checksum": "b0284c80139a3a9a28a4e693c1a2e2c0902a71243cc6cb0be9a992002b40c162"
+    },
+    {
+      "task_id": "task_110",
+      "source": "new_unseen",
+      "checksum": "f4794c930a45911c28be317368641daec8e69544c0f3decef34f6f8efea63cf8"
+    },
+    {
+      "task_id": "task_111",
+      "source": "new_unseen",
+      "checksum": "ff29a2f6275430e9ef39376d7d5b053b8faf735068cdf354c7417f30670884b0"
+    },
+    {
+      "task_id": "task_112",
+      "source": "new_unseen",
+      "checksum": "eda79dc2c4f50e48a669f8128a4d197924ec696f94c38fda6aaf8ffece93cb1b"
+    },
+    {
+      "task_id": "task_113",
+      "source": "new_unseen",
+      "checksum": "4ac19fc1ece643684dd85e6605996609ffaa2b2daad2f9da0c1b16b8f371076d"
+    }
+  ]
+}

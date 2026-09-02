@@ -1,0 +1,22 @@
+diff --git a/checkpoints/service.py b/checkpoints/service.py
+--- a/checkpoints/service.py
++++ b/checkpoints/service.py
+@@ -8,10 +8,16 @@ def acknowledge(store: CheckpointStore, ack: Ack) -> CheckpointState:
+         raise ValueError("acknowledgement belongs to another stream")
+     if ack.sequence <= state.checkpoint:
+         return state
++    pending = set(state.pending)
++    pending.add(ack.sequence)
++    checkpoint = state.checkpoint
++    while checkpoint + 1 in pending:
++        checkpoint += 1
++        pending.remove(checkpoint)
+     updated = CheckpointState(
+         stream_id=state.stream_id,
+-        checkpoint=ack.sequence,
+-        pending=frozenset(),
++        checkpoint=checkpoint,
++        pending=frozenset(pending),
+     )
+     store.save(updated)
+     return updated

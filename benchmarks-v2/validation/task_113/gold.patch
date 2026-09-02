@@ -1,0 +1,37 @@
+diff --git a/profiles/serializer.py b/profiles/serializer.py
+--- a/profiles/serializer.py
++++ b/profiles/serializer.py
+@@ -7,16 +7,28 @@ def load_profile(payload: dict[str, Any]) -> Profile:
+     version = payload.get("schema_version")
+     if version not in {1, 2}:
+         raise ValueError(f"unsupported schema version: {version}")
+-    display_name = payload.get("display_name") or payload.get("displayName")
+-    return Profile(name=str(payload["name"]), display_name=display_name)
++    if "displayName" in payload and "display_name" in payload:
++        raise ValueError("conflicting display name aliases")
++    name = payload.get("name")
++    if not isinstance(name, str):
++        raise ValueError("profile name must be a string")
++    field = "displayName" if version == 1 else "display_name"
++    other_field = "display_name" if version == 1 else "displayName"
++    if other_field in payload:
++        raise ValueError(f"field {other_field} is not valid for schema v{version}")
++    display_name = payload.get(field)
++    if display_name is not None and not isinstance(display_name, str):
++        raise ValueError("display name must be a string or null")
++    return Profile(name=name, display_name=display_name)
+
+
+ def dump_profile(profile: Profile, schema_version: int) -> dict[str, Any]:
+     if schema_version not in {1, 2}:
+         raise ValueError(f"unsupported schema version: {schema_version}")
+-    return {
++    payload = {
+         "schema_version": schema_version,
+         "name": profile.name,
+-        "displayName": profile.display_name,
+-        "display_name": profile.display_name,
+     }
++    field = "displayName" if schema_version == 1 else "display_name"
++    payload[field] = profile.display_name
++    return payload

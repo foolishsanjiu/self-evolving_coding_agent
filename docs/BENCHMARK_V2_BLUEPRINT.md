@@ -26,11 +26,11 @@ Concurrency/Resource 2、Test Repair/Compatibility 3。全部题目为 Medium �
 | task_106 | Train | cross_module_bug | Hard | 跨模块订阅按比例计费 | Implemented + QA |
 | task_107 | Train | concurrency_resource | Hard | 有序有界并行映射 | Implemented + QA |
 | task_108 | Train | test_repair_compatibility | Medium | Transport 协议兼容适配 | Implemented + QA |
-| task_109 | Validation | cross_module_bug | Hard | 时区安全的 Token 过期判断 | Planned |
-| task_110 | Validation | state_data_flow | Hard | 连续 ACK Checkpoint | Planned |
-| task_111 | Validation | feature | Medium | HTTP ETag 条件刷新 | Planned |
-| task_112 | Validation | error_resilience | Medium | 保留主异常的资源清理 | Planned |
-| task_113 | Validation | test_repair_compatibility | Medium | 版本化序列化兼容 | Planned |
+| task_109 | Validation | cross_module_bug | Hard | 时区安全的 Token 过期判断 | Implemented + QA |
+| task_110 | Validation | state_data_flow | Hard | 连续 ACK Checkpoint | Implemented + QA |
+| task_111 | Validation | feature | Medium | HTTP ETag 条件刷新 | Implemented + QA |
+| task_112 | Validation | error_resilience | Medium | 保留主异常的资源清理 | Implemented + QA |
+| task_113 | Validation | test_repair_compatibility | Medium | 版本化序列化兼容 | Implemented + QA |
 | task_114 | Test | cross_module_bug | Hard | 层级权限解析 | Planned |
 | task_115 | Test | feature | Hard | 稳定依赖安装顺序 | Planned |
 | task_116 | Test | error_resilience | Medium | 仅瞬态错误重试 | Planned |
@@ -57,6 +57,6 @@ Concurrency/Resource 2、Test Repair/Compatibility 3。全部题目为 Medium �
 ## 后续实施顺序
 
 1. **已完成**：构建并验证 Train task_105–108，同时把 task_101–104 迁入正式 Train；
-2. 独立构建 Validation task_109–113，只做离线 Gold/Hidden QA；
+2. **已完成**：独立构建 Validation task_109–113，只做离线 Gold/Hidden QA；
 3. 独立构建 Test task_114–118，只做离线 Gold/Hidden QA；
 4. 18 题完整库存 QA 通过后生成 Manifest，再讨论任何新的付费实验。
