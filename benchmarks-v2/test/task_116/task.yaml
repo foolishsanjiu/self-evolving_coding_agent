@@ -1,0 +1,8 @@
+task_id: task_116
+category: error_resilience
+difficulty: medium
+description: Fix request retries so only transient failures are retried within the exact attempt budget and valid Retry-After delays take precedence over backoff.
+test_command: pytest -q
+expected_behavior: Permanent errors and final transient failures preserve their identity, success and exhausted attempts never sleep, and all waiting uses the injected sleeper.
+repository_template: transient_retry_policy_v2
+benchmark_version: "2.0"

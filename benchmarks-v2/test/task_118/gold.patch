@@ -1,0 +1,44 @@
+diff --git a/hooks/dispatcher.py b/hooks/dispatcher.py
+--- a/hooks/dispatcher.py
++++ b/hooks/dispatcher.py
+@@ -5,6 +5,27 @@ from typing import Any
+ from hooks.models import HookResult
+
+
++def _hook_style(hook: Callable[..., Any]) -> str:
++    parameters = list(inspect.signature(hook).parameters.values())
++    if [parameter.name for parameter in parameters] != ["event", "context"]:
++        raise TypeError("unsupported hook signature")
++    if all(
++        parameter.kind is inspect.Parameter.KEYWORD_ONLY
++        for parameter in parameters
++    ):
++        return "current"
++    if all(
++        parameter.kind
++        in {
++            inspect.Parameter.POSITIONAL_ONLY,
++            inspect.Parameter.POSITIONAL_OR_KEYWORD,
++        }
++        for parameter in parameters
++    ):
++        return "legacy"
++    raise TypeError("unsupported hook signature")
++
++
+ async def dispatch(
+     hooks: list[Callable[..., Any]],
+     *,
+@@ -14,9 +35,10 @@ async def dispatch(
+ ) -> list[HookResult]:
+     results: list[HookResult] = []
+     for hook in hooks:
+-        try:
++        style = _hook_style(hook)
++        if style == "current":
+             result = hook(event=event, context=context)
+-        except TypeError:
++        else:
+             result = hook(event, context)
+         if inspect.isawaitable(result):
+             result = await result

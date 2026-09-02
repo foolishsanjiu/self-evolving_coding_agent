@@ -1,0 +1,8 @@
+task_id: task_117
+category: concurrency_resource
+difficulty: hard
+description: Fix the async worker pool so timeout, parent cancellation, and worker failure cancel and await outstanding tasks without leaking semaphore permits.
+test_command: pytest -q
+expected_behavior: Successful results remain input-ordered and bounded, completed tasks are preserved, and every outstanding task is cancelled and awaited on all failure exits.
+repository_template: async_pool_cancellation_v2
+benchmark_version: "2.0"

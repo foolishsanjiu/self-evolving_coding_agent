@@ -1,0 +1,8 @@
+task_id: task_114
+category: cross_module_bug
+difficulty: hard
+description: Fix hierarchical permission resolution so transitive group grants are found, explicit denies win, and cyclic membership does not contaminate later checks.
+test_command: pytest -q
+expected_behavior: Direct and inherited grants remain resource-scoped, explicit deny overrides allow, cycles terminate, and each permission check uses independent traversal state.
+repository_template: hierarchical_permissions_v2
+benchmark_version: "2.0"

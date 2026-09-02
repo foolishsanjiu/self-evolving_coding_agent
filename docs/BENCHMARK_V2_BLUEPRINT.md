@@ -31,11 +31,11 @@ Concurrency/Resource 2、Test Repair/Compatibility 3。全部题目为 Medium �
 | task_111 | Validation | feature | Medium | HTTP ETag 条件刷新 | Implemented + QA |
 | task_112 | Validation | error_resilience | Medium | 保留主异常的资源清理 | Implemented + QA |
 | task_113 | Validation | test_repair_compatibility | Medium | 版本化序列化兼容 | Implemented + QA |
-| task_114 | Test | cross_module_bug | Hard | 层级权限解析 | Planned |
-| task_115 | Test | feature | Hard | 稳定依赖安装顺序 | Planned |
-| task_116 | Test | error_resilience | Medium | 仅瞬态错误重试 | Planned |
-| task_117 | Test | concurrency_resource | Hard | 可取消 Async Worker Pool | Planned |
-| task_118 | Test | test_repair_compatibility | Medium | Plugin Hook 签名兼容 | Planned |
+| task_114 | Test | cross_module_bug | Hard | 层级权限解析 | Implemented + QA |
+| task_115 | Test | feature | Hard | 稳定依赖安装顺序 | Implemented + QA |
+| task_116 | Test | error_resilience | Medium | 仅瞬态错误重试 | Implemented + QA |
+| task_117 | Test | concurrency_resource | Hard | 可取消 Async Worker Pool | Implemented + QA |
+| task_118 | Test | test_repair_compatibility | Medium | Plugin Hook 签名兼容 | Implemented + QA |
 
 四道已校准 Pilot 题全部迁入 Train 候选；原 Pilot 目录中的 2/1/1 位置只是 Loader 合同，不延续到
 正式 V2。正式 Validation/Test 的十道题均为全新 Repository Template，没有 Agent 历史运行。
@@ -58,5 +58,5 @@ Concurrency/Resource 2、Test Repair/Compatibility 3。全部题目为 Medium �
 
 1. **已完成**：构建并验证 Train task_105–108，同时把 task_101–104 迁入正式 Train；
 2. **已完成**：独立构建 Validation task_109–113，只做离线 Gold/Hidden QA；
-3. 独立构建 Test task_114–118，只做离线 Gold/Hidden QA；
+3. **已完成**：独立构建 Test task_114–118，只做离线 Gold/Hidden QA；
 4. 18 题完整库存 QA 通过后生成 Manifest，再讨论任何新的付费实验。

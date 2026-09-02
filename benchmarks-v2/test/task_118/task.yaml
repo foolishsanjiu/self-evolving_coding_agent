@@ -1,0 +1,8 @@
+task_id: task_118
+category: test_repair_compatibility
+difficulty: medium
+description: Repair plugin hook dispatch so current keyword-only and recognized legacy positional signatures support sync or async results without masking hook TypeError failures.
+test_command: pytest -q
+expected_behavior: Unsupported signatures fail before invocation, hook ordering and short-circuiting are preserved, and every invocation produces a validated HookResult.
+repository_template: plugin_hook_compat_v2
+benchmark_version: "2.0"

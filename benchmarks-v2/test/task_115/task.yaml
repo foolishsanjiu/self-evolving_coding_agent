@@ -1,0 +1,8 @@
+task_id: task_115
+category: feature
+difficulty: hard
+description: Implement deterministic dependency installation planning with dependencies before dependants, stable independent ordering, and actionable graph validation errors.
+test_command: pytest -q
+expected_behavior: Repeated dependency declarations are deduplicated, missing packages and concrete cycles are rejected, and otherwise independent packages retain input order.
+repository_template: stable_dependency_order_v2
+benchmark_version: "2.0"

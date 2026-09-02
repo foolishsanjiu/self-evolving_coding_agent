@@ -1,0 +1,46 @@
+diff --git a/permissions/service.py b/permissions/service.py
+--- a/permissions/service.py
++++ b/permissions/service.py
+@@ -7,13 +7,30 @@ class PermissionResolver:
+         self.directory = directory
+         self.grants = grants
+
++    def _principals_for(self, user: str) -> set[tuple[str, str]]:
++        principals = {("user", user)}
++        pending = [
++            group
++            for group, members in self.directory.memberships.items()
++            if f"user:{user}" in members
++        ]
++        visited: set[str] = set()
++        while pending:
++            group = pending.pop(0)
++            if group in visited:
++                continue
++            visited.add(group)
++            principals.add(("group", group))
++            child = f"group:{group}"
++            pending.extend(
++                parent
++                for parent, members in self.directory.memberships.items()
++                if child in members
++            )
++        return principals
++
+     def is_allowed(self, user: str, permission: str, resource: str) -> bool:
+-        principals = {("user", user)}
+-        principals.update(
+-            ("group", group)
+-            for group, members in self.directory.memberships.items()
+-            if f"user:{user}" in members
+-        )
++        principals = self._principals_for(user)
+         effects = {
+             grant.effect
+             for grant in self.grants
+@@ -24,4 +41,4 @@ class PermissionResolver:
+             and grant.permission == permission
+             and grant.resource == resource
+         }
+-        return "allow" in effects
++        return "allow" in effects and "deny" not in effects

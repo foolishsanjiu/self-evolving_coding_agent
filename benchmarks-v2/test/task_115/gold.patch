@@ -1,0 +1,41 @@
+diff --git a/packages/planner.py b/packages/planner.py
+--- a/packages/planner.py
++++ b/packages/planner.py
+@@ -2,4 +2,36 @@ from packages.models import Package
+
+
+ def installation_order(packages: list[Package]) -> list[str]:
+-    return [package.name for package in packages]
++    by_name: dict[str, Package] = {}
++    for package in packages:
++        if package.name in by_name:
++            raise ValueError(f"duplicate package: {package.name}")
++        by_name[package.name] = package
++
++    state: dict[str, str] = {}
++    stack: list[str] = []
++    ordered: list[str] = []
++
++    def visit(name: str) -> None:
++        if state.get(name) == "done":
++            return
++        if state.get(name) == "active":
++            cycle_start = stack.index(name)
++            cycle = [*stack[cycle_start:], name]
++            raise ValueError(f"dependency cycle: {' -> '.join(cycle)}")
++        state[name] = "active"
++        stack.append(name)
++        package = by_name[name]
++        for dependency in package.dependencies:
++            if dependency not in by_name:
++                raise ValueError(
++                    f"missing dependency {dependency!r} required by {name!r}"
++                )
++            visit(dependency)
++        stack.pop()
++        state[name] = "done"
++        ordered.append(name)
++
++    for package in packages:
++        visit(package.name)
++    return ordered

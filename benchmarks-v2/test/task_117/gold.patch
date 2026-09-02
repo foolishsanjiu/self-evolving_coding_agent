@@ -1,0 +1,31 @@
+diff --git a/worker_pool/pool.py b/worker_pool/pool.py
+--- a/worker_pool/pool.py
++++ b/worker_pool/pool.py
+@@ -20,12 +20,20 @@ async def ordered_map(
+
+     async def run(value: InputT) -> OutputT:
+         await semaphore.acquire()
+-        result = await worker(value)
+-        semaphore.release()
+-        return result
++        try:
++            return await worker(value)
++        finally:
++            semaphore.release()
+
+     tasks = [asyncio.create_task(run(value)) for value in values]
+-    _, pending = await asyncio.wait(tasks, timeout=timeout)
+-    if pending:
+-        raise TimeoutError("worker pool timed out")
+-    return [task.result() for task in tasks]
++    try:
++        results = asyncio.gather(*tasks)
++        if timeout is None:
++            return await results
++        return await asyncio.wait_for(results, timeout)
++    finally:
++        pending = [task for task in tasks if not task.done()]
++        for task in pending:
++            task.cancel()
++        if pending:
++            await asyncio.gather(*pending, return_exceptions=True)

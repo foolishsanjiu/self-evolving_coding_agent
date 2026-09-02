@@ -322,9 +322,9 @@ Test Repair/Compatibility 3。四道 Pilot 题统一迁入 Train 候选；正式
 全部使用无 Agent 历史运行的新 Repository Template。
 
 机器可读蓝图位于 `configs/benchmarks/v2-blueprint.yaml`，逐题固定故障机制、Hidden Target、
-Regression Focus 和 Gold Patch 最小范围。当前 task_101–108 已完成 Train QA，task_109–113
-已完成 Validation QA，task_114–118 仍为 `planned`；在全部实现和离线 QA 通过前，不生成正式
-`benchmarks-v2/manifest.json`，也不把蓝图状态表述为已完成 Benchmark。完整任务表与实施顺序见
+Regression Focus 和 Gold Patch 最小范围。当前 task_101–108、task_109–113 和 task_114–118
+已分别完成 Train、Validation 与 Test QA；正式完整库存 QA 与 Manifest 冻结仍是独立收尾阶段。
+在收尾完成前不生成 `benchmarks-v2/manifest.json`，也不把蓝图状态表述为已冻结 Benchmark。见
 `docs/BENCHMARK_V2_BLUEPRINT.md`。
 
 ### Benchmark v2 Train 实现与离线 QA
@@ -353,8 +353,23 @@ Validation 专项测试共 21 项：验证 5/5 原始 Public Tests 通过、5/5 
 Paid Debugging 为 false；规范化任务树哈希和机器可读阶段结果位于
 `benchmarks-v2/validation-qa.json`。
 
-该阶段仍不生成正式 Benchmark Manifest：Test task_114–118 尚未实现，避免部分库存被误当作
-完整 V2。Validation 的实现与 Gold 只用于离线资格验证，不构成 Agent 或 Policy 效果结论。
+该阶段仍不生成正式 Benchmark Manifest：当时 Test task_114–118 尚未实现，避免部分库存被
+误当作完整 V2。Validation 的实现与 Gold 只用于离线资格验证，不构成 Agent 或 Policy 效果结论。
+
+### Benchmark v2 Test 实现与离线 QA
+
+正式 V2 的 5 道 Test 题 task_114–118 已独立完成，覆盖层级权限解析、稳定依赖安装顺序、仅瞬态
+错误重试、可取消 Async Worker Pool 和 Plugin Hook 签名兼容。每题均包含 Repository、Public
+Tests、Hidden Target/Regression Tests 和最小 Gold Patch。
+
+Test 专项测试共 21 项：验证 5/5 原始 Public Tests 通过、5/5 原始 Hidden Evaluation 失败、
+5/5 应用 Gold 后通过，并对每题构造两种 Gold 退化，共 10/10 被 Hidden Tests 拒绝。完整专项
+QA 使用独立临时根重复 5 轮，5/5 轮均为 21/21 通过，其中包含异步超时、父任务取消、Worker
+失败和 Semaphore 释放路径。该阶段 Agent Runs 为 0，Paid Debugging 为 false；规范化任务树
+哈希和机器可读阶段结果位于 `benchmarks-v2/test-qa.json`。
+
+此时 18 道题均已完成各 Split 离线资格验证，但正式 Manifest 仍未生成；下一阶段需要执行完整
+库存、类别配额、跨 Split 模板隔离和全树哈希验证，再一次性冻结正式 V2。
 
 ## Independent Evaluation 与 Baseline
 

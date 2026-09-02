@@ -79,8 +79,8 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 每个新版本使用 `benchmark.yaml` 声明版本、任务总数、Split 和类别配额，不覆盖 v1 历史数据。
 另有 4 题 [Benchmark v2 Pilot](benchmarks-pilot-v2/README.md) 完成离线 QA 与 8-call 付费
 难度校准；总体 3/8 Accepted，没有题目被两种策略同时解决。基于该结论，正式 V2 的
-8 道 Train 与 5 道 Validation 题已完成离线资格验证；5 道 Test 仍处于规划状态，因此尚未
-冻结正式 Manifest。Validation 阶段没有 Agent 运行或付费调试。
+8 道 Train、5 道 Validation 与 5 道 Test 均已完成分 Split 离线资格验证；正式完整库存 QA 与
+Manifest 冻结仍是下一独立阶段。Validation/Test 阶段没有 Agent 运行或付费调试。
 
 ## 工程亮点
 
@@ -91,7 +91,7 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：269 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：290 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -136,7 +136,7 @@ EvoDev/
 ├── mcp_servers/         # DevTools MCP stdio Server
 ├── benchmarks/          # 6 Train + 3 Validation + 3 Test
 ├── benchmarks-pilot-v2/ # 4 题 V2 离线校准集，非正式 Test
-├── benchmarks-v2/       # 正式 V2 分阶段实现；当前完成 8 Train + 5 Validation
+├── benchmarks-v2/       # 正式 V2 的 18 题均完成分 Split QA，待完整库存冻结
 ├── docker/sandbox/      # 隔离测试镜像
 ├── policies/            # Candidate、Champion 与版本索引
 ├── evolution/           # Proposal、Gate 与 Generation 状态
@@ -187,6 +187,7 @@ EvoDev/
 - [Benchmark v2 正式任务蓝图](docs/BENCHMARK_V2_BLUEPRINT.md)
 - [Benchmark v2 Train QA](benchmarks-v2/train-qa.json)
 - [Benchmark v2 Validation QA](benchmarks-v2/validation-qa.json)
+- [Benchmark v2 Test QA](benchmarks-v2/test-qa.json)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

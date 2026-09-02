@@ -1,0 +1,38 @@
+diff --git a/retries/policy.py b/retries/policy.py
+--- a/retries/policy.py
++++ b/retries/policy.py
+@@ -5,6 +5,20 @@ from retries.errors import RequestError
+ ResultT = TypeVar("ResultT")
+
+
++def _is_transient(error: RequestError) -> bool:
++    return error.status_code in {408, 429} or 500 <= error.status_code < 600
++
++
++def _retry_after(error: RequestError) -> float | None:
++    if error.retry_after is None:
++        return None
++    try:
++        delay = float(error.retry_after)
++    except ValueError:
++        return None
++    return delay if delay >= 0 else None
++
++
+ def request_with_retries(
+     operation: Callable[[], ResultT],
+     *,
+@@ -17,5 +31,10 @@ def request_with_retries(
+         try:
+             return operation()
+-        except RequestError:
+-            sleeper(backoff(attempt))
+-    raise RuntimeError("request failed after retries")
++        except RequestError as exc:
++            if not _is_transient(exc) or attempt == max_attempts:
++                raise
++            delay = _retry_after(exc)
++            if delay is None:
++                delay = backoff(attempt)
++            sleeper(delay)
++    raise AssertionError("attempt loop exhausted without a result")

@@ -1,7 +1,7 @@
 schema_version: "1.0"
 benchmark_version: "2.0"
 status: blueprint_frozen
-implementation_stage: validation_qualified
+implementation_stage: test_qualified
 inventory:
   task_count: 18
   split_counts:
@@ -318,7 +318,7 @@ tasks:
     difficulty: hard
     repository_template: hierarchical_permissions_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_test_qa
     evaluation_usage: final_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -340,7 +340,7 @@ tasks:
     difficulty: hard
     repository_template: stable_dependency_order_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_test_qa
     evaluation_usage: final_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -362,7 +362,7 @@ tasks:
     difficulty: medium
     repository_template: transient_retry_policy_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_test_qa
     evaluation_usage: final_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -384,7 +384,7 @@ tasks:
     difficulty: hard
     repository_template: async_pool_cancellation_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_test_qa
     evaluation_usage: final_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -406,7 +406,7 @@ tasks:
     difficulty: medium
     repository_template: plugin_hook_compat_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_test_qa
     evaluation_usage: final_only
     prior_agent_runs: false
     calibration_experiment_id: null
