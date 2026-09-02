@@ -94,6 +94,7 @@ def test_guardrail_paid_result_demonstrates_enforcement_not_performance_uplift()
         "blocked_uninspected_patch_retries": 2,
         "executed_uninspected_patch_retries": 0,
         "verification_window_blocks": 2,
+        "final_answer_blocks": 0,
         "total_contract_blocks": 4,
         "test_calls": 5,
         "test_executions": 5,
@@ -152,6 +153,12 @@ def test_local_guardrail_paid_evidence_recomputes_and_matches_hashes_when_presen
             for key in (
                 "patch_attempts",
                 "patch_failures",
+                "uninspected_patch_retry_attempts",
+                "blocked_uninspected_patch_retries",
+                "executed_uninspected_patch_retries",
+                "verification_window_blocks",
+                "final_answer_blocks",
+                "total_contract_blocks",
                 "max_consecutive_patch_failures",
                 "test_calls",
                 "test_executions",
@@ -159,21 +166,6 @@ def test_local_guardrail_paid_evidence_recomputes_and_matches_hashes_when_presen
                 "finish_status",
             ):
                 assert measured[key] == frozen[key]
-            blocked = sum(
-                event.get("type") == "TOOL_RESULT"
-                and event.get("data", {}).get("result", {}).get("error_type")
-                == "CONTRACT_PRECONDITION_NOT_MET"
-                and event.get("data", {}).get("result", {}).get("data", {}).get(
-                    "required_action"
-                )
-                == "read_current_file_after_patch_failure"
-                for event in events
-            )
-            assert blocked == frozen["blocked_uninspected_patch_retries"]
-            assert (
-                measured["uninspected_patch_retries"] - blocked
-                == frozen["executed_uninspected_patch_retries"]
-            )
             report = (
                 evaluation_root
                 / "instances/task_101"

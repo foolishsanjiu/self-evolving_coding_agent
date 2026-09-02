@@ -97,6 +97,17 @@ def test_guardrail_trace_analysis_counts_only_executed_tests_and_patch_failures(
             "type": "TOOL_RESULT",
             "data": {
                 "result": {
+                    "tool_name": "read_file",
+                    "success": False,
+                    "error_type": "CONTRACT_PRECONDITION_NOT_MET",
+                    "data": {"required_action": "run_tests_before_step_budget_expires"},
+                }
+            },
+        },
+        {
+            "type": "TOOL_RESULT",
+            "data": {
+                "result": {
                     "tool_name": "apply_patch",
                     "success": False,
                     "error_type": "PATCH_APPLY_FAILED",
@@ -107,6 +118,17 @@ def test_guardrail_trace_analysis_counts_only_executed_tests_and_patch_failures(
         {
             "type": "TOOL_CALL",
             "data": {"tool_call": {"name": "apply_patch"}},
+        },
+        {
+            "type": "TOOL_RESULT",
+            "data": {
+                "result": {
+                    "tool_name": "apply_patch",
+                    "success": False,
+                    "error_type": "CONTRACT_PRECONDITION_NOT_MET",
+                    "data": {"required_action": "read_current_file_after_patch_failure"},
+                }
+            },
         },
         {
             "type": "TOOL_CALL",
@@ -123,6 +145,10 @@ def test_guardrail_trace_analysis_counts_only_executed_tests_and_patch_failures(
                 }
             },
         },
+        {
+            "type": "CONTRACT_BLOCKED",
+            "data": {"required_action": "run_tests_after_last_edit"},
+        },
         {"type": "RUN_FINISHED", "data": {"status": "MAX_STEPS"}},
     ]
 
@@ -130,6 +156,12 @@ def test_guardrail_trace_analysis_counts_only_executed_tests_and_patch_failures(
         "patch_attempts": 2,
         "patch_failures": 1,
         "uninspected_patch_retries": 1,
+        "uninspected_patch_retry_attempts": 1,
+        "blocked_uninspected_patch_retries": 1,
+        "executed_uninspected_patch_retries": 0,
+        "verification_window_blocks": 1,
+        "final_answer_blocks": 1,
+        "total_contract_blocks": 3,
         "max_consecutive_patch_failures": 1,
         "test_calls": 1,
         "test_executions": 0,
@@ -176,7 +208,8 @@ def test_v005_frozen_attribution_recomputes_from_local_public_events() -> None:
                 for key, value in frozen.items()
                 if key not in {"resolved", "failure_type"}
             }
-            assert analyze_guardrail_trace(events) == expected
+            measured = analyze_guardrail_trace(events)
+            assert {key: measured[key] for key in expected} == expected
 
 
 def test_v005_offline_config_makes_no_performance_claim() -> None:

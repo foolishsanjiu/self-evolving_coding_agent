@@ -2,7 +2,7 @@ from pathlib import Path
 
 from evodev.agent.state import AgentState, should_retry, update_state
 from evodev.schemas import TaskSpec
-from evodev.tools import ToolResult, ToolSpec
+from evodev.tools import ToolCall, ToolResult, ToolSpec
 
 
 def _state() -> AgentState:
@@ -15,14 +15,20 @@ def _state() -> AgentState:
     )
 
 
-def _result(tool_name: str, *, success: bool = True, **data) -> ToolResult:
+def _result(
+    tool_name: str,
+    *,
+    success: bool = True,
+    error_type: str | None = None,
+    **data,
+) -> ToolResult:
     return ToolResult(
         call_id=f"{tool_name}-call",
         tool_name=tool_name,
         success=success,
         content="result",
         data=data,
-        error_type=None if success else "FAILURE",
+        error_type=None if success else error_type or "FAILURE",
         duration_ms=1,
     )
 
@@ -96,3 +102,55 @@ def test_source_inspection_does_not_count_as_test_inspection() -> None:
     update_state(state, _result("read_file", path="src/app.py"))
 
     assert state.tests_inspected_before_edit is False
+
+
+def test_patch_recovery_requires_reading_every_known_failed_patch_path() -> None:
+    state = _state()
+    patch_call = ToolCall(
+        call_id="failed-patch",
+        name="apply_patch",
+        arguments={
+            "patch": (
+                "--- a/src/app.py\n"
+                "+++ b/src/app.py\n"
+                "--- a/src/config.py\n"
+                "+++ b/src/config.py\n"
+            )
+        },
+    )
+
+    update_state(
+        state,
+        _result("apply_patch", success=False, error_type="PATCH_APPLY_FAILED"),
+        tool_call=patch_call,
+    )
+    update_state(state, _result("read_file", path="unrelated.txt"))
+
+    assert state.patch_recovery_required is True
+    assert state.patch_recovery_paths == {"src/app.py", "src/config.py"}
+
+    update_state(state, _result("read_file", path="./src/app.py"))
+    assert state.patch_recovery_required is True
+    assert state.patch_recovery_paths == {"src/config.py"}
+
+    update_state(state, _result("read_file", path="src\\config.py"))
+    assert state.patch_recovery_required is False
+    assert state.patch_recovery_paths == set()
+
+
+def test_pathless_failed_patch_keeps_compatible_read_recovery() -> None:
+    state = _state()
+    patch_call = ToolCall(
+        call_id="failed-patch",
+        name="apply_patch",
+        arguments={"patch": "not a unified patch"},
+    )
+
+    update_state(
+        state,
+        _result("apply_patch", success=False, error_type="PATCH_APPLY_FAILED"),
+        tool_call=patch_call,
+    )
+    update_state(state, _result("read_file", path="src/app.py"))
+
+    assert state.patch_recovery_required is False

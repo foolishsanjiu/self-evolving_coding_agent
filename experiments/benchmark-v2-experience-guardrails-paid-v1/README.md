@@ -67,3 +67,7 @@ v004 为一次 Accepted；配对中只有 r01 不一致，exact McNemar 双侧 p
 [guardrail-behavior.json](guardrail-behavior.json)，原始本地证据 Hash 见
 [evidence-manifest.json](evidence-manifest.json)。完整轨迹、Agent Patch 和隐藏评估输出仍只保存
 在本地 Git ignored 目录。本实验到此停止，不根据该小样本补跑或继续调参。
+
+实验结束后的离线代码审计将 Patch 恢复状态绑定到失败 Diff 的目标路径，并把 Trace Analyzer
+指标拆分为违规尝试、运行时阻断与实际执行；归档轨迹重算仍为 v004 实际违规 9 次、v005 0 次。
+该兼容加固没有调用模型、没有补跑，也不改变本实验的成功率、成本或统计结论。

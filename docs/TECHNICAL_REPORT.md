@@ -1273,7 +1273,7 @@ python -m pytest tests/test_docker_integration.py -v
 配置好密钥后，可执行一次真实模型调用：
 
 ```powershell
-evodev-smoke-llm
+evodev-smoke-llm --confirm-paid
 ```
 
 预期模型回复：
@@ -1282,7 +1282,8 @@ evodev-smoke-llm
 EvoDev ready
 ```
 
-真实调用会产生 API 费用，因此不属于默认单元测试。
+真实调用会产生 API 费用，因此不属于默认单元测试；缺少 `--confirm-paid` 时会在加载模型配置和
+调用 Provider 前拒绝执行，`--help` 只显示参数说明。
 
 ## Limitations
 

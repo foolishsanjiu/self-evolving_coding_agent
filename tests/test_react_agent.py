@@ -327,8 +327,22 @@ def test_prefer_policy_is_visible_guidance_without_hard_block() -> None:
 
 def test_contract_guard_blocks_patch_retry_until_file_is_reinspected() -> None:
     calls = [
-        ToolCall(call_id="patch-fails", name="apply_patch", arguments={"patch": "bad"}),
+        ToolCall(
+            call_id="patch-fails",
+            name="apply_patch",
+            arguments={"patch": "--- a/app.py\n+++ b/app.py\n"},
+        ),
         ToolCall(call_id="patch-blocked", name="apply_patch", arguments={"patch": "retry"}),
+        ToolCall(
+            call_id="read-unrelated",
+            name="read_file",
+            arguments={"path": "unrelated.py"},
+        ),
+        ToolCall(
+            call_id="patch-still-blocked",
+            name="apply_patch",
+            arguments={"patch": "retry"},
+        ),
         ToolCall(call_id="read-current", name="read_file", arguments={"path": "app.py"}),
         ToolCall(call_id="patch-works", name="apply_patch", arguments={"patch": "good"}),
         ToolCall(call_id="verify", name="run_tests", arguments={}),
@@ -347,8 +361,10 @@ def test_contract_guard_blocks_patch_retry_until_file_is_reinspected() -> None:
 
     assert result.status == AgentStatus.SUCCESS
     assert result.tool_results[1].error_type == "CONTRACT_PRECONDITION_NOT_MET"
+    assert result.tool_results[3].error_type == "CONTRACT_PRECONDITION_NOT_MET"
     assert [call.call_id for call in provider.calls] == [
         "patch-fails",
+        "read-unrelated",
         "read-current",
         "patch-works",
         "verify",

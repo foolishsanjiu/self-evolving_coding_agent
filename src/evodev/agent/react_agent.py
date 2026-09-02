@@ -272,7 +272,7 @@ class ReActAgent:
                         or self._contract_tool_guard(tool_call, state)
                         or self._call_tool(tool_call, tools_by_name.get(tool_call.name))
                     )
-                    update_state(state, result)
+                    update_state(state, result, tool_call=tool_call)
                     exchange_results.append(result)
                     self._emit(
                         "TOOL_RESULT", step_count=step_count, result=result.model_dump()

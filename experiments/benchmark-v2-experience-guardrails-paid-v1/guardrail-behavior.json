@@ -3,7 +3,9 @@
   "metric_semantics": {
     "uninspected_patch_retry_attempts": "An apply_patch tool call made while a prior PATCH_APPLY_FAILED still requires a successful read_file.",
     "blocked_uninspected_patch_retries": "Those attempts rejected by the runtime with CONTRACT_PRECONDITION_NOT_MET before patch execution.",
-    "executed_uninspected_patch_retries": "Attempted violations minus runtime-blocked attempts."
+    "executed_uninspected_patch_retries": "Attempted violations minus runtime-blocked attempts.",
+    "verification_window_blocks": "Tool calls blocked to reserve a remaining step for post-edit tests.",
+    "final_answer_blocks": "Final answers blocked until the latest successful edit has a test execution."
   },
   "runs": {
     "v004": {
@@ -17,6 +19,7 @@
         "blocked_uninspected_patch_retries": 0,
         "executed_uninspected_patch_retries": 5,
         "verification_window_blocks": 0,
+        "final_answer_blocks": 0,
         "total_contract_blocks": 0,
         "max_consecutive_patch_failures": 3,
         "test_calls": 1,
@@ -36,6 +39,7 @@
         "blocked_uninspected_patch_retries": 0,
         "executed_uninspected_patch_retries": 4,
         "verification_window_blocks": 0,
+        "final_answer_blocks": 0,
         "total_contract_blocks": 0,
         "max_consecutive_patch_failures": 3,
         "test_calls": 1,
@@ -57,6 +61,7 @@
         "blocked_uninspected_patch_retries": 1,
         "executed_uninspected_patch_retries": 0,
         "verification_window_blocks": 2,
+        "final_answer_blocks": 0,
         "total_contract_blocks": 3,
         "max_consecutive_patch_failures": 1,
         "test_calls": 2,
@@ -76,6 +81,7 @@
         "blocked_uninspected_patch_retries": 1,
         "executed_uninspected_patch_retries": 0,
         "verification_window_blocks": 0,
+        "final_answer_blocks": 0,
         "total_contract_blocks": 1,
         "max_consecutive_patch_failures": 1,
         "test_calls": 3,
@@ -95,6 +101,7 @@
       "blocked_uninspected_patch_retries": 0,
       "executed_uninspected_patch_retries": 9,
       "verification_window_blocks": 0,
+      "final_answer_blocks": 0,
       "total_contract_blocks": 0,
       "test_calls": 2,
       "test_executions": 2,
@@ -107,6 +114,7 @@
       "blocked_uninspected_patch_retries": 2,
       "executed_uninspected_patch_retries": 0,
       "verification_window_blocks": 2,
+      "final_answer_blocks": 0,
       "total_contract_blocks": 4,
       "test_calls": 5,
       "test_executions": 5,

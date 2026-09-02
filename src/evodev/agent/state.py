@@ -7,8 +7,9 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from evodev.agent.patch_recovery import extract_patch_paths, normalize_tool_path
 from evodev.schemas import TaskSpec
-from evodev.tools import ToolResult, ToolSpec
+from evodev.tools import ToolCall, ToolResult, ToolSpec
 
 
 class AgentStatus(StrEnum):
@@ -32,6 +33,7 @@ class AgentState(BaseModel):
     tool_history: list[ToolResult] = Field(default_factory=list)
     current_patch: str | None = None
     patch_recovery_required: bool = False
+    patch_recovery_paths: set[str] = Field(default_factory=set)
     patch_needs_verification: bool = False
     contract_feedback: str | None = None
     test_results: list[dict[str, Any]] = Field(default_factory=list)
@@ -49,7 +51,12 @@ TRANSIENT_TOOL_ERRORS = frozenset(
 )
 
 
-def update_state(state: AgentState, result: ToolResult) -> None:
+def update_state(
+    state: AgentState,
+    result: ToolResult,
+    *,
+    tool_call: ToolCall | None = None,
+) -> None:
     """Apply one final tool result to the current task state."""
     state.tool_history.append(result)
     if result.tool_name == "run_tests" and result.data:
@@ -58,12 +65,19 @@ def update_state(state: AgentState, result: ToolResult) -> None:
     if not result.success:
         if result.tool_name == "apply_patch" and result.error_type == "PATCH_APPLY_FAILED":
             state.patch_recovery_required = True
+            patch = tool_call.arguments.get("patch") if tool_call is not None else None
+            state.patch_recovery_paths = extract_patch_paths(patch)
         state.last_error = result.error_type or result.content
         return
 
     if result.tool_name == "read_file" and (path := result.data.get("path")):
-        state.patch_recovery_required = False
-        path = str(path)
+        path = normalize_tool_path(str(path))
+        if state.patch_recovery_required:
+            if state.patch_recovery_paths:
+                state.patch_recovery_paths.discard(path)
+                state.patch_recovery_required = bool(state.patch_recovery_paths)
+            else:
+                state.patch_recovery_required = False
         state.files_inspected.add(path)
         if state.current_patch is None and _is_test_path(path):
             state.tests_inspected_before_edit = True
@@ -76,6 +90,7 @@ def update_state(state: AgentState, result: ToolResult) -> None:
         patch = result.data.get("patch") or result.data.get("diff")
         state.current_patch = str(patch or result.content)
         state.patch_recovery_required = False
+        state.patch_recovery_paths.clear()
         state.patch_needs_verification = True
 
 
