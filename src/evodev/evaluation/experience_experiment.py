@@ -38,6 +38,7 @@ from evodev.tools import MCPToolProvider
 from evodev.trajectory import RunMetadata, TrajectoryRecorder, tool_catalog_hash
 
 RetrievalMode = Literal["relevant", "random"]
+RetrievalAuditSplit = Literal["train", "validation"]
 
 
 def _resolve_under_root(project_root: Path, path: Path) -> tuple[Path, str]:
@@ -45,16 +46,18 @@ def _resolve_under_root(project_root: Path, path: Path) -> tuple[Path, str]:
     return resolved, resolved.relative_to(project_root).as_posix()
 
 
-def _load_public_validation_tasks(loader: BenchmarkLoader) -> list[BenchmarkTask]:
+def _load_public_tasks(
+    loader: BenchmarkLoader, split: RetrievalAuditSplit
+) -> list[BenchmarkTask]:
     manifest = loader.load_manifest()
     if manifest.benchmark_version != loader.definition.benchmark_version:
         raise ValueError("Benchmark definition and manifest versions differ")
     entries = {
-        item.task_id: item for item in manifest.tasks if item.split == "validation"
+        item.task_id: item for item in manifest.tasks if item.split == split
     }
     tasks = []
-    validation_root = loader.root / "validation"
-    for task_path in sorted(validation_root.glob("task_*")):
+    split_root = loader.root / split
+    for task_path in sorted(split_root.glob("task_*")):
         if not task_path.is_dir():
             continue
         config = BenchmarkTaskConfig.model_validate(
@@ -65,11 +68,11 @@ def _load_public_validation_tasks(loader: BenchmarkLoader) -> list[BenchmarkTask
             entry.category != config.category
             or entry.repository_template != config.repository_template
         ):
-            raise ValueError(f"Public Validation task differs from manifest: {config.task_id}")
+            raise ValueError(f"Public {split} task differs from manifest: {config.task_id}")
         repository = (task_path / "repo").resolve(strict=True)
         tasks.append(
             BenchmarkTask(
-                split="validation",
+                split=split,
                 config=config,
                 task_path=task_path.resolve(),
                 repository_path=repository,
@@ -80,15 +83,16 @@ def _load_public_validation_tasks(loader: BenchmarkLoader) -> list[BenchmarkTask
             )
         )
     if {task.config.task_id for task in tasks} != set(entries):
-        raise ValueError("Validation public task inventory differs from manifest")
+        raise ValueError(f"{split} public task inventory differs from manifest")
     return tasks
 
 
-def audit_validation_retrieval(
+def audit_retrieval(
     project_root: Path,
     snapshot_path: Path,
     benchmark_root: Path,
     *,
+    split: RetrievalAuditSplit,
     top_k: int = 3,
     max_chars: int = 2_500,
 ) -> dict[str, object]:
@@ -106,7 +110,7 @@ def audit_validation_retrieval(
     )
     tasks = []
     selected_ids = set()
-    for task in _load_public_validation_tasks(loader):
+    for task in _load_public_tasks(loader, split):
         result = retriever.retrieve(build_retrieval_query(task), "relevant")
         selections = [
             {
@@ -129,7 +133,7 @@ def audit_validation_retrieval(
             }
         )
     if not tasks:
-        raise ValueError("Selected Benchmark has no Validation tasks")
+        raise ValueError(f"Selected Benchmark has no {split} tasks")
     hit_tasks = sum(bool(task["hit"]) for task in tasks)
     return {
         "benchmark_root": relative_benchmark,
@@ -138,7 +142,7 @@ def audit_validation_retrieval(
         "snapshot_path": relative_snapshot,
         "experience_version": snapshot.version,
         "experience_hash": snapshot.content_hash,
-        "split": "validation",
+        "split": split,
         "public_metadata_only": True,
         "task_count": len(tasks),
         "hit_tasks": hit_tasks,
@@ -149,6 +153,24 @@ def audit_validation_retrieval(
         "unique_selected_experiences": sorted(selected_ids),
         "tasks": tasks,
     }
+
+
+def audit_validation_retrieval(
+    project_root: Path,
+    snapshot_path: Path,
+    benchmark_root: Path,
+    *,
+    top_k: int = 3,
+    max_chars: int = 2_500,
+) -> dict[str, object]:
+    return audit_retrieval(
+        project_root,
+        snapshot_path,
+        benchmark_root,
+        split="validation",
+        top_k=top_k,
+        max_chars=max_chars,
+    )
 
 
 def build_experience_arm_preflight(
@@ -171,7 +193,7 @@ def build_experience_arm_preflight(
     snapshot = load_snapshot(resolved_snapshot)
     loader = BenchmarkLoader(resolved_benchmark)
     manifest = loader.load_manifest()
-    tasks = _load_public_validation_tasks(loader)
+    tasks = _load_public_tasks(loader, "validation")
     runs = [
         {
             "task_id": task.config.task_id,
@@ -588,13 +610,15 @@ def audit_main() -> None:
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--snapshot", type=Path, required=True)
     parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
+    parser.add_argument("--split", choices=["train", "validation"], default="validation")
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--max-chars", type=int, default=2_500)
     arguments = parser.parse_args()
-    audit = audit_validation_retrieval(
+    audit = audit_retrieval(
         arguments.project_root,
         arguments.snapshot,
         arguments.benchmark_root,
+        split=arguments.split,
         top_k=arguments.top_k,
         max_chars=arguments.max_chars,
     )

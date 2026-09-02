@@ -40,6 +40,35 @@ def create_snapshot(
     )
 
 
+def add_source_task_types(
+    snapshot: ExperienceSnapshot,
+    version: str,
+    task_categories: dict[str, str],
+) -> ExperienceSnapshot:
+    """Add trusted source-task categories without removing model-generated tags."""
+    missing = sorted(
+        {source.task_id for source in snapshot.sources} - set(task_categories)
+    )
+    if missing:
+        raise ValueError(f"Missing source task categories: {missing}")
+    categories_by_experience: dict[str, set[str]] = {}
+    for source in snapshot.sources:
+        categories_by_experience.setdefault(source.experience_id, set()).add(
+            task_categories[source.task_id]
+        )
+    experiences = [
+        item.model_copy(
+            update={
+                "task_types": sorted(
+                    set(item.task_types) | categories_by_experience[item.experience_id]
+                )
+            }
+        )
+        for item in snapshot.experiences
+    ]
+    return create_snapshot(version, experiences, snapshot.sources)
+
+
 def write_snapshot(snapshot: ExperienceSnapshot, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(snapshot.model_dump_json(indent=2), encoding="utf-8")

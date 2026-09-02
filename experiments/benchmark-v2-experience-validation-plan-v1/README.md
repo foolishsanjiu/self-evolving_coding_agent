@@ -35,3 +35,7 @@ category，并以 Train leave-one-task-out 覆盖率验证。不能根据本次 
 
 机器可读审计见 [retrieval-audit.json](retrieval-audit.json)，完整合同见
 [`benchmark-v2-experience-validation-v1.yaml`](../../configs/experiments/benchmark-v2-experience-validation-v1.yaml)。
+
+后续状态：Train-only 元数据契约已在
+[`benchmark-v2-experience-metadata-v1`](../benchmark-v2-experience-metadata-v1/README.md) 修复并冻结为
+`experience-v003`。本目录对 v002 的 1/5 结果保持不变；尚未用 v003 重新读取 Validation。

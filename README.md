@@ -87,7 +87,9 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 一调用的 Reflection：8 条通过安全校验，1 条因复制 evaluator-specific literals 被拒绝且
 未重试；经去重后冻结为 7 条 active Experience 的 `experience-v002`。其是否带来收益仍需
 后续 Validation 对照实验验证。公开元数据离线预检显示当前快照只命中 1/5 Validation 任务，
-因此付费对照实验已在 API 前阻断；下一阶段先用 Train-only evidence 修复检索元数据契约。
+因此付费对照实验已在 API 前阻断。随后仅用 Train 来源修复了元数据契约：`experience-v003`
+为 7/7 经验追加可信源 category，并在唯一具备跨任务同类 Experience 的 Train holdout 上从
+0/1 提升到 1/1；Validation 尚未用新快照重放。
 
 ## 工程亮点
 
@@ -98,7 +100,7 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：313 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：316 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -196,7 +198,7 @@ EvoDev/
 - V2 Pilot 只有 4 题 × 2 Policy × 1 次重复，不能作为策略优劣或能力提升证据；
 - 成功率改善集中在 `task_010`，尚未完成 SWE-bench 或大型真实仓库评测；
 - v1 Final 使用的 Experience 快照只有一个 Train 来源；新 V2 快照含 7 条经验，但尚未通过
-  Validation 对照验证其净收益；
+  Validation 对照验证其净收益，Train 可验证的跨任务类别也只有一个；
 - Policy Search Space 人工限制为三个字段，没有进行模型微调；
 - B、C、D 在 Primary Metric 上并列，尚无 Experience 与 Policy 额外互补增益的证据；
 - Docker Sandbox 面向受控 Coding Task，不应视为恶意代码的完整安全边界。
@@ -222,6 +224,8 @@ EvoDev/
 - [Benchmark v2 Train Reflection 结果](experiments/benchmark-v2-reflection-v1/README.md)
 - [Benchmark v2 Experience 快照](experiences/experience-v002.json)
 - [Benchmark v2 Experience Validation 预检](experiments/benchmark-v2-experience-validation-plan-v1/README.md)
+- [Benchmark v2 Train Experience 元数据修复](experiments/benchmark-v2-experience-metadata-v1/README.md)
+- [Benchmark v2 Experience v003 快照](experiences/experience-v003.json)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

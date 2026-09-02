@@ -75,6 +75,13 @@ class ReflectionExtractor:
         }
         if copied_literals:
             raise ValueError("Experience candidate copies evaluator-specific literals")
+        candidate = draft.experience_candidate.model_copy(
+            update={
+                "task_types": sorted(
+                    {*draft.experience_candidate.task_types, context.task_type}
+                )
+            }
+        )
         reflection = Reflection(
             reflection_id=f"reflection_{uuid4().hex}",
             task_id=context.task_id,
@@ -83,5 +90,5 @@ class ReflectionExtractor:
         )
         return StructuredReflection(
             reflection=reflection,
-            experience_candidate=draft.experience_candidate,
+            experience_candidate=candidate,
         )

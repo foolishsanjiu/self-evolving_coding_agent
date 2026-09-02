@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "audit_id": "benchmark-v2-experience-metadata-v1",
+  "data_boundary": {
+    "benchmark_root": "benchmarks-v2",
+    "benchmark_hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6",
+    "split": "train",
+    "public_metadata_only": true,
+    "validation_accessed": false,
+    "test_accessed": false,
+    "hidden_tests_accessed": false,
+    "gold_patches_accessed": false
+  },
+  "source": {
+    "version": "experience-v002",
+    "path": "experiences/experience-v002.json",
+    "content_hash": "8eb3a05d7a1c7aa655688b74f050951234fb2133dc8183b1c2566c05aa1ae5dd"
+  },
+  "target": {
+    "version": "experience-v003",
+    "path": "experiences/experience-v003.json",
+    "content_hash": "53f8ce05c569b94f2969aacff64c43a799b19adec52cdad07a1f59611f1006e9",
+    "active_experiences": 7,
+    "sources": 8
+  },
+  "trusted_task_categories": {
+    "task_101": "cross_module_bug",
+    "task_102": "state_data_flow",
+    "task_103": "error_resilience",
+    "task_104": "state_data_flow",
+    "task_105": "feature",
+    "task_106": "cross_module_bug",
+    "task_107": "concurrency_resource",
+    "task_108": "test_repair_compatibility"
+  },
+  "curation": {
+    "rule": "Preserve model-generated task_types and append every trusted source task category.",
+    "changed_experiences": 6,
+    "already_contained_source_category": 1,
+    "removed_tags": 0,
+    "changed_recommendations": 0,
+    "changed_sources": 0
+  },
+  "train_leave_one_task_out": {
+    "all_tasks": {
+      "task_count": 8,
+      "v002_hits": 0,
+      "v002_hit_rate": 0.0,
+      "v003_hits": 1,
+      "v003_hit_rate": 0.125,
+      "v003_hit_task_ids": [
+        "task_101"
+      ]
+    },
+    "cross_task_category_supported": {
+      "definition": "Held-out Train tasks whose category has Experience from a different task.",
+      "task_ids": [
+        "task_101"
+      ],
+      "v002_hits": 0,
+      "v003_hits": 1,
+      "v003_hit_rate": 1.0,
+      "selected_experience_ids": [
+        "exp_242f9076fcdd413085a70c719c9a07fc",
+        "exp_975124e62db3481c8d106a0fedfe8bd4"
+      ]
+    }
+  },
+  "interpretation_boundary": "The trusted category contract is fixed and succeeds on the only cross-task category-supported Train holdout. The 1/8 overall hit rate also shows that the Train Experience inventory remains sparse; no Validation outcome is inferred."
+}

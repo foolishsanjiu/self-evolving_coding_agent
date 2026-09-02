@@ -478,6 +478,22 @@ Metrics 对 v1 Baseline 路径的硬编码；缺少确认时会在 Runner、Dock
 否则会污染用于 Gate 的数据。机器可读计划位于
 `configs/experiments/benchmark-v2-experience-validation-v1.yaml`。
 
+### Benchmark v2 Train Experience 元数据修复
+
+Validation 预检之后没有依据 Validation 题意调整检索器。修复只使用 `experience-v002` 的
+Train Provenance 与对应公开 `task.yaml`：保留模型生成的语义 `task_types`，再追加可信源任务
+category。`ReflectionExtractor` 对未来候选自动执行相同规则；历史快照通过确定性
+`add_source_task_types` 迁移为 `experience-v003`，7/7 active Experience 均包含源 category，
+recommendation、rationale、confidence、时间戳和 8 个 Sources 均保持不变。新 Hash 为
+`53f8ce05c569b94f2969aacff64c43a799b19adec52cdad07a1f59611f1006e9`。
+
+Train leave-one-task-out 审计中，v002 为 0/8、v003 为 1/8。总体比例低是因为同任务来源会被
+防泄漏规则排除，且只有 task_101 的 category 在另一任务 task_106 中存在 Experience；在这个
+唯一可验证的 cross-task category-supported holdout 上，命中由 0/1 提升到 1/1，并选择两条
+来自 task_106 的经验。该结果证明可信 category 契约生效，不证明广泛覆盖。审计文件位于
+`experiments/benchmark-v2-experience-metadata-v1/train-retrieval-audit.json`；文件读取测试确认
+本阶段没有访问 Validation/Test、hidden tests 或 Gold Patch，也没有模型调用与新增费用。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

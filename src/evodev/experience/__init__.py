@@ -22,7 +22,12 @@ from evodev.experience.models import (
     StructuredReflectionDraft,
 )
 from evodev.experience.retrieval import ExperienceRetriever, build_retrieval_query
-from evodev.experience.snapshot import create_snapshot, load_snapshot, write_snapshot
+from evodev.experience.snapshot import (
+    add_source_task_types,
+    create_snapshot,
+    load_snapshot,
+    write_snapshot,
+)
 from evodev.experience.store import ExperienceStore
 
 __all__ = [
@@ -48,6 +53,7 @@ __all__ = [
     "StructuredReflectionDraft",
     "can_write_experience",
     "build_retrieval_query",
+    "add_source_task_types",
     "create_snapshot",
     "is_reflection_eligible",
     "load_snapshot",

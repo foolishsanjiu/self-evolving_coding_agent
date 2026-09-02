@@ -132,12 +132,18 @@ def test_eligibility_excludes_infrastructure_and_split_policy() -> None:
 
 
 def test_one_call_extracts_two_validated_objects_without_raw_trace() -> None:
-    model = FakeReflectionModel(_output())
+    output = _output()
+    output.experience_candidate.task_types = ["generated_input_validation"]
+    model = FakeReflectionModel(output)
     result = ReflectionExtractor(model).extract(_context())
 
     assert model.calls == 1
     assert result.reflection.root_cause
     assert result.experience_candidate.recommendation
+    assert result.experience_candidate.task_types == [
+        "exception_handling",
+        "generated_input_validation",
+    ]
     prompt = json.dumps(model.messages)
     assert "allowed_evidence_references" in prompt
     assert "events.jsonl" not in prompt
