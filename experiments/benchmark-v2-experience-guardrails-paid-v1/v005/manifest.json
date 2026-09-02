@@ -1,0 +1,32 @@
+{
+  "experiment_id": "exp-experience-v005-train-guardrail-v1",
+  "experiment_version": "exp-experience-v005-train-guardrail-v1",
+  "repetitions": 2,
+  "agent_release": "0.1.0",
+  "policy_version": "fixed-react-v1",
+  "policy_hash": "45cc1142fee0fc096d587dcb265bec789687b63242bc979aa341ca23a3762947",
+  "experience_version": "experience-v005",
+  "experience_hash": "622a19135c144e1e9a8b1d787933add4a8299491888e6e31463c1bbc18919602",
+  "experience_mode": "relevant",
+  "experience_consumer": "execution-contract-v2",
+  "experience_top_k": 3,
+  "experience_max_chars": 2500,
+  "experience_random_seed": 0,
+  "model": "deepseek-v4-flash",
+  "temperature": 0.1,
+  "prompt_version": "react-system-v1",
+  "max_steps": 15,
+  "context_budget": 60000,
+  "tool_provider": "mcp-devtools-v1",
+  "tool_catalog_hash": "6b9879a000c06d27b75fbc5c46d95a41268fab4e9a3bb60fd0866178304ab3c2",
+  "sandbox_image": "evodev-python:3.11",
+  "sandbox_digest": "sha256:52b485a7b17bb160572782f342398329285ee45654cfb560c83b40cab2b065c3",
+  "benchmark_version": "2.0",
+  "benchmark_hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6",
+  "benchmark_root": "benchmarks-v2",
+  "benchmark_splits": [
+    "train"
+  ],
+  "evaluator_version": "1.0",
+  "created_at": "2026-09-02T13:18:18.926180+00:00"
+}

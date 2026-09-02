@@ -104,9 +104,11 @@ Hash；该阶段解决“如何执行和测量经验”的工程合同问题，�
 `PATCH_APPLY_FAILED`，其中 8 次没有重新读取文件就继续 Patch；一条 Accepted 轨迹甚至没有
 运行测试。由此冻结 `experience-v005` 与 `execution-contract-v2`：Patch 失败后必须先重新读取，
 最后成功编辑后必须测试，并为固定步数保留验证窗口。该机制默认关闭且不改变 v001–v004；目前
-只通过离线 FakeLLM 验证，尚无新的付费性能结论。v004/v005 的 Train-only 定向机制测试现已
-冻结并获得 4-call 付费授权：两臂对唯一跨任务检索命中的 `task_101` 各重新运行 2 次，禁止
-选择性补跑；结果尚未产生。
+先通过离线 FakeLLM 验证，随后冻结并执行 v004/v005 的 4-call Train-only 定向机制测试。v005
+两次目标违规尝试均被 Runtime Guard 阻断，实际执行的“Patch 失败后未重读就继续 Patch”从
+v004 的 9 次降为 0 次，证明门禁真实生效。v005 为 2/2 Accepted、v004 为 1/2，但只有一个
+不一致配对（exact McNemar p=1.0），且 v005 平均 Tokens 高 42.68%，因此不能宣称成功率或效率
+已得到因果改善。
 
 ## 工程亮点
 
@@ -117,7 +119,7 @@ Hash；该阶段解决“如何执行和测量经验”的工程合同问题，�
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：343 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：350 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -215,7 +217,8 @@ EvoDev/
 - 成功率改善集中在 `task_010`，尚未完成 SWE-bench 或大型真实仓库评测；
 - v1 Final 使用的 Experience 快照只有一个 Train 来源；V2 的 20-call Validation 对照未证明
   v003 带来净收益；v004 已补齐可执行/可测合同，但单题 4-call Train holdout 对照也未证明
-  成功率、合同遵循或增量利用改善；v005 运行时门禁只有离线验证，尚未运行真实模型；
+  成功率、合同遵循或增量利用改善；v005 真实模型对照证明门禁生效，但单题两次重复不足以证明
+  成功率改善，且观察到更高 Tokens、Tool Calls 与延迟；
 - Policy Search Space 人工限制为三个字段，没有进行模型微调；
 - B、C、D 在 Primary Metric 上并列，尚无 Experience 与 Policy 额外互补增益的证据；
 - Docker Sandbox 面向受控 Coding Task，不应视为恶意代码的完整安全边界。

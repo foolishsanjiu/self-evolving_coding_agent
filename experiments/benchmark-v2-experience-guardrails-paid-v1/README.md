@@ -25,8 +25,45 @@ hidden tests 只由运行后的独立评估器使用。机器预检见 [prefligh
 执行契约见
 [`benchmark-v2-experience-guardrails-paid-v1.yaml`](../../configs/experiments/benchmark-v2-experience-guardrails-paid-v1.yaml)。
 
-## 当前停止点
+## 结果
 
-实验协议已冻结并获得用户付费授权，尚未开始模型调用。结果将比较 Accepted、Patch 失败、
-失败后未重读重试、末次编辑验证、合同遵循、Tokens、延迟与保守成本；不会根据中间结果改参
-或补跑。
+付费前协议已在 Git 提交 `3ffe514` 冻结，随后严格执行 v004、v005 各 2 次调用；4 次调用均
+进入独立评测，没有选择性补跑。
+
+| 指标 | v004 | v005 | v005 - v004 |
+|---|---:|---:|---:|
+| Accepted | 1 / 2 | 2 / 2 | +1 |
+| Patch attempts | 14 | 11 | -3 |
+| `PATCH_APPLY_FAILED` | 10 | 4 | -6 |
+| 未重读 Patch 尝试 | 9 | 2 | -7 |
+| 其中被 Runtime Guard 阻断 | 0 | 2 | +2 |
+| 实际执行的未重读 Patch | 9 | 0 | -9 |
+| Test executions | 2 | 5 | +3 |
+| 末次成功编辑已验证 | 2 / 2 | 2 / 2 | 0 |
+| 合同遵循 | 2 / 2 | 2 / 2 | 0 |
+| Experience 增量利用 | 0 / 2 | 0 / 2 | 0 |
+| 平均 Tokens | 105,985.5 | 151,221.0 | +42.68% |
+| 平均 Tool Calls | 18.0 | 24.0 | +33.33% |
+| 平均延迟 | 65.8 s | 74.5 s | +13.29% |
+
+v005 两条轨迹各发生一次“Patch 失败后未重读就再次 Patch”的尝试，运行时均以
+`CONTRACT_PRECONDITION_NOT_MET` 在补丁执行前阻断，随后 Agent 重新读取并恢复；因此门禁机制
+的真实模型路径已经得到验证。v005 r01 还发生 2 次验证窗口阻断，将最后步骤保留给测试；四次
+合同阻断都由 Agent 正常恢复。v004 的同类 9 次 Patch 尝试全部实际执行。v005 两次均 Accepted，
+v004 为一次 Accepted；配对中只有 r01 不一致，exact McNemar 双侧 p=1.0。
+
+实际总用量为 475,556 Input Tokens、38,857 Output Tokens。按执行时淡时费率并将全部输入视为
+缓存未命中，保守估算 0.1303 美元，低于 0.50 美元授权上限。
+
+## 结论与停止点
+
+本轮接受“v005 Runtime Guardrails 在真实模型轨迹中能够阻断目标违规”的机制结论：两次目标
+违规尝试均被阻断，实际执行的违规从 v004 的 9 次降为 0 次。不能接受“v005 已证明提升成功率”
+的性能结论：只有一题、两次重复和一个不一致配对，p=1.0；而且两臂的末次编辑验证与合同遵循
+本来都是 2/2，Experience 增量利用也仍为 0/2。v005 同时付出更多 Tokens、Tool Calls 和延迟，
+效率没有改善。
+
+机器比较见 [comparison.json](comparison.json)，逐 run 门禁归因见
+[guardrail-behavior.json](guardrail-behavior.json)，原始本地证据 Hash 见
+[evidence-manifest.json](evidence-manifest.json)。完整轨迹、Agent Patch 和隐藏评估输出仍只保存
+在本地 Git ignored 目录。本实验到此停止，不根据该小样本补跑或继续调参。

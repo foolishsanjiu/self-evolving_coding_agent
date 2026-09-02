@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "execution_contract": "configs/experiments/benchmark-v2-experience-guardrails-paid-v1.yaml",
+  "execution_contract_commit": "3ffe51400b71afb6adcbce4523c64e85fd4f0025",
+  "raw_evidence_retention": "local_only_gitignored",
+  "execution_window": {
+    "started_at": "2026-09-02T13:12:40.559083+00:00",
+    "finished_at": "2026-09-02T13:18:14.009835+00:00",
+    "pricing_period": "off_peak"
+  },
+  "arm_artifacts": {
+    "v004_manifest": "dfda546050558a2619a81b7da0f24b04b15813d2f35dcc10485e95b2ce558707",
+    "v004_summary_json": "ca1ee7ea8ed3a19b211be8f61e2e72aa1353c02924752d0ff502951156e017be",
+    "v004_summary_csv": "48ea128d0aa50eb752b13f45217c1edd9c91d6e6eebe3aafd561fd975a057b59",
+    "v004_experience_metrics": "91f56621494a1f8dade5430c4158fa9e7af7e46e841ef752b2b078f3ea7cef9d",
+    "v005_manifest": "4a9f5b39dafa12b49701aaa16376d9a32a54cae0eb521e37f4af24c619c40ef9",
+    "v005_summary_json": "b565b19907906315d0961279de54ead6b62479e4b7e289c3d984c83ffffec544",
+    "v005_summary_csv": "35586cc1302641e7904ddb9d446c21bfa91f3b56a489ec105ac98c8325099a15",
+    "v005_experience_metrics": "91f56621494a1f8dade5430c4158fa9e7af7e46e841ef752b2b078f3ea7cef9d"
+  },
+  "run_artifacts": {
+    "v004_r01_events": "c6509e84831feec5f96d122f9867fa2bb7edaa964826079878e0f305fcdb2bdb",
+    "v004_r01_retrieval": "035fb91b19497d6098352df56baf46a44af17c0ebf73cf12e773165052669b7b",
+    "v004_r01_trace_features": "6a6031d96e0bebddb395588dc31c2c13cce998b6737975f38e8bdfdebb0f3892",
+    "v004_r01_final_patch": "469e17ab80f5ee824d350a0da17d50058a60c1f11c36fa70815779724ea48aed",
+    "v004_r01_evaluation_report": "bc66ed7bc7f81123ba61aff4d0db66a1c4ead6b48bdf8d1417f7a64540163778",
+    "v004_r02_events": "ba97e7df489c12539e5fe4aefb9982dcf84c8376dcb7ddd4f75768a735615908",
+    "v004_r02_retrieval": "035fb91b19497d6098352df56baf46a44af17c0ebf73cf12e773165052669b7b",
+    "v004_r02_trace_features": "e95f7ff7d43d4d7f258f5b2a8907cbc2ca071b02b550417fba0f989a4f4941a7",
+    "v004_r02_final_patch": "cdc27856cfdeb40f54aafc0153a07482776a22d9b6d9ede6868db22073ac27c4",
+    "v004_r02_evaluation_report": "6939f9f0a8a903ed80d85c4282fc464991f2b5f199d16eafae7de4877c56ca7f",
+    "v005_r01_events": "df71997ce0369761e3034bd4f25e1829dc5eedd1051b866bd51dda04af18b3b9",
+    "v005_r01_retrieval": "4ad9139f693fc408a6670ea3a583f089ac97c13d766add4a4e4ed3640005874b",
+    "v005_r01_trace_features": "6d5b2bb71c08c8266e028dba7c84e549b60b1b79c27bab17d665e9d7874019ca",
+    "v005_r01_final_patch": "6b092a0d0fde8c2be549f426b895281c7e83f012d97517e2774237822bd63155",
+    "v005_r01_evaluation_report": "8cbaca13fbf7619495a93866eadd4d4797b78e30a973a5e157abc6f8e85a20db",
+    "v005_r02_events": "34d331afcfaeebf9f5c9f86c9ec71a3fb1ce1e8f77aeb992c30f3bfc66e38577",
+    "v005_r02_retrieval": "4ad9139f693fc408a6670ea3a583f089ac97c13d766add4a4e4ed3640005874b",
+    "v005_r02_trace_features": "9f0e50fd8bbefdaabb5cf8f81cf7615c066298282cdbf0a818300428e2765f3b",
+    "v005_r02_final_patch": "5f079f359722a25ee07edd71b6a078fb31bc5e3b12bfdfb3c05f75d3d1d702a7",
+    "v005_r02_evaluation_report": "74f182e92006e4babdb3215ea1e1722e3e23e830d3fa523b020616d00f5c9511"
+  },
+  "boundaries": {
+    "benchmark_split": "train",
+    "selected_task_ids": ["task_101"],
+    "validation_split_accessed": false,
+    "test_split_accessed": false,
+    "gold_patch_exposed_to_agent": false,
+    "hidden_tests_exposed_to_agent": false,
+    "independent_evaluator_used": true,
+    "selective_reruns_performed": false
+  }
+}

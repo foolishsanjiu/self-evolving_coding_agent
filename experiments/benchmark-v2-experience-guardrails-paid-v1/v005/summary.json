@@ -1,0 +1,17 @@
+{
+  "experiment_id": "exp-experience-v005-train-guardrail-v1",
+  "total_attempts": 2,
+  "valid_evaluated_attempts": 2,
+  "resolved_attempts": 2,
+  "resolution_rate": 1.0,
+  "average_react_steps": 15.0,
+  "average_tool_calls": 24.0,
+  "average_tokens": 151221.0,
+  "average_latency_ms": 74523.0,
+  "search_before_edit_rate": 1.0,
+  "test_inspection_before_edit_rate": 1.0,
+  "average_patch_attempts": 5.5,
+  "failure_distribution": {
+    "RESOLVED": 2
+  }
+}

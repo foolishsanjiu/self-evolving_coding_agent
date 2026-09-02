@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0",
+  "metric_semantics": {
+    "uninspected_patch_retry_attempts": "An apply_patch tool call made while a prior PATCH_APPLY_FAILED still requires a successful read_file.",
+    "blocked_uninspected_patch_retries": "Those attempts rejected by the runtime with CONTRACT_PRECONDITION_NOT_MET before patch execution.",
+    "executed_uninspected_patch_retries": "Attempted violations minus runtime-blocked attempts."
+  },
+  "runs": {
+    "v004": {
+      "run_task_101_r01": {
+        "resolved": false,
+        "failure_type": "TARGET_TEST_FAILED",
+        "finish_status": "MAX_STEPS",
+        "patch_attempts": 8,
+        "patch_failures": 6,
+        "uninspected_patch_retry_attempts": 5,
+        "blocked_uninspected_patch_retries": 0,
+        "executed_uninspected_patch_retries": 5,
+        "verification_window_blocks": 0,
+        "total_contract_blocks": 0,
+        "max_consecutive_patch_failures": 3,
+        "test_calls": 1,
+        "test_executions": 1,
+        "last_successful_edit_verified": true,
+        "model_turns": 15,
+        "input_tokens": 127575,
+        "output_tokens": 13845
+      },
+      "run_task_101_r02": {
+        "resolved": true,
+        "failure_type": "RESOLVED",
+        "finish_status": "SUCCESS",
+        "patch_attempts": 6,
+        "patch_failures": 4,
+        "uninspected_patch_retry_attempts": 4,
+        "blocked_uninspected_patch_retries": 0,
+        "executed_uninspected_patch_retries": 4,
+        "verification_window_blocks": 0,
+        "total_contract_blocks": 0,
+        "max_consecutive_patch_failures": 3,
+        "test_calls": 1,
+        "test_executions": 1,
+        "last_successful_edit_verified": true,
+        "model_turns": 13,
+        "input_tokens": 66183,
+        "output_tokens": 4368
+      }
+    },
+    "v005": {
+      "run_task_101_r01": {
+        "resolved": true,
+        "failure_type": "RESOLVED",
+        "finish_status": "MAX_STEPS",
+        "patch_attempts": 5,
+        "patch_failures": 2,
+        "uninspected_patch_retry_attempts": 1,
+        "blocked_uninspected_patch_retries": 1,
+        "executed_uninspected_patch_retries": 0,
+        "verification_window_blocks": 2,
+        "total_contract_blocks": 3,
+        "max_consecutive_patch_failures": 1,
+        "test_calls": 2,
+        "test_executions": 2,
+        "last_successful_edit_verified": true,
+        "model_turns": 15,
+        "input_tokens": 152499,
+        "output_tokens": 12021
+      },
+      "run_task_101_r02": {
+        "resolved": true,
+        "failure_type": "RESOLVED",
+        "finish_status": "SUCCESS",
+        "patch_attempts": 6,
+        "patch_failures": 2,
+        "uninspected_patch_retry_attempts": 1,
+        "blocked_uninspected_patch_retries": 1,
+        "executed_uninspected_patch_retries": 0,
+        "verification_window_blocks": 0,
+        "total_contract_blocks": 1,
+        "max_consecutive_patch_failures": 1,
+        "test_calls": 3,
+        "test_executions": 3,
+        "last_successful_edit_verified": true,
+        "model_turns": 15,
+        "input_tokens": 129299,
+        "output_tokens": 8623
+      }
+    }
+  },
+  "aggregate": {
+    "v004": {
+      "patch_attempts": 14,
+      "patch_failures": 10,
+      "uninspected_patch_retry_attempts": 9,
+      "blocked_uninspected_patch_retries": 0,
+      "executed_uninspected_patch_retries": 9,
+      "verification_window_blocks": 0,
+      "total_contract_blocks": 0,
+      "test_calls": 2,
+      "test_executions": 2,
+      "verified_final_edits": 2
+    },
+    "v005": {
+      "patch_attempts": 11,
+      "patch_failures": 4,
+      "uninspected_patch_retry_attempts": 2,
+      "blocked_uninspected_patch_retries": 2,
+      "executed_uninspected_patch_retries": 0,
+      "verification_window_blocks": 2,
+      "total_contract_blocks": 4,
+      "test_calls": 5,
+      "test_executions": 5,
+      "verified_final_edits": 2
+    }
+  }
+}

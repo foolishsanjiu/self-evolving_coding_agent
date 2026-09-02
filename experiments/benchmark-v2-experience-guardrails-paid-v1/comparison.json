@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "experiment_version": "benchmark-v2-experience-guardrails-paid-v1",
+  "execution_contract_commit": "3ffe51400b71afb6adcbce4523c64e85fd4f0025",
+  "controlled_conditions_verified": true,
+  "selective_reruns_performed": false,
+  "total_paid_calls": 4,
+  "arms": {
+    "v004": {
+      "experiment_id": "exp-experience-v004-train-guardrail-control-v1",
+      "resolved": 1,
+      "valid_attempts": 2,
+      "resolution_rate": 0.5,
+      "total_model_turns": 28,
+      "input_tokens": 193758,
+      "output_tokens": 18213,
+      "total_tokens": 211971,
+      "average_tool_calls": 18.0,
+      "average_latency_ms": 65778.5,
+      "conservative_off_peak_cost_usd": 0.0546,
+      "retrieval_hits": 2,
+      "prompt_chars": 1177,
+      "adherent_retrievals": 2,
+      "utilized_retrievals": 0
+    },
+    "v005": {
+      "experiment_id": "exp-experience-v005-train-guardrail-v1",
+      "resolved": 2,
+      "valid_attempts": 2,
+      "resolution_rate": 1.0,
+      "resolution_delta_vs_v004": 0.5,
+      "total_model_turns": 30,
+      "input_tokens": 281798,
+      "output_tokens": 20644,
+      "total_tokens": 302442,
+      "average_tool_calls": 24.0,
+      "average_latency_ms": 74523.0,
+      "conservative_off_peak_cost_usd": 0.0756,
+      "retrieval_hits": 2,
+      "prompt_chars": 1431,
+      "adherent_retrievals": 2,
+      "utilized_retrievals": 0
+    }
+  },
+  "paired_outcomes": {
+    "pairs": 2,
+    "v004_wins": 0,
+    "v005_wins": 1,
+    "ties": 1,
+    "two_sided_exact_mcnemar_p": 1.0,
+    "rows": [
+      {
+        "run_id": "run_task_101_r01",
+        "v004_resolved": false,
+        "v005_resolved": true
+      },
+      {
+        "run_id": "run_task_101_r02",
+        "v004_resolved": true,
+        "v005_resolved": true
+      }
+    ]
+  },
+  "observed_deltas": {
+    "average_tokens": 45235.5,
+    "average_tokens_increase_rate": 0.4268,
+    "average_tool_calls": 6.0,
+    "average_tool_calls_increase_rate": 0.3333,
+    "average_latency_ms": 8744.5,
+    "average_latency_increase_rate": 0.1329,
+    "patch_attempts": -3,
+    "patch_failures": -6,
+    "executed_uninspected_patch_retries": -9,
+    "runtime_contract_blocks": 4,
+    "test_executions": 3
+  },
+  "cost": {
+    "pricing_period": "off_peak",
+    "all_input_assumed_cache_miss": true,
+    "input_tokens": 475556,
+    "output_tokens": 38857,
+    "conservative_total_usd": 0.1303,
+    "authorization_ceiling_usd": 0.5,
+    "supplier_invoice_available": false
+  },
+  "interpretation": {
+    "runtime_enforcement_observed": true,
+    "resolution_uplift_demonstrated": false,
+    "contract_adherence_improvement_demonstrated": false,
+    "incremental_experience_utilization_demonstrated": false,
+    "last_edit_verification_improvement_demonstrated": false,
+    "efficiency_improvement_demonstrated": false,
+    "conclusion": "v005 blocked both attempted uninspected patch retries and both runs were accepted, while v004 allowed nine such retries and resolved one run. However, there was only one discordant pair, exact McNemar p=1.0, both arms already verified their final edits and followed the measurable contracts, and v005 used more tokens, tool calls, and time. The runtime mechanism is demonstrated; a causal performance uplift is not."
+  }
+}
