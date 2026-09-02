@@ -81,6 +81,52 @@ def test_v2_relevant_arm_preflight_is_offline_and_exact() -> None:
     assert plan["requires_paid_confirmation"] is True
 
 
+def test_v2_train_holdout_preflight_selects_only_the_frozen_hit_task() -> None:
+    plan = build_experience_arm_preflight(
+        Path("."),
+        load_settings(Path("configs")),
+        Path("experiences/experience-v003.json"),
+        experiment_id="exp-experience-v003-train-holdout-v1",
+        mode="relevant",
+        repetitions=2,
+        benchmark_root=Path("benchmarks-v2"),
+        baseline_manifest_path=Path(
+            "evaluation_runs/__train_holdout_preflight_missing__/manifest.json"
+        ),
+        split="train",
+        task_ids=["task_101"],
+    )
+
+    assert plan["benchmark_splits"] == ["train"]
+    assert plan["task_ids"] == ["task_101"]
+    assert plan["expected_paid_calls"] == 2
+    assert [run["agent_run_id"] for run in plan["runs"]] == [
+        "run_task_101_r01",
+        "run_task_101_r02",
+    ]
+    assert plan["experience_version"] == "experience-v003"
+    assert plan["experience_consumer"] == "legacy-v1"
+    assert plan["baseline_manifest_ready"] is False
+
+
+def test_v2_train_holdout_preflight_rejects_non_train_task() -> None:
+    with pytest.raises(ValueError, match="not in the train split"):
+        build_experience_arm_preflight(
+            Path("."),
+            load_settings(Path("configs")),
+            Path("experiences/experience-v004.json"),
+            experiment_id="exp-experience-v004-train-holdout-v1",
+            mode="relevant",
+            repetitions=2,
+            benchmark_root=Path("benchmarks-v2"),
+            baseline_manifest_path=Path(
+                "evaluation_runs/__train_holdout_preflight_missing__/manifest.json"
+            ),
+            split="train",
+            task_ids=["task_109"],
+        )
+
+
 def test_experience_validation_requires_explicit_paid_confirmation() -> None:
     with pytest.raises(PermissionError, match="--confirm-paid"):
         require_experience_paid_confirmation(False)

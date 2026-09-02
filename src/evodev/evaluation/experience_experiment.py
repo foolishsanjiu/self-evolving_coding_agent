@@ -87,6 +87,24 @@ def _load_public_tasks(
     return tasks
 
 
+def _select_public_tasks(
+    loader: BenchmarkLoader,
+    split: RetrievalAuditSplit,
+    task_ids: list[str] | None = None,
+) -> list[BenchmarkTask]:
+    tasks = _load_public_tasks(loader, split)
+    if task_ids is None:
+        return tasks
+    if len(task_ids) != len(set(task_ids)):
+        raise ValueError("Selected task IDs must be unique")
+    selected = set(task_ids)
+    available = {task.config.task_id for task in tasks}
+    unknown = sorted(selected - available)
+    if unknown:
+        raise ValueError(f"Selected tasks are not in the {split} split: {unknown}")
+    return [task for task in tasks if task.config.task_id in selected]
+
+
 def audit_retrieval(
     project_root: Path,
     snapshot_path: Path,
@@ -183,6 +201,8 @@ def build_experience_arm_preflight(
     repetitions: int,
     benchmark_root: Path,
     baseline_manifest_path: Path,
+    split: RetrievalAuditSplit = "validation",
+    task_ids: list[str] | None = None,
 ) -> dict[str, object]:
     if repetitions < 1:
         raise ValueError("repetitions must be positive")
@@ -193,7 +213,7 @@ def build_experience_arm_preflight(
     snapshot = load_snapshot(resolved_snapshot)
     loader = BenchmarkLoader(resolved_benchmark)
     manifest = loader.load_manifest()
-    tasks = _load_public_tasks(loader, "validation")
+    tasks = _select_public_tasks(loader, split, task_ids)
     runs = [
         {
             "task_id": task.config.task_id,
@@ -211,15 +231,15 @@ def build_experience_arm_preflight(
         if (
             baseline.benchmark_version != manifest.benchmark_version
             or baseline.benchmark_hash != manifest.manifest_hash
-            or baseline.benchmark_splits != ["validation"]
+            or baseline.benchmark_splits != [split]
         ):
-            raise ValueError("Baseline manifest does not match selected Validation split")
+            raise ValueError(f"Baseline manifest does not match selected {split} split")
     return {
         "experiment_id": experiment_id,
         "benchmark_root": relative_benchmark,
         "benchmark_version": manifest.benchmark_version,
         "benchmark_hash": manifest.manifest_hash,
-        "benchmark_splits": ["validation"],
+        "benchmark_splits": [split],
         "task_ids": [task.config.task_id for task in tasks],
         "repetitions": repetitions,
         "expected_paid_calls": len(runs),
@@ -249,7 +269,7 @@ def build_experience_arm_preflight(
 
 def require_experience_paid_confirmation(confirmed: bool) -> None:
     if not confirmed:
-        raise PermissionError("Experience Validation execution requires --confirm-paid")
+        raise PermissionError("Experience execution requires --confirm-paid")
 
 
 def assert_controlled_conditions(
@@ -331,7 +351,7 @@ def prepare_validation_baseline(
 
 
 class ExperienceExperimentRunner:
-    """Run a frozen relevant or random retrieval arm on Validation only."""
+    """Run a frozen relevant or random retrieval arm on one public split."""
 
     def __init__(
         self,
@@ -345,6 +365,8 @@ class ExperienceExperimentRunner:
         random_seed: int = 0,
         baseline_manifest_path: Path | None = None,
         benchmark_root: Path = Path("benchmarks"),
+        split: RetrievalAuditSplit = "validation",
+        task_ids: list[str] | None = None,
     ) -> None:
         if repetitions < 1:
             raise ValueError("repetitions must be positive")
@@ -362,6 +384,8 @@ class ExperienceExperimentRunner:
         self.mode = mode
         self.repetitions = repetitions
         self.random_seed = random_seed
+        self.split = split
+        self.task_ids = task_ids
         baseline_path = baseline_manifest_path or (
             self.project_root
             / "baselines"
@@ -427,11 +451,9 @@ class ExperienceExperimentRunner:
         trajectory_paths: dict[str, Path] = {}
         catalog_hash: str | None = None
         llm = LLMClient(self.settings.model)
-        validation_tasks = [
-            task for task in self.loader.load_tasks() if task.split == "validation"
-        ]
+        selected_tasks = _select_public_tasks(self.loader, self.split, self.task_ids)
         for repetition in range(1, self.repetitions + 1):
-            for task in validation_tasks:
+            for task in selected_tasks:
                 run_id = f"run_{task.config.task_id}_r{repetition:02d}"
                 retrieval = self.retriever.retrieve(build_retrieval_query(task), self.mode)
                 run = self.loader.create_agent_workspace(
@@ -547,12 +569,12 @@ class ExperienceExperimentRunner:
             benchmark_version=self.benchmark_manifest.benchmark_version,
             benchmark_hash=self.benchmark_manifest.manifest_hash,
             benchmark_root=self.benchmark_root,
-            benchmark_splits=["validation"],
+            benchmark_splits=[self.split],
         )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run a Validation experience arm.")
+    parser = argparse.ArgumentParser(description="Run a controlled experience arm.")
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--snapshot", type=Path, default=Path("experiences/experience-v001.json"))
     parser.add_argument("--mode", choices=["relevant", "random"], required=True)
@@ -560,6 +582,8 @@ def main() -> None:
     parser.add_argument("--repetitions", type=int, default=1)
     parser.add_argument("--random-seed", type=int, default=0)
     parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
+    parser.add_argument("--split", choices=["train", "validation"], default="validation")
+    parser.add_argument("--task-id", action="append", dest="task_ids")
     parser.add_argument("--baseline-manifest", type=Path)
     parser.add_argument("--plan", action="store_true")
     parser.add_argument("--confirm-paid", action="store_true")
@@ -571,7 +595,11 @@ def main() -> None:
     settings = load_settings(project_root / "configs", project_root / ".env")
     baseline_manifest = arguments.baseline_manifest
     if baseline_manifest is None:
-        baseline_manifest = Path("baselines/exp-baseline-validation-v1/manifest.json")
+        baseline_manifest = (
+            Path("baselines/exp-baseline-validation-v1/manifest.json")
+            if arguments.split == "validation"
+            else Path("evaluation_runs/exp-baseline-v2-train-v1/manifest.json")
+        )
     preflight = build_experience_arm_preflight(
         project_root,
         settings,
@@ -581,6 +609,8 @@ def main() -> None:
         repetitions=arguments.repetitions,
         benchmark_root=arguments.benchmark_root,
         baseline_manifest_path=baseline_manifest,
+        split=arguments.split,
+        task_ids=arguments.task_ids,
     )
     if arguments.plan:
         print(json.dumps(preflight, indent=2))
@@ -603,6 +633,8 @@ def main() -> None:
         random_seed=arguments.random_seed,
         baseline_manifest_path=baseline_manifest,
         benchmark_root=arguments.benchmark_root,
+        split=arguments.split,
+        task_ids=arguments.task_ids,
     ).run()
     print(
         json.dumps(

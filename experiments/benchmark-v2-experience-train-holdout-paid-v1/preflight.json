@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "execution_id": "benchmark-v2-experience-train-holdout-paid-v1",
+  "status": "ready_for_paid_execution",
+  "benchmark": {
+    "root": "benchmarks-v2",
+    "version": "2.0",
+    "hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6",
+    "split": "train",
+    "task_ids": ["task_101"]
+  },
+  "runs": [
+    "run_task_101_r01",
+    "run_task_101_r02"
+  ],
+  "arms": {
+    "v003": {
+      "experiment_id": "exp-experience-v003-train-holdout-v1",
+      "snapshot": "experiences/experience-v003.json",
+      "experience_hash": "53f8ce05c569b94f2969aacff64c43a799b19adec52cdad07a1f59611f1006e9",
+      "consumer": "legacy-v1",
+      "expected_paid_calls": 2,
+      "control_manifest_ready": true
+    },
+    "v004": {
+      "experiment_id": "exp-experience-v004-train-holdout-v1",
+      "snapshot": "experiences/experience-v004.json",
+      "experience_hash": "f71ac3984674ba98e52ae02fd939dbc5bf2d4ad998a7013b547ff756f6054988",
+      "consumer": "execution-contract-v1",
+      "expected_paid_calls": 2,
+      "control_manifest_ready_after_v003": true
+    }
+  },
+  "total_paid_calls": 4,
+  "selective_reruns_allowed": false,
+  "maximum_projected_cost_usd": 0.5,
+  "runtime_ready": true,
+  "decision": "ready_for_paid_execution"
+}
