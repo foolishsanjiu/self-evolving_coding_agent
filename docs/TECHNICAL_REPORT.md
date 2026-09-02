@@ -427,6 +427,23 @@ input cache miss 保守估算为 1.3054 USD，低于 2.00 USD 授权上限，但
 冻结条件、逐次指标与边界位于 `experiments/benchmark-v2-train-baseline-v1/`。Validation/Test
 未访问，因此本轮不能说明演化收益，也不是正式最终性能分数。
 
+### Benchmark v2 Train Failure Evidence
+
+确定性 `evodev-evolve aggregate` 对 10 个 Baseline 失败 Run 做 Train-only 聚合：4 个
+`TARGET_TEST_FAILED`、4 个 `REGRESSION_FAILED`、1 个 `AGENT_MAX_STEPS` 符合 Reflection
+资格；`run_task_108_r01` 的 `SYNTAX_ERROR` 不在当前资格集合中。聚合报告新增总失败、eligible
+失败与排除项的显式记账，因此非 eligible 失败不再静默消失。完整机器可读结果位于
+`evolution/benchmark-v2/failure-patterns-baseline-v2-train-v1.json`。
+
+逐 Run 审计将主要根因归为：4 次需求维度覆盖不完整、2 次实现未收尾、2 次破坏注入资源的
+生命周期契约、1 次步数耗尽且无最终 Patch、1 次修改测试后留下语法错误。10/10 失败 Run 均在
+编辑前搜索并检查测试，所以当前证据不支持继续优先变异 `inspect_tests_before_edit` 或
+`prefer_search_before_read`；`max_react_steps` 有更直接的候选依据，但仍必须经过 Validation Gate。
+详细证据与推断边界位于 `evolution/benchmark-v2/failure-audit-v1.json`。
+
+本阶段只读取 Train 轨迹并离线聚合，模型调用与新增费用均为 0。若下一阶段为 9 个 eligible Run
+生成结构化 Reflection/Experience，最多需要 9 次新模型调用，必须另行获得付费授权。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

@@ -1,0 +1,172 @@
+{
+  "schema_version": "1.0",
+  "audit_id": "benchmark-v2-train-baseline-failure-audit-v1",
+  "git_commit": "58f3c422d9bf8191be131623e762fbebf2fc5718",
+  "source": {
+    "experiment_id": "exp-baseline-v2-train-v1",
+    "summary_path": "experiments/benchmark-v2-train-baseline-v1/summary.csv",
+    "summary_git_blob": "966cb7976ed051f7e8b1956e316470102ad822f2",
+    "benchmark_root": "benchmarks-v2",
+    "benchmark_splits": [
+      "train"
+    ]
+  },
+  "accounting": {
+    "failed_runs": 10,
+    "reflection_eligible_runs": 9,
+    "reflection_excluded_runs": 1,
+    "searched_before_edit": 10,
+    "inspected_tests_before_edit": 10,
+    "patch_attempts": 56,
+    "test_runs": 24
+  },
+  "primary_categories": {
+    "incomplete_requirement_coverage": 4,
+    "incomplete_implementation": 2,
+    "resource_lifecycle_contract": 2,
+    "budget_exhaustion_no_patch": 1,
+    "syntax_hygiene_test_edit": 1
+  },
+  "diagnostics": [
+    {
+      "task_id": "task_103",
+      "run_id": "run_task_103_r01",
+      "failure_type": "TARGET_TEST_FAILED",
+      "reflection_eligible": true,
+      "primary_category": "incomplete_requirement_coverage",
+      "patch_files": [
+        "settings/resolver.py"
+      ],
+      "evidence": "The patch corrected source precedence but left boolean coercion unchanged; two boolean-domain target cases remained failing.",
+      "learning_focus": "Enumerate every requirement dimension before selecting a one-field fix."
+    },
+    {
+      "task_id": "task_103",
+      "run_id": "run_task_103_r02",
+      "failure_type": "TARGET_TEST_FAILED",
+      "reflection_eligible": true,
+      "primary_category": "incomplete_requirement_coverage",
+      "patch_files": [
+        "settings/coercion.py",
+        "settings/resolver.py"
+      ],
+      "evidence": "The patch handled common false-like strings and precedence but treated every unknown string as true instead of rejecting invalid boolean input.",
+      "learning_focus": "Use explicit accepted-value sets and validate the complement, not only common examples."
+    },
+    {
+      "task_id": "task_105",
+      "run_id": "run_task_105_r01",
+      "failure_type": "TARGET_TEST_FAILED",
+      "reflection_eligible": true,
+      "primary_category": "incomplete_implementation",
+      "patch_files": [
+        "uploads/assembler.py"
+      ],
+      "evidence": "The patch added consistency and completeness logic but stopped before returning assembled bytes, leaving the central target behavior incomplete.",
+      "learning_focus": "Reserve time to trace the primary success path end to end before polishing secondary checks."
+    },
+    {
+      "task_id": "task_105",
+      "run_id": "run_task_105_r02",
+      "failure_type": "REGRESSION_FAILED",
+      "reflection_eligible": true,
+      "primary_category": "incomplete_requirement_coverage",
+      "patch_files": [
+        "uploads/assembler.py",
+        "uploads/store.py"
+      ],
+      "evidence": "Assembly and conflict handling worked, but invalid chunk bounds were accepted and mutated state.",
+      "learning_focus": "Validate input bounds before any state mutation and include negative-domain checks in the contract checklist."
+    },
+    {
+      "task_id": "task_106",
+      "run_id": "run_task_106_r01",
+      "failure_type": "TARGET_TEST_FAILED",
+      "reflection_eligible": true,
+      "primary_category": "incomplete_implementation",
+      "patch_files": [
+        "billing/proration.py"
+      ],
+      "evidence": "The final patch only imported decimal helpers, did not change the calculation, and the trajectory ran no tests.",
+      "learning_focus": "Do not leave preparatory imports as the final patch; implement and exercise the changed data path."
+    },
+    {
+      "task_id": "task_106",
+      "run_id": "run_task_106_r02",
+      "failure_type": "AGENT_MAX_STEPS",
+      "reflection_eligible": true,
+      "primary_category": "budget_exhaustion_no_patch",
+      "patch_files": [],
+      "evidence": "The run made eight patch attempts but reached the 15-step limit with no final patch available for evaluation.",
+      "learning_focus": "Checkpoint a coherent patch before the final budget window and treat remaining steps as verification and repair."
+    },
+    {
+      "task_id": "task_107",
+      "run_id": "run_task_107_r01",
+      "failure_type": "REGRESSION_FAILED",
+      "reflection_eligible": true,
+      "primary_category": "resource_lifecycle_contract",
+      "patch_files": [
+        "parallelism/mapping.py"
+      ],
+      "evidence": "The ordering fix assumed every injected executor implemented the context-manager protocol, breaking the existing executor-factory contract.",
+      "learning_focus": "Preserve lifecycle semantics of injected resources and verify test doubles before changing ownership behavior."
+    },
+    {
+      "task_id": "task_107",
+      "run_id": "run_task_107_r02",
+      "failure_type": "REGRESSION_FAILED",
+      "reflection_eligible": true,
+      "primary_category": "resource_lifecycle_contract",
+      "patch_files": [
+        "parallelism/mapping.py"
+      ],
+      "evidence": "A different bounded scheduling implementation repeated the same context-manager assumption and failed the same injected-executor regressions.",
+      "learning_focus": "When two implementations fail the same contract seam, elevate that seam to an explicit pre-edit invariant."
+    },
+    {
+      "task_id": "task_108",
+      "run_id": "run_task_108_r01",
+      "failure_type": "SYNTAX_ERROR",
+      "reflection_eligible": false,
+      "exclusion_reason": "failure_not_reflection_eligible",
+      "primary_category": "syntax_hygiene_test_edit",
+      "patch_files": [
+        "tests/test_transport.py",
+        "transport/adapter.py"
+      ],
+      "evidence": "The run edited the repository tests and left an unfinished test function, so independent syntax validation failed before target evaluation.",
+      "learning_focus": "Avoid modifying tests unless the task requires it and run a final repository-wide syntax check."
+    },
+    {
+      "task_id": "task_108",
+      "run_id": "run_task_108_r02",
+      "failure_type": "REGRESSION_FAILED",
+      "reflection_eligible": true,
+      "primary_category": "incomplete_requirement_coverage",
+      "patch_files": [
+        "transport/adapter.py"
+      ],
+      "evidence": "The signature detector distinguished keyword-only calls but did not reject unsupported callable shapes before invocation.",
+      "learning_focus": "Validate the complete callable contract, including unsupported shapes, before selecting a dispatch mode."
+    }
+  ],
+  "secondary_observations": [
+    {
+      "type": "unknown_tool_request",
+      "tool_name": "git_log",
+      "run_ids": [
+        "run_task_107_r01",
+        "run_task_108_r02"
+      ],
+      "interpretation": "The calls failed cleanly and were not the direct evaluator failure, but they consumed budget and indicate tool-catalog grounding drift."
+    }
+  ],
+  "policy_implications": {
+    "inspect_tests_before_edit": "Not supported as the next mutation: all 10 failed runs already inspected tests before editing.",
+    "prefer_search_before_read": "Not supported as the next mutation: all 10 failed runs already searched before editing.",
+    "max_react_steps": "Supported for proposal consideration: one run produced no patch at 15 steps and 10 of 16 total attempts ended at the step limit, but a Validation gate is still required.",
+    "experience_priority": "Prioritize contract-dimension checklists, injected-resource lifecycle compatibility, checkpointing a coherent patch, and final syntax/regression verification."
+  },
+  "interpretation_boundary": "All diagnoses are Train-only, evidence-backed engineering inferences. They do not use Validation/Test and do not prove that any proposed mutation will improve resolution."
+}

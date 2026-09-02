@@ -61,3 +61,7 @@ Workspace 中的 Patch Apply、Syntax、Hidden Target 和 Hidden Regression Test
 
 本轮没有运行演化后 Policy，因而不能说明 Experience 或 Policy Evolution 是否有效。后续只能
 使用这些 Train 轨迹生成候选；Validation 用于 Gate，Test 继续保持冻结，不能根据本结果调整。
+
+离线失败聚合与逐 Run 根因审计已保存到
+[`evolution/benchmark-v2`](../../evolution/benchmark-v2/README.md)：10 个失败中 9 个符合
+Reflection 资格，1 个 Syntax Error 按当前规则明确排除。该聚合没有产生新的模型调用。

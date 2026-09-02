@@ -36,3 +36,4 @@ Benchmark 库存冻结阶段没有运行 Coding Agent 或产生付费调用，�
 [`BENCHMARK_V2_BASELINE_PLAN.md`](../docs/BENCHMARK_V2_BASELINE_PLAN.md)、
 [`benchmark-v2-train-baseline-v1.yaml`](../configs/experiments/benchmark-v2-train-baseline-v1.yaml) 与
 [`benchmark-v2-train-baseline-v1`](../experiments/benchmark-v2-train-baseline-v1/README.md)。
+对应的 Train-only 失败证据见 [`evolution/benchmark-v2`](../evolution/benchmark-v2/README.md)。

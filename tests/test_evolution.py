@@ -1101,10 +1101,11 @@ def test_failure_report_excludes_validation_evidence(
     path = Path(".test_runtime") / f"evidence_{uuid4().hex}"
     experiment_id = "train-history"
     try:
-        for task_id, run_id, attempt in [
-            ("task_001", "train-1", "attempt_01"),
-            ("task_001", "train-2", "attempt_02"),
-            ("task_007", "validation-1", "attempt_03"),
+        for task_id, run_id, attempt, failure_type in [
+            ("task_001", "train-1", "attempt_01", FailureType.TARGET_TEST_FAILED),
+            ("task_001", "train-2", "attempt_02", FailureType.TARGET_TEST_FAILED),
+            ("task_001", "train-syntax", "attempt_03", FailureType.SYNTAX_ERROR),
+            ("task_007", "validation-1", "attempt_04", FailureType.TARGET_TEST_FAILED),
         ]:
             report_path = (
                 path
@@ -1117,7 +1118,10 @@ def test_failure_report_excludes_validation_evidence(
             )
             report_path.parent.mkdir(parents=True)
             report_path.write_text(
-                _evaluation(task_id, run_id).model_dump_json(indent=2), encoding="utf-8"
+                _evaluation(task_id, run_id)
+                .model_copy(update={"failure_type": failure_type})
+                .model_dump_json(indent=2),
+                encoding="utf-8",
             )
             run_path = path / "runs" / experiment_id / run_id
             run_path.mkdir(parents=True)
@@ -1158,6 +1162,12 @@ def test_failure_report_excludes_validation_evidence(
             "train-history/train-1",
             "train-history/train-2",
         ]
+        assert report.total_failed_runs == 3
+        assert report.eligible_failed_runs == 2
+        assert [item.run_id for item in report.excluded_failures] == [
+            "train-history/train-syntax"
+        ]
+        assert report.excluded_failures[0].failure_type == FailureType.SYNTAX_ERROR
         assert "validation-1" not in report.model_dump_json()
     finally:
         if path.exists():

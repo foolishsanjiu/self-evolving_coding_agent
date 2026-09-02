@@ -94,7 +94,7 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：304 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：306 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -206,6 +206,7 @@ EvoDev/
 - [Benchmark v2 Train Baseline 预案](docs/BENCHMARK_V2_BASELINE_PLAN.md)
 - [Benchmark v2 Train Baseline 配置](configs/experiments/benchmark-v2-train-baseline-v1.yaml)
 - [Benchmark v2 Train Baseline 结果](experiments/benchmark-v2-train-baseline-v1/README.md)
+- [Benchmark v2 Train Failure Evidence](evolution/benchmark-v2/README.md)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

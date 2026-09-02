@@ -7,7 +7,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from evodev.evaluation.models import EvaluationResult, ExperimentManifest, ExperimentSummary
+from evodev.evaluation.models import (
+    EvaluationResult,
+    ExperimentManifest,
+    ExperimentSummary,
+    FailureType,
+)
 from evodev.policy.models import FailurePattern, PolicyMutation
 from evodev.policy.runtime import AgentPolicy
 from evodev.trajectory.models import utc_now
@@ -57,6 +62,14 @@ class ProposalAttemptReport(BaseModel):
     created_at: str = Field(default_factory=utc_now)
 
 
+class FailureEvidenceExclusion(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_id: str = Field(min_length=1)
+    failure_type: FailureType
+    reason: Literal["failure_not_reflection_eligible"]
+
+
 class FailurePatternReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -64,7 +77,24 @@ class FailurePatternReport(BaseModel):
     split: Literal["train"] = "train"
     source_experiment_ids: list[str] = Field(min_length=1)
     patterns: list[FailurePattern]
+    total_failed_runs: int | None = Field(default=None, ge=0)
+    eligible_failed_runs: int | None = Field(default=None, ge=0)
+    excluded_failures: list[FailureEvidenceExclusion] = Field(default_factory=list)
     created_at: str = Field(default_factory=utc_now)
+
+    @model_validator(mode="after")
+    def validate_failure_accounting(self) -> FailurePatternReport:
+        eligible = sum(pattern.failed_runs for pattern in self.patterns)
+        total = eligible + len(self.excluded_failures)
+        if self.eligible_failed_runs is None:
+            self.eligible_failed_runs = eligible
+        elif self.eligible_failed_runs != eligible:
+            raise ValueError("Eligible failure count does not match patterns")
+        if self.total_failed_runs is None:
+            self.total_failed_runs = total
+        elif self.total_failed_runs != total:
+            raise ValueError("Total failure count does not match included and excluded runs")
+        return self
 
 
 class SchemaGateReport(BaseModel):

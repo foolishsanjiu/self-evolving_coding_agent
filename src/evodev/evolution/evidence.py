@@ -7,11 +7,12 @@ from pathlib import Path
 
 from evodev.benchmark import BenchmarkLoader
 from evodev.evaluation.models import EvaluationResult
+from evodev.experience import is_reflection_eligible
 from evodev.policy.aggregation import aggregate_failure_patterns
 from evodev.policy.models import TrainRunEvidence
 from evodev.trajectory import TraceAnalyzer
 
-from .models import FailurePatternReport
+from .models import FailureEvidenceExclusion, FailurePatternReport
 
 
 def aggregate_train_failure_report(
@@ -31,6 +32,7 @@ def aggregate_train_failure_report(
         for task in BenchmarkLoader(resolved_benchmark_root).load_tasks()
     }
     evidence = []
+    excluded_failures = []
     for experiment_id in experiment_ids:
         experiment_path = root / "evaluation_runs" / experiment_id
         if not experiment_path.is_dir():
@@ -44,6 +46,18 @@ def aggregate_train_failure_report(
                 raise ValueError(f"Unknown benchmark task in evaluation: {result.task_id}")
             if task.split != "train":
                 continue
+            if result.resolved:
+                continue
+            run_id = f"{experiment_id}/{result.agent_run_id}"
+            if not is_reflection_eligible(result.failure_type):
+                excluded_failures.append(
+                    FailureEvidenceExclusion(
+                        run_id=run_id,
+                        failure_type=result.failure_type,
+                        reason="failure_not_reflection_eligible",
+                    )
+                )
+                continue
             run_path = root / "runs" / experiment_id / result.agent_run_id
             features_path = run_path / "trace_features.json"
             if features_path.is_file():
@@ -53,7 +67,7 @@ def aggregate_train_failure_report(
                 features = TraceAnalyzer.analyze(events)
             evidence.append(
                 TrainRunEvidence(
-                    run_id=f"{experiment_id}/{result.agent_run_id}",
+                    run_id=run_id,
                     failure_type=result.failure_type,
                     inspected_tests_before_edit=bool(
                         features["inspected_tests_before_edit"]
@@ -61,12 +75,15 @@ def aggregate_train_failure_report(
                     patch_attempts=int(features["patch_attempts"]),
                 )
             )
-    if not evidence:
-        raise ValueError("No Train evaluations were found in the selected experiments")
+    if not evidence and not excluded_failures:
+        raise ValueError("No failed Train evaluations were found in the selected experiments")
     return FailurePatternReport(
         report_id=report_id,
         source_experiment_ids=experiment_ids,
         patterns=aggregate_failure_patterns(evidence),
+        total_failed_runs=len(evidence) + len(excluded_failures),
+        eligible_failed_runs=len(evidence),
+        excluded_failures=excluded_failures,
     )
 
 

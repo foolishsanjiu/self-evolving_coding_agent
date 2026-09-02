@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 
 RESULT_ROOT = Path("experiments/benchmark-v2-train-baseline-v1")
+EVIDENCE_ROOT = Path("evolution/benchmark-v2")
 
 
 def _manifest() -> dict:
@@ -76,3 +77,46 @@ def test_formal_v2_baseline_repetitions_have_stable_resolution_outcomes() -> Non
         "task_107": [False, False],
         "task_108": [False, False],
     }
+
+
+def test_v2_failure_patterns_account_for_ineligible_failures_explicitly() -> None:
+    report = json.loads(
+        (EVIDENCE_ROOT / "failure-patterns-baseline-v2-train-v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    patterns = {item["failure_type"]: item for item in report["patterns"]}
+
+    assert report["split"] == "train"
+    assert report["total_failed_runs"] == 10
+    assert report["eligible_failed_runs"] == 9
+    assert {name: item["failed_runs"] for name, item in patterns.items()} == {
+        "AGENT_MAX_STEPS": 1,
+        "REGRESSION_FAILED": 4,
+        "TARGET_TEST_FAILED": 4,
+    }
+    assert report["excluded_failures"] == [
+        {
+            "run_id": "exp-baseline-v2-train-v1/run_task_108_r01",
+            "failure_type": "SYNTAX_ERROR",
+            "reason": "failure_not_reflection_eligible",
+        }
+    ]
+
+
+def test_v2_failure_audit_matches_all_frozen_failed_runs() -> None:
+    audit = json.loads(
+        (EVIDENCE_ROOT / "failure-audit-v1.json").read_text(encoding="utf-8")
+    )
+    frozen_failures = {
+        row["run_id"] for row in _rows() if row["resolved"] == "false"
+    }
+    diagnostics = audit["diagnostics"]
+
+    assert audit["source"]["benchmark_splits"] == ["train"]
+    assert audit["accounting"]["failed_runs"] == len(diagnostics) == 10
+    assert {item["run_id"] for item in diagnostics} == frozen_failures
+    assert sum(item["reflection_eligible"] for item in diagnostics) == 9
+    assert audit["accounting"]["searched_before_edit"] == 10
+    assert audit["accounting"]["inspected_tests_before_edit"] == 10
+    assert sum(audit["primary_categories"].values()) == 10

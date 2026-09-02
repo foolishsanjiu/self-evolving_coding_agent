@@ -1,0 +1,52 @@
+{
+  "report_id": "failure-patterns-baseline-v2-train-v1",
+  "split": "train",
+  "source_experiment_ids": [
+    "exp-baseline-v2-train-v1"
+  ],
+  "patterns": [
+    {
+      "failure_type": "AGENT_MAX_STEPS",
+      "failed_runs": 1,
+      "edited_before_tests": 0,
+      "avg_patch_attempts": 8.0,
+      "run_ids": [
+        "exp-baseline-v2-train-v1/run_task_106_r02"
+      ]
+    },
+    {
+      "failure_type": "REGRESSION_FAILED",
+      "failed_runs": 4,
+      "edited_before_tests": 0,
+      "avg_patch_attempts": 5.0,
+      "run_ids": [
+        "exp-baseline-v2-train-v1/run_task_105_r02",
+        "exp-baseline-v2-train-v1/run_task_107_r01",
+        "exp-baseline-v2-train-v1/run_task_107_r02",
+        "exp-baseline-v2-train-v1/run_task_108_r02"
+      ]
+    },
+    {
+      "failure_type": "TARGET_TEST_FAILED",
+      "failed_runs": 4,
+      "edited_before_tests": 0,
+      "avg_patch_attempts": 5.75,
+      "run_ids": [
+        "exp-baseline-v2-train-v1/run_task_103_r01",
+        "exp-baseline-v2-train-v1/run_task_103_r02",
+        "exp-baseline-v2-train-v1/run_task_105_r01",
+        "exp-baseline-v2-train-v1/run_task_106_r01"
+      ]
+    }
+  ],
+  "total_failed_runs": 10,
+  "eligible_failed_runs": 9,
+  "excluded_failures": [
+    {
+      "run_id": "exp-baseline-v2-train-v1/run_task_108_r01",
+      "failure_type": "SYNTAX_ERROR",
+      "reason": "failure_not_reflection_eligible"
+    }
+  ],
+  "created_at": "2026-09-02T08:13:22.966572+00:00"
+}
