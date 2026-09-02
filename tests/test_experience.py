@@ -350,6 +350,32 @@ def test_generation_runner_writes_once_and_skips_existing_run(
     ]
     assert model.calls == 1
 
+    class RejectingExtractor:
+        last_turn = ModelTurn(input_tokens=10, output_tokens=5)
+
+        def extract(self, context):
+            raise ValueError("candidate failed local validation")
+
+    rejected = ExperienceGenerationRunner(
+        experience_root,
+        "exp-test",
+        experience_root / "rejected.sqlite",
+        extractor=RejectingExtractor(),
+    ).run(selected_run_ids={"run_task_002_r01"})
+
+    assert rejected["generated"] == []
+    assert rejected["rejected"] == [
+        {
+            "task_id": "task_002",
+            "run_id": "run_task_002_r01",
+            "reason": "candidate failed local validation",
+            "input_tokens": 10,
+            "output_tokens": 5,
+        }
+    ]
+    assert rejected["input_tokens"] == 10
+    assert rejected["output_tokens"] == 5
+
 
 def test_reflection_cli_requires_explicit_paid_confirmation() -> None:
     with pytest.raises(PermissionError, match="--confirm-paid"):

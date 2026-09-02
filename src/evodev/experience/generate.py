@@ -57,6 +57,7 @@ def build_experience_generation_plan(
     experiment_id: str,
     database_path: Path,
     benchmark_root: Path,
+    selected_run_ids: set[str] | None = None,
 ) -> ExperienceGenerationPlan:
     root = project_root.resolve()
     resolved_benchmark = (
@@ -79,6 +80,7 @@ def build_experience_generation_plan(
     )
     runs = []
     skipped = []
+    seen_run_ids = set()
     try:
         reports_root = root / "evaluation_runs" / experiment_id / "instances"
         if not reports_root.is_dir():
@@ -90,6 +92,9 @@ def build_experience_generation_plan(
             task = tasks.get(result.task_id)
             if task is None:
                 raise ValueError(f"Unknown benchmark task in evaluation: {result.task_id}")
+            if selected_run_ids is not None and result.agent_run_id not in selected_run_ids:
+                continue
+            seen_run_ids.add(result.agent_run_id)
             reason = ExperienceGenerationRunner._skip_reason(task.split, result, store)
             if reason:
                 skipped.append(
@@ -106,6 +111,9 @@ def build_experience_generation_plan(
     finally:
         if store is not None:
             store.close()
+    unknown_run_ids = (selected_run_ids or set()) - seen_run_ids
+    if unknown_run_ids:
+        raise ValueError(f"Unknown selected Run IDs: {sorted(unknown_run_ids)}")
     return ExperienceGenerationPlan(
         experiment_id=experiment_id,
         benchmark_root=resolved_benchmark.relative_to(root).as_posix(),
@@ -138,7 +146,11 @@ class ExperienceGenerationRunner:
         self.extractor = extractor
         self.benchmark_root = benchmark_root
 
-    def run(self, task_id: str | None = None) -> dict[str, object]:
+    def run(
+        self,
+        task_id: str | None = None,
+        selected_run_ids: set[str] | None = None,
+    ) -> dict[str, object]:
         root = (
             self.benchmark_root
             if self.benchmark_root.is_absolute()
@@ -152,6 +164,7 @@ class ExperienceGenerationRunner:
             extractor = ReflectionExtractor(LLMClient(settings.model))
         store = ExperienceStore(self.database_path)
         generated: list[dict[str, object]] = []
+        rejected: list[dict[str, object]] = []
         skipped: list[dict[str, str]] = []
         input_tokens = 0
         output_tokens = 0
@@ -165,6 +178,11 @@ class ExperienceGenerationRunner:
                 )
                 if task_id is not None and result.task_id != task_id:
                     continue
+                if (
+                    selected_run_ids is not None
+                    and result.agent_run_id not in selected_run_ids
+                ):
+                    continue
                 task = tasks[result.task_id]
                 reason = self._skip_reason(task.split, result, store)
                 if reason:
@@ -176,7 +194,23 @@ class ExperienceGenerationRunner:
                 context = ReflectionContextBuilder().build(
                     task, result, run_path, report_path.parent
                 )
-                structured = extractor.extract(context)
+                try:
+                    structured = extractor.extract(context)
+                except ValueError as exc:
+                    turn = extractor.last_turn
+                    if turn is not None:
+                        input_tokens += turn.input_tokens
+                        output_tokens += turn.output_tokens
+                    rejected.append(
+                        {
+                            "task_id": result.task_id,
+                            "run_id": result.agent_run_id,
+                            "reason": str(exc),
+                            "input_tokens": turn.input_tokens if turn is not None else None,
+                            "output_tokens": turn.output_tokens if turn is not None else None,
+                        }
+                    )
+                    continue
                 experience_id = store.add_or_merge(
                     structured.experience_candidate,
                     structured.reflection,
@@ -200,6 +234,7 @@ class ExperienceGenerationRunner:
         return {
             "experiment_id": self.experiment_id,
             "generated": generated,
+            "rejected": rejected,
             "skipped": skipped,
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
@@ -225,6 +260,7 @@ def main() -> None:
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--experiment-id", default="exp-baseline-v1")
     parser.add_argument("--task-id")
+    parser.add_argument("--run-id", dest="run_ids", action="append")
     parser.add_argument("--database", type=Path, default=Path("data/experience.sqlite"))
     parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
     parser.add_argument("--plan", action="store_true")
@@ -235,12 +271,16 @@ def main() -> None:
     database = arguments.database
     if not database.is_absolute():
         database = project_root / database
+    selected_run_ids = set(arguments.run_ids) if arguments.run_ids else None
+    if arguments.run_ids and len(selected_run_ids) != len(arguments.run_ids):
+        parser.error("--run-id values must be unique")
     plan = build_experience_generation_plan(
         project_root,
         settings,
         experiment_id=arguments.experiment_id,
         database_path=database,
         benchmark_root=arguments.benchmark_root,
+        selected_run_ids=selected_run_ids,
     )
     if arguments.plan:
         print(plan.model_dump_json(indent=2))
@@ -251,7 +291,7 @@ def main() -> None:
         arguments.experiment_id,
         database,
         benchmark_root=arguments.benchmark_root,
-    ).run(task_id=arguments.task_id)
+    ).run(task_id=arguments.task_id, selected_run_ids=selected_run_ids)
     print(json.dumps(summary, indent=2))
 
 
