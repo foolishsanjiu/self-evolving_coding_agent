@@ -29,8 +29,34 @@ Agent 上下文。hidden tests 只由运行后的独立评估器使用。
 机器预检见 [preflight.json](preflight.json)，完整执行契约见
 [`benchmark-v2-experience-train-holdout-paid-v1.yaml`](../../configs/experiments/benchmark-v2-experience-train-holdout-paid-v1.yaml)。
 
-## 当前停止点
+## 结果
 
-状态为 `ready_for_paid_execution`。本目录必须先作为 Git 预检提交冻结，随后才可执行已授权的
-2 次 v003 与 2 次 v004 调用。结果只用于判断 v004 是否提高合同遵循、增量利用或 task_101
-配对成功率；两次重复不足以支持统计显著性或完整 Train 性能结论。
+预检已在 Git 提交 `280afbd` 冻结，随后严格执行 2 次 v003 与 2 次 v004 调用，没有选择性补跑。
+
+| 指标 | v003 | v004 | v004 - v003 |
+|---|---:|---:|---:|
+| Accepted | 1 / 2 | 1 / 2 | 0 |
+| 同一套 v004 合同遵循 | 2 / 2 | 1 / 2 | -1 |
+| Experience 增量利用 | — | 0 / 2 | 0 |
+| 平均 Tokens | 143,138.5 | 108,923.5 | -34,215.0 |
+| 平均 Tool Calls | 26.0 | 22.0 | -4.0 |
+| 平均延迟 | 97.1 s | 70.2 s | -26.9 s |
+
+两个配对结果完全反转：r01 为 v004 Accepted、v003 失败，r02 为 v003 Accepted、v004 失败，
+exact McNemar 双侧 p=1.0。v004 r01 虽然最终 Accepted，但 `test_runs=0`，没有遵循任一选中
+合同；r02 遵循合同但因 Syntax Error 未通过。这再次说明 Accepted、合同遵循和增量利用不能
+互相替代。
+
+实际总用量为 460,311 Input Tokens、43,813 Output Tokens。按执行时淡时费率并将全部输入视为
+缓存未命中，保守估算 0.1302 美元，低于 0.50 美元授权上限。
+
+## 结论与停止点
+
+本轮不接受 v004 提升成功率、合同遵循率或 Experience 利用率的假设。v004 的 Tokens、Tool Calls
+与延迟较低，但单题两次重复只能作为描述性效率信号，不能证明因果改善。结果不用于修改
+Validation/Test，也不根据本结果补跑。
+
+机器比较见 [comparison.json](comparison.json)，逐 run 公共行为见
+[behavior-comparison.json](behavior-comparison.json)，原始本地证据 Hash 见
+[evidence-manifest.json](evidence-manifest.json)。完整轨迹、Agent Patch 和隐藏评估输出仍只保存在
+本地 Git ignored 目录。

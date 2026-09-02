@@ -57,5 +57,7 @@ v004 Canonical Hash 为
 ## 结论与停止点
 
 本阶段证明消费合同可执行、可版本化、可测量且不破坏历史 Retriever，但没有证明 v004 改善
-成功率。下一阶段若要运行模型，只能先冻结 Train holdout 的 v003/v004 对照方案并重新获得付费
-授权；不能复用或继续调整已完成的 Validation Gate。
+成功率。后续已经独立冻结并执行单题 v003/v004 Train holdout 对照，结果仍未证明成功率、合同
+遵循或增量利用改善，见
+[`benchmark-v2-experience-train-holdout-paid-v1`](../benchmark-v2-experience-train-holdout-paid-v1/README.md)。
+该结果没有复用或继续调整已完成的 Validation Gate。

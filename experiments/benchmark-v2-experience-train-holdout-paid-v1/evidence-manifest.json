@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "execution_contract": "configs/experiments/benchmark-v2-experience-train-holdout-paid-v1.yaml",
+  "execution_contract_commit": "280afbd3cea32c5e4205000efffdc39dda72455f",
+  "raw_evidence_retention": "local_only_gitignored",
+  "execution_window": {
+    "started_at": "2026-09-02T12:05:24.812069+00:00",
+    "finished_at": "2026-09-02T12:11:56.528013+00:00",
+    "pricing_period": "off_peak"
+  },
+  "arm_artifacts": {
+    "v003_manifest": "458643b5355b9cefc0e044f4a56d91236926a49dcae07f02e2b4a07242e5cc4b",
+    "v003_summary_json": "9465fd70ed9c608970385407851350bcb9fa641f0e1dbfe39cb7544e489f1921",
+    "v003_summary_csv": "2ca9546ca3848abe50d091e22e6d483f4107d625ff75b4f12fb2c1d24cf09445",
+    "v003_experience_metrics": "91f56621494a1f8dade5430c4158fa9e7af7e46e841ef752b2b078f3ea7cef9d",
+    "v004_manifest": "d531abdd26008a01514c716dca30ed703e28da7091d710d8d495efdbd3ca9ede",
+    "v004_summary_json": "5329a2d02dd633478bb5e53a4b1999fdd5c5a18c3cbf9130c080ceaa91bdd451",
+    "v004_summary_csv": "c1e8fe2e4dcb0aca97b89adf99763f7be3a88f52fdb3dc307588f5edf5e969d7",
+    "v004_experience_metrics": "2adb2e17221680ef10e7038dc14edf428fec75e0364b21d56daf3f6b0e036b7d"
+  },
+  "run_artifacts": {
+    "v003_r01_retrieval": "f702352e5fa1ffbadc310c0552fd74b82f72795a14f1d284b355d35bf2cfe69b",
+    "v003_r01_trace_features": "ca8a6696b0a556c524be60119c02005a11ff1e0262eaed65e97339e85e6f351c",
+    "v003_r01_final_patch": "c4e8c703e46361117a66e83d951b63981d33f33f8a3a591a1f4840b29976b1ba",
+    "v003_r01_evaluation_report": "95abe45094865d812f69db1ff1f583ad0c8b925a1eaa2282f7b38e274eb879e4",
+    "v003_r02_retrieval": "f702352e5fa1ffbadc310c0552fd74b82f72795a14f1d284b355d35bf2cfe69b",
+    "v003_r02_trace_features": "f12f6959d966d3fce9ea5d1b89c13faebf12e1954a38788bd81146a742527411",
+    "v003_r02_final_patch": "cdc27856cfdeb40f54aafc0153a07482776a22d9b6d9ede6868db22073ac27c4",
+    "v003_r02_evaluation_report": "0ae2fa5791850253ad56352c3825b72b5c0b3369bf480576be64e04317f1931e",
+    "v004_r01_retrieval": "be40bf42ecf177e64b5d66c0abf4503986e2c6d680f76b8c93fb0505f711e621",
+    "v004_r01_trace_features": "319c8ee2243d26f0fe4c164aaa5b4a11f6471f678383090a5b1cac484d13dc0f",
+    "v004_r01_final_patch": "a67af8a65ec7737197c017c9ca454a1eb14e24883299910e214eb3ef96c963d2",
+    "v004_r01_evaluation_report": "d3b58d2fff19286b080d74f5c9aa8e5bfd6cd5eacce950aec046cb0e8c7ccce2",
+    "v004_r02_retrieval": "be40bf42ecf177e64b5d66c0abf4503986e2c6d680f76b8c93fb0505f711e621",
+    "v004_r02_trace_features": "c521721f2eed5a72e373a6383348f059aefcbc94186204f18c57ec82c3696fed",
+    "v004_r02_final_patch": "d5f183f1c3ae3a60d146c92a59c39a8893e2b02b45819345e697b396e156d3dc",
+    "v004_r02_evaluation_report": "ce6ba9190c7f4bf99d5e5049e811aad17cd4904bbb7b19c3bf98994548e8110d"
+  },
+  "boundaries": {
+    "benchmark_split": "train",
+    "selected_task_ids": ["task_101"],
+    "validation_split_accessed": false,
+    "test_split_accessed": false,
+    "gold_patch_exposed_to_agent": false,
+    "hidden_tests_exposed_to_agent": false,
+    "independent_evaluator_used": true,
+    "selective_reruns_performed": false
+  }
+}

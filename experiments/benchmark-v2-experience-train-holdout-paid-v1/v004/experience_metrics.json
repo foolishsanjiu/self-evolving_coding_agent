@@ -1,0 +1,10 @@
+{
+  "retrieval_attempts": 2,
+  "retrieval_hits": 2,
+  "retrieval_hit_rate": 1.0,
+  "measurable_retrievals": 2,
+  "adherent_retrievals": 1,
+  "experience_adherence_rate": 0.5,
+  "utilized_retrievals": 0,
+  "experience_utilization_rate": 0.0
+}

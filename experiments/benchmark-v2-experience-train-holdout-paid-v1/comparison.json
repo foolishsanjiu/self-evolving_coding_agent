@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "experiment_version": "benchmark-v2-experience-train-holdout-paid-v1",
+  "execution_contract_commit": "280afbd3cea32c5e4205000efffdc39dda72455f",
+  "controlled_conditions_verified": true,
+  "selective_reruns_performed": false,
+  "total_paid_calls": 4,
+  "arms": {
+    "v003": {
+      "experiment_id": "exp-experience-v003-train-holdout-v1",
+      "resolved": 1,
+      "valid_attempts": 2,
+      "resolution_rate": 0.5,
+      "total_model_turns": 30,
+      "input_tokens": 260313,
+      "output_tokens": 25964,
+      "total_tokens": 286277,
+      "average_tool_calls": 26.0,
+      "average_latency_ms": 97068.5,
+      "conservative_off_peak_cost_usd": 0.0744,
+      "retrieval_hits": 2,
+      "prompt_chars": 1888,
+      "v004_contract_adherent_runs": 2
+    },
+    "v004": {
+      "experiment_id": "exp-experience-v004-train-holdout-v1",
+      "resolved": 1,
+      "valid_attempts": 2,
+      "resolution_rate": 0.5,
+      "resolution_delta_vs_v003": 0.0,
+      "total_model_turns": 30,
+      "input_tokens": 199998,
+      "output_tokens": 17849,
+      "total_tokens": 217847,
+      "average_tool_calls": 22.0,
+      "average_latency_ms": 70159.0,
+      "conservative_off_peak_cost_usd": 0.0558,
+      "retrieval_hits": 2,
+      "prompt_chars": 1177,
+      "measurable_retrievals": 2,
+      "adherent_retrievals": 1,
+      "utilized_retrievals": 0,
+      "experience_adherence_rate": 0.5,
+      "experience_utilization_rate": 0.0
+    }
+  },
+  "paired_outcomes": {
+    "pairs": 2,
+    "v003_wins": 1,
+    "v004_wins": 1,
+    "ties": 0,
+    "two_sided_exact_mcnemar_p": 1.0,
+    "rows": [
+      {
+        "run_id": "run_task_101_r01",
+        "v003_resolved": false,
+        "v004_resolved": true
+      },
+      {
+        "run_id": "run_task_101_r02",
+        "v003_resolved": true,
+        "v004_resolved": false
+      }
+    ]
+  },
+  "observed_efficiency": {
+    "average_tokens_delta": -34215.0,
+    "average_tokens_reduction_rate": 0.239,
+    "average_tool_calls_delta": -4.0,
+    "average_latency_ms_delta": -26909.5,
+    "average_latency_reduction_rate": 0.2772
+  },
+  "cost": {
+    "pricing_period": "off_peak",
+    "all_input_assumed_cache_miss": true,
+    "input_tokens": 460311,
+    "output_tokens": 43813,
+    "conservative_total_usd": 0.1302,
+    "authorization_ceiling_usd": 0.5,
+    "supplier_invoice_available": false
+  },
+  "interpretation": {
+    "resolution_uplift_demonstrated": false,
+    "contract_adherence_improvement_demonstrated": false,
+    "incremental_experience_utilization_demonstrated": false,
+    "efficiency_improvement_demonstrated": false,
+    "conclusion": "The two paired outcomes reversed, leaving resolution unchanged. v004 used fewer tokens, tool calls, and wall time, but only one of two v004 runs followed a selected execution contract and neither run showed behavior absent from its v003 pair. With one task and two repetitions, the efficiency difference is descriptive rather than a demonstrated causal improvement."
+  }
+}

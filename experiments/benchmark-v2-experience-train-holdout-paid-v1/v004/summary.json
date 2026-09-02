@@ -1,0 +1,18 @@
+{
+  "experiment_id": "exp-experience-v004-train-holdout-v1",
+  "total_attempts": 2,
+  "valid_evaluated_attempts": 2,
+  "resolved_attempts": 1,
+  "resolution_rate": 0.5,
+  "average_react_steps": 15.0,
+  "average_tool_calls": 22.0,
+  "average_tokens": 108923.5,
+  "average_latency_ms": 70159.0,
+  "search_before_edit_rate": 0.0,
+  "test_inspection_before_edit_rate": 1.0,
+  "average_patch_attempts": 8.0,
+  "failure_distribution": {
+    "RESOLVED": 1,
+    "SYNTAX_ERROR": 1
+  }
+}

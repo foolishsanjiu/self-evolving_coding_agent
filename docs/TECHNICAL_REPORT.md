@@ -566,6 +566,29 @@ Adherent；Treatment 达成而配对 Baseline 未达成才算 Utilized。Train l
 本阶段没有模型调用、Docker、Validation/Test 访问或新费用，只证明新合同可执行、可测和向后
 兼容，不构成成功率提升。任何后续付费 Train 对照都必须先冻结新方案并获得新的明确授权。
 
+### Benchmark v2 Experience v003/v004 Train Holdout
+
+为避免在七个无检索命中的 Train 任务上浪费调用，本轮按已冻结的 leave-one-task-out 审计只选择
+唯一有跨任务 Experience 命中的 `task_101`。方案在提交 `280afbd` 预先锁定：v003 与 v004 各
+运行 2 次，共 4 次调用；模型、温度、Policy、步数、上下文、top-k、Sandbox Digest、工具目录、
+任务和 Run ID 全部相同，只允许 Snapshot 与 Consumer 改变。同任务来源 Experience 由 Retriever
+自动排除，Validation/Test 不读取，hidden tests 只由独立评估器在 Agent 结束后使用。
+
+| 指标 | v003 | v004 |
+|---|---:|---:|
+| Accepted | 1 / 2 | 1 / 2 |
+| 同一套 v004 合同遵循 | 2 / 2 | 1 / 2 |
+| v004 增量利用 | — | 0 / 2 |
+| 平均 Tokens | 143,138.5 | 108,923.5 |
+| 平均 Tool Calls | 26.0 | 22.0 |
+| 平均延迟 | 97.1 s | 70.2 s |
+
+r01 是 v004 胜、r02 是 v003 胜，双侧 exact McNemar p=1.0。v004 r01 虽 Accepted，但没有执行
+测试，不满足选中合同；r02 满足合同却出现 Syntax Error。因此本轮再次分离了结果、行为遵循与
+增量利用三个概念。v004 的 Token、Tool Call 与延迟下降是描述性信号，但一题两次无法证明
+因果效率改善。实际保守费用估算为 0.1302 美元，无补跑。冻结摘要和证据 Hash 位于
+`experiments/benchmark-v2-experience-train-holdout-paid-v1/`。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "contract_source": "experience-v004",
+  "selected_experience_ids": [
+    "exp_975124e62db3481c8d106a0fedfe8bd4",
+    "exp_242f9076fcdd413085a70c719c9a07fc"
+  ],
+  "contract_rule": "A run is adherent when it satisfies every target of at least one selected v004 contract.",
+  "runs": [
+    {
+      "run_id": "run_task_101_r01",
+      "v003": {
+        "resolved": false,
+        "failure_type": "TARGET_TEST_FAILED",
+        "features": {
+          "searched_before_edit": true,
+          "inspected_tests_before_edit": true,
+          "unique_files_read": 6,
+          "patch_attempts": 4,
+          "test_runs": 3
+        },
+        "v004_contract_adherent": true
+      },
+      "v004": {
+        "resolved": true,
+        "failure_type": "RESOLVED",
+        "features": {
+          "searched_before_edit": false,
+          "inspected_tests_before_edit": true,
+          "unique_files_read": 6,
+          "patch_attempts": 10,
+          "test_runs": 0
+        },
+        "v004_contract_adherent": false
+      }
+    },
+    {
+      "run_id": "run_task_101_r02",
+      "v003": {
+        "resolved": true,
+        "failure_type": "RESOLVED",
+        "features": {
+          "searched_before_edit": false,
+          "inspected_tests_before_edit": true,
+          "unique_files_read": 5,
+          "patch_attempts": 6,
+          "test_runs": 2
+        },
+        "v004_contract_adherent": true
+      },
+      "v004": {
+        "resolved": false,
+        "failure_type": "SYNTAX_ERROR",
+        "features": {
+          "searched_before_edit": false,
+          "inspected_tests_before_edit": true,
+          "unique_files_read": 6,
+          "patch_attempts": 6,
+          "test_runs": 4
+        },
+        "v004_contract_adherent": true
+      }
+    }
+  ],
+  "same_contract_summary": {
+    "v003_adherent": 2,
+    "v004_adherent": 1,
+    "v003_rate": 1.0,
+    "v004_rate": 0.5,
+    "v004_incremental_utilization": 0
+  }
+}
