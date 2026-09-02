@@ -115,7 +115,8 @@ v004 的 9 次降为 0 次，证明门禁真实生效。v005 为 2/2 Accepted、
 Benchmark v2 Final Test 已完成离线冻结预案：最终只比较未使用 Experience 的 Baseline 与
 `experience-v005 + execution-contract-v2` 完整候选，覆盖全部 5 个 Test 任务、每臂每题 2 次，
 共 20 次预注册调用。Test 结果将作为终局结果，不允许据此调参或选择性补跑。当前尚未运行
-Test Agent、没有新增模型调用；执行仍等待独立付费授权和 Docker Desktop 就绪。
+Test Agent、没有新增模型调用；20 次调用与 3.50 美元硬上限现已获得明确授权，Docker 与固定
+沙箱镜像也已通过预检，协议将在付费执行前提交 Git。
 
 ## 工程亮点
 

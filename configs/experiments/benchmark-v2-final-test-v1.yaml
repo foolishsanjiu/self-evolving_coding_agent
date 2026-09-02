@@ -1,8 +1,9 @@
 schema_version: "1.0"
 execution_id: benchmark-v2-final-test-v1
-status: awaiting_paid_authorization
+status: authorized_before_execution
 authorization:
-  explicitly_authorized: false
+  explicitly_authorized: true
+  authorization_date: "2026-09-02"
   authorized_scope: frozen_20_call_baseline_vs_experience_v005_test_comparison
   maximum_projected_cost_usd: 3.50
 design:
@@ -63,8 +64,9 @@ runtime_preflight:
   checked_at: "2026-09-02"
   api_key_present: true
   model_listed_by_official_docs: true
-  docker_desktop_ready: false
-  docker_blocker: Docker Desktop Linux engine pipe is not currently available.
+  docker_desktop_ready: true
+  docker_engine_version: 29.7.2
+  sandbox_digest: sha256:52b485a7b17bb160572782f342398329285ee45654cfb560c83b40cab2b065c3
 execution:
   baseline_experiment_id: exp-baseline-v2-test-final-v1
   candidate_experiment_id: exp-experience-v005-test-final-v1

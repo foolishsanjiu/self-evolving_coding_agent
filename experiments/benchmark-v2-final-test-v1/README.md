@@ -42,5 +42,6 @@
 
 机器契约位于
 [`benchmark-v2-final-test-v1.yaml`](../../configs/experiments/benchmark-v2-final-test-v1.yaml)，
-离线状态见 [preflight.json](preflight.json)。当前 API Key 可用且官方文档列出目标模型，但
-Docker Desktop 未运行；此外尚未获得这 20 次调用和 3.50 USD 上限的明确授权，因此停止在执行前。
+离线状态见 [preflight.json](preflight.json)。API Key、Docker 29.7.2 与固定沙箱镜像均已就绪；
+用户已明确授权 20 次调用和 3.50 USD 硬上限。协议将在任何付费调用前提交 Git，随后严格按
+Baseline 10 次、Candidate 10 次的顺序执行。

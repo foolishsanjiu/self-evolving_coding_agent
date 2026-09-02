@@ -631,8 +631,9 @@ Experience 执行器的付费运行路径已最小扩展为支持 `--split test`
 Token 外推，淡时约 0.7946 美元、峰时约 1.5892 美元；峰时 Token 翻倍估算为 3.1785 美元，
 拟申请硬上限 3.50 美元。机器契约与离线状态位于
 `configs/experiments/benchmark-v2-final-test-v1.yaml` 和
-`experiments/benchmark-v2-final-test-v1/`。当前没有执行 Test Agent 或模型调用；API Key 已就绪，
-Docker Desktop 未运行，付费授权也尚未取得，因此停止在执行前。
+`experiments/benchmark-v2-final-test-v1/`。协议冻结时尚未执行 Test Agent 或模型调用；API Key、
+Docker 29.7.2 和固定镜像摘要均已核验，用户已明确授权 20 次调用与 3.50 美元硬上限。执行协议
+将在第一笔付费调用前提交 Git。
 
 ## Independent Evaluation 与 Baseline
 

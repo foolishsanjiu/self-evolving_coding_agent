@@ -2,11 +2,8 @@
   "schema_version": "1.0",
   "execution_id": "benchmark-v2-final-test-v1",
   "generated_at": "2026-09-02",
-  "decision": "awaiting_explicit_paid_authorization",
-  "blocking_conditions": [
-    "Explicit authorization for 20 paid Agent calls with a 3.50 USD ceiling is absent.",
-    "Docker Desktop is not running."
-  ],
+  "decision": "ready_for_paid_execution",
+  "blocking_conditions": [],
   "benchmark": {
     "root": "benchmarks-v2",
     "version": "2.0",
@@ -65,8 +62,9 @@
   "runtime": {
     "api_key_present": true,
     "model_listed_by_official_docs": true,
-    "docker_desktop_ready": false,
-    "sandbox_digest": null
+    "docker_desktop_ready": true,
+    "docker_engine_version": "29.7.2",
+    "sandbox_digest": "sha256:52b485a7b17bb160572782f342398329285ee45654cfb560c83b40cab2b065c3"
   },
   "data_boundaries": {
     "test_public_metadata_used_for_inventory_only": true,

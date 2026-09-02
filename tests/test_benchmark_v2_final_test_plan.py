@@ -31,7 +31,8 @@ def test_final_test_plan_freezes_all_test_tasks_and_twenty_calls() -> None:
     config = yaml.safe_load(CONFIG.read_text(encoding="utf-8"))
     preflight = json.loads(PREFLIGHT.read_text(encoding="utf-8"))
 
-    assert config["status"] == "awaiting_paid_authorization"
+    assert config["status"] == "authorized_before_execution"
+    assert config["authorization"]["explicitly_authorized"] is True
     assert config["design"]["split"] == "test"
     assert config["design"]["tasks"] == [f"task_{number}" for number in range(114, 119)]
     assert config["design"]["repetitions_per_arm"] == 2
@@ -39,7 +40,8 @@ def test_final_test_plan_freezes_all_test_tasks_and_twenty_calls() -> None:
     assert config["execution"]["baseline_calls"] == 10
     assert config["execution"]["candidate_calls"] == 10
     assert config["execution"]["total_paid_calls"] == 20
-    assert preflight["decision"] == "awaiting_explicit_paid_authorization"
+    assert preflight["decision"] == "ready_for_paid_execution"
+    assert preflight["blocking_conditions"] == []
     assert preflight["total_paid_calls"] == 20
     assert preflight["test_result_is_terminal"] is True
 
