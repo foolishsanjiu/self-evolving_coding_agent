@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "execution_id": "benchmark-v2-final-test-v1",
+  "generated_at": "2026-09-02",
+  "decision": "awaiting_explicit_paid_authorization",
+  "blocking_conditions": [
+    "Explicit authorization for 20 paid Agent calls with a 3.50 USD ceiling is absent.",
+    "Docker Desktop is not running."
+  ],
+  "benchmark": {
+    "root": "benchmarks-v2",
+    "version": "2.0",
+    "hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6",
+    "split": "test",
+    "task_ids": [
+      "task_114",
+      "task_115",
+      "task_116",
+      "task_117",
+      "task_118"
+    ]
+  },
+  "controlled_conditions": {
+    "model": "deepseek-v4-flash",
+    "model_version": "DeepSeek-V4-Flash-0731",
+    "temperature": 0.1,
+    "policy_version": "fixed-react-v1",
+    "policy_hash": "45cc1142fee0fc096d587dcb265bec789687b63242bc979aa341ca23a3762947",
+    "max_steps": 15,
+    "context_budget": 60000,
+    "sandbox_image": "evodev-python:3.11"
+  },
+  "arms": {
+    "baseline": {
+      "experiment_id": "exp-baseline-v2-test-final-v1",
+      "experience_mode": "disabled",
+      "paid_calls": 10
+    },
+    "candidate": {
+      "experiment_id": "exp-experience-v005-test-final-v1",
+      "experience_mode": "relevant",
+      "snapshot": "experiences/experience-v005.json",
+      "experience_version": "experience-v005",
+      "experience_hash": "622a19135c144e1e9a8b1d787933add4a8299491888e6e31463c1bbc18919602",
+      "experience_consumer": "execution-contract-v2",
+      "paid_calls": 10
+    }
+  },
+  "runs_per_arm": [
+    "run_task_114_r01",
+    "run_task_115_r01",
+    "run_task_116_r01",
+    "run_task_117_r01",
+    "run_task_118_r01",
+    "run_task_114_r02",
+    "run_task_115_r02",
+    "run_task_116_r02",
+    "run_task_117_r02",
+    "run_task_118_r02"
+  ],
+  "total_paid_calls": 20,
+  "maximum_projected_cost_usd": 3.5,
+  "test_result_is_terminal": true,
+  "selective_reruns_allowed": false,
+  "runtime": {
+    "api_key_present": true,
+    "model_listed_by_official_docs": true,
+    "docker_desktop_ready": false,
+    "sandbox_digest": null
+  },
+  "data_boundaries": {
+    "test_public_metadata_used_for_inventory_only": true,
+    "test_agent_execution_started": false,
+    "gold_patch_exposed_to_agent": false,
+    "hidden_tests_exposed_to_agent": false,
+    "hidden_tests_used_only_by_independent_evaluator": true,
+    "post_test_tuning_allowed": false
+  }
+}

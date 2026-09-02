@@ -1,4 +1,4 @@
-"""Validation-only controlled experiments for frozen experience retrieval."""
+"""Controlled experiments for frozen experience retrieval."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from evodev import __version__
 from evodev.agent import ReActAgent
 from evodev.agent.react_agent import SYSTEM_PROMPT
 from evodev.benchmark import BenchmarkLoader, BenchmarkTask, BenchmarkTaskConfig
+from evodev.benchmark.models import BenchmarkSplit
 from evodev.config import AppSettings, load_settings
 from evodev.evaluation.baseline import _sandbox_digest, _sha256_text
 from evodev.evaluation.evaluator import IndependentEvaluator
@@ -41,6 +42,7 @@ from evodev.trajectory import RunMetadata, TrajectoryRecorder, tool_catalog_hash
 
 RetrievalMode = Literal["relevant", "random"]
 RetrievalAuditSplit = Literal["train", "validation"]
+ExperienceExecutionSplit = BenchmarkSplit
 
 
 def _resolve_under_root(project_root: Path, path: Path) -> tuple[Path, str]:
@@ -49,7 +51,7 @@ def _resolve_under_root(project_root: Path, path: Path) -> tuple[Path, str]:
 
 
 def _load_public_tasks(
-    loader: BenchmarkLoader, split: RetrievalAuditSplit
+    loader: BenchmarkLoader, split: ExperienceExecutionSplit
 ) -> list[BenchmarkTask]:
     manifest = loader.load_manifest()
     if manifest.benchmark_version != loader.definition.benchmark_version:
@@ -91,7 +93,7 @@ def _load_public_tasks(
 
 def _select_public_tasks(
     loader: BenchmarkLoader,
-    split: RetrievalAuditSplit,
+    split: ExperienceExecutionSplit,
     task_ids: list[str] | None = None,
 ) -> list[BenchmarkTask]:
     tasks = _load_public_tasks(loader, split)
@@ -116,6 +118,8 @@ def audit_retrieval(
     top_k: int = 3,
     max_chars: int = 2_500,
 ) -> dict[str, object]:
+    if split not in {"train", "validation"}:
+        raise ValueError("Retrieval audit is limited to train and validation splits")
     root = project_root.resolve()
     resolved_snapshot, relative_snapshot = _resolve_under_root(root, snapshot_path)
     resolved_benchmark, relative_benchmark = _resolve_under_root(root, benchmark_root)
@@ -203,7 +207,7 @@ def build_experience_arm_preflight(
     repetitions: int,
     benchmark_root: Path,
     baseline_manifest_path: Path,
-    split: RetrievalAuditSplit = "validation",
+    split: ExperienceExecutionSplit = "validation",
     task_ids: list[str] | None = None,
 ) -> dict[str, object]:
     if repetitions < 1:
@@ -349,7 +353,7 @@ def prepare_validation_baseline(
 
 
 class ExperienceExperimentRunner:
-    """Run a frozen relevant or random retrieval arm on one public split."""
+    """Run a frozen relevant or random retrieval arm on one benchmark split."""
 
     def __init__(
         self,
@@ -363,7 +367,7 @@ class ExperienceExperimentRunner:
         random_seed: int = 0,
         baseline_manifest_path: Path | None = None,
         benchmark_root: Path = Path("benchmarks"),
-        split: RetrievalAuditSplit = "validation",
+        split: ExperienceExecutionSplit = "validation",
         task_ids: list[str] | None = None,
     ) -> None:
         if repetitions < 1:
@@ -578,7 +582,9 @@ def main() -> None:
     parser.add_argument("--repetitions", type=int, default=1)
     parser.add_argument("--random-seed", type=int, default=0)
     parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
-    parser.add_argument("--split", choices=["train", "validation"], default="validation")
+    parser.add_argument(
+        "--split", choices=["train", "validation", "test"], default="validation"
+    )
     parser.add_argument("--task-id", action="append", dest="task_ids")
     parser.add_argument("--baseline-manifest", type=Path)
     parser.add_argument("--plan", action="store_true")
@@ -591,11 +597,12 @@ def main() -> None:
     settings = load_settings(project_root / "configs", project_root / ".env")
     baseline_manifest = arguments.baseline_manifest
     if baseline_manifest is None:
-        baseline_manifest = (
-            Path("baselines/exp-baseline-validation-v1/manifest.json")
-            if arguments.split == "validation"
-            else Path("evaluation_runs/exp-baseline-v2-train-v1/manifest.json")
-        )
+        default_baselines = {
+            "train": Path("evaluation_runs/exp-baseline-v2-train-v1/manifest.json"),
+            "validation": Path("baselines/exp-baseline-validation-v1/manifest.json"),
+            "test": Path("evaluation_runs/exp-baseline-v2-test-final-v1/manifest.json"),
+        }
+        baseline_manifest = default_baselines[arguments.split]
     preflight = build_experience_arm_preflight(
         project_root,
         settings,

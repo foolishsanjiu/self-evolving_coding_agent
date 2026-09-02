@@ -614,6 +614,26 @@ Train leave-one-task-out 仍为 1/8，task_101 选择与 v004 相同的两条 Ex
 最后一步 Patch；本阶段模型调用、Docker 与费用均为 0，不构成性能提升。完整归因和审计位于
 `experiments/benchmark-v2-experience-guardrails-v1/`。
 
+### Benchmark v2 Final Test 预案
+
+在 v005 运行时机制验证与离线代码加固完成后，最终样本外评测冻结为两臂：无 Experience 的
+`fixed-react-v1` Baseline，以及 `experience-v005 + execution-contract-v2` 完整候选。两臂覆盖
+`task_114`–`task_118` 全部五个 Test 任务，每题各重复两次，共 20 个预注册 Agent Run。已有
+Train 定向实验负责隔离 v004/v005 门禁机制，因此 Final Test 不再增加第三臂；它只回答冻结后的
+完整系统相对 Baseline 的终局表现。
+
+Experience 执行器的付费运行路径已最小扩展为支持 `--split test`，但离线 Retrieval Audit 仍只
+允许 Train/Validation，避免在执行前使用 Test 检索结果选择候选。Test 公共元数据只用于核对固定
+库存和生成 Run 清单；Gold Patch 与 hidden tests 不进入 Agent 上下文。所有 Run 均进入独立
+评测，禁止选择性补跑，Test 结果也不得用于后续调参。
+
+按 2026-09-02 DeepSeek 官方 `deepseek-v4-flash` 价格和此前同为 20-call 的 Validation 实际
+Token 外推，淡时约 0.7946 美元、峰时约 1.5892 美元；峰时 Token 翻倍估算为 3.1785 美元，
+拟申请硬上限 3.50 美元。机器契约与离线状态位于
+`configs/experiments/benchmark-v2-final-test-v1.yaml` 和
+`experiments/benchmark-v2-final-test-v1/`。当前没有执行 Test Agent 或模型调用；API Key 已就绪，
+Docker Desktop 未运行，付费授权也尚未取得，因此停止在执行前。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和
@@ -1195,6 +1215,7 @@ python -m evodev.run `
 - `configs/evolution.yaml`：Policy Evolution 搜索与验证预算；
 - `configs/experiments/final-v1.yaml`：Task 14 固定 2×2 Final Experiment 设计。
 - `configs/experiments/benchmark-v2-train-baseline-v1.yaml`：V2 Train-only Baseline 运行与预算预案。
+- `configs/experiments/benchmark-v2-final-test-v1.yaml`：V2 终局 Test 两臂运行与费用预案。
 
 密钥只从环境变量或本地 `.env` 读取：
 

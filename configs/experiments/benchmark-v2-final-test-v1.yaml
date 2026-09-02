@@ -1,0 +1,110 @@
+schema_version: "1.0"
+execution_id: benchmark-v2-final-test-v1
+status: awaiting_paid_authorization
+authorization:
+  explicitly_authorized: false
+  authorized_scope: frozen_20_call_baseline_vs_experience_v005_test_comparison
+  maximum_projected_cost_usd: 3.50
+design:
+  purpose: terminal_out_of_sample_system_comparison
+  split: test
+  tasks:
+    - task_114
+    - task_115
+    - task_116
+    - task_117
+    - task_118
+  arms:
+    - baseline
+    - experience_v005
+  repetitions_per_arm: 2
+  selective_reruns_allowed: false
+  test_result_is_terminal: true
+  selection_rule: >-
+    Compare the unchanged fixed ReAct baseline with the frozen experience-v005 candidate on
+    every Test task. Both arms and all repetitions are fixed before any Test Agent outcome.
+controlled_conditions:
+  model: deepseek-v4-flash
+  model_version_at_preflight: DeepSeek-V4-Flash-0731
+  temperature: 0.1
+  policy_version: fixed-react-v1
+  policy_hash: 45cc1142fee0fc096d587dcb265bec789687b63242bc979aa341ca23a3762947
+  max_steps: 15
+  context_budget: 60000
+  sandbox_image: evodev-python:3.11
+  baseline_experience_mode: disabled
+  candidate_experience_mode: relevant
+  candidate_snapshot: experiences/experience-v005.json
+  candidate_experience_hash: 622a19135c144e1e9a8b1d787933add4a8299491888e6e31463c1bbc18919602
+  candidate_experience_consumer: execution-contract-v2
+  top_k: 3
+  max_experience_chars: 2500
+inputs:
+  benchmark_root: benchmarks-v2
+  benchmark_version: "2.0"
+  benchmark_hash: c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6
+pricing_preflight:
+  checked_at: "2026-09-02"
+  source: https://api-docs.deepseek.com/quick_start/pricing/
+  unit: USD_per_million_tokens
+  per_million_tokens:
+    off_peak_cache_miss_input: 0.22
+    off_peak_output: 0.66
+    peak_cache_miss_input: 0.44
+    peak_output: 1.32
+  projection_for_20_calls:
+    input_tokens: 2773058
+    output_tokens: 279610
+    off_peak_all_cache_miss_usd: 0.7946
+    peak_all_cache_miss_usd: 1.5892
+    double_token_peak_usd: 3.1785
+    basis: experiments/benchmark-v2-experience-validation-paid-v1/comparison.json
+runtime_preflight:
+  checked_at: "2026-09-02"
+  api_key_present: true
+  model_listed_by_official_docs: true
+  docker_desktop_ready: false
+  docker_blocker: Docker Desktop Linux engine pipe is not currently available.
+execution:
+  baseline_experiment_id: exp-baseline-v2-test-final-v1
+  candidate_experiment_id: exp-experience-v005-test-final-v1
+  baseline_calls: 10
+  candidate_calls: 10
+  total_paid_calls: 20
+  baseline_manifest: evaluation_runs/exp-baseline-v2-test-final-v1/manifest.json
+  baseline_command: >-
+    evodev-baseline --project-root . --benchmark-root benchmarks-v2
+    --experiment-id exp-baseline-v2-test-final-v1 --repetitions 2
+    --split test --confirm-paid
+  candidate_command: >-
+    evodev-experience-experiment --project-root . --benchmark-root benchmarks-v2
+    --snapshot experiences/experience-v005.json --mode relevant
+    --experiment-id exp-experience-v005-test-final-v1 --repetitions 2
+    --split test
+    --baseline-manifest evaluation_runs/exp-baseline-v2-test-final-v1/manifest.json
+    --confirm-paid
+analysis:
+  primary_metric: independently_evaluated_resolution_rate
+  paired_unit: task_and_repetition
+  report:
+    - accepted_runs
+    - resolution_rate
+    - per_task_outcomes
+    - exact_mcnemar_p_value
+    - react_steps
+    - tool_calls
+    - input_and_output_tokens
+    - latency
+    - retrieval_and_contract_metrics
+  claim_boundary: >-
+    Report the terminal Test result as observed. Five tasks with two repetitions cannot by
+    themselves establish broad causal superiority, even if the point estimate is positive.
+boundaries:
+  test_tasks_selected_after_outcomes: false
+  test_public_metadata_used_for_inventory_only: true
+  test_agent_execution_started: false
+  selective_reruns_allowed: false
+  post_test_tuning_allowed: false
+  gold_patch_exposed_to_agent: false
+  hidden_tests_exposed_to_agent: false
+  hidden_tests_used_only_by_independent_evaluator: true
