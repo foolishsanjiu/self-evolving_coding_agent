@@ -1,0 +1,52 @@
+schema_version: "1.0"
+plan_id: benchmark-v2-experience-validation-v2
+status: pending_one_time_public_audit
+frozen_before_audit: true
+inputs:
+  benchmark_root: benchmarks-v2
+  benchmark_version: "2.0"
+  benchmark_hash: c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6
+  split: validation
+  snapshot: experiences/experience-v003.json
+  experience_version: experience-v003
+  experience_hash: 53f8ce05c569b94f2969aacff64c43a799b19adec52cdad07a1f59611f1006e9
+retriever:
+  module: src/evodev/experience/retrieval.py
+  git_blob: cc692131c39b64b1bbb577ec6ac682d02c99ec6f
+  canonical_sha256: bb1f50b47462d0d5f8f5af84dc9efd3332d3e493902b79dc72ab128d182499d2
+  mode: relevant
+  top_k: 3
+  max_chars: 2500
+  random_seed: 0
+data_boundary:
+  public_task_metadata_and_repository_filenames_only: true
+  hidden_tests_access: forbidden
+  gold_patch_access: forbidden
+  test_split_access: forbidden
+decision_rule:
+  minimum_hit_tasks: 4
+  total_validation_tasks: 5
+  minimum_unique_selected_experiences: 3
+  maximum_prompt_chars_per_task: 2500
+  all_boundary_checks_must_pass: true
+  pass_decision: ready_for_paid_authorization
+  fail_decision: blocked_before_paid_execution
+audit:
+  exactly_once: true
+  command: >-
+    evodev-experience-audit --project-root . --benchmark-root benchmarks-v2
+    --snapshot experiences/experience-v003.json --split validation
+post_audit_lock:
+  retriever_changes_allowed: false
+  snapshot_changes_allowed: false
+  task_type_changes_allowed: false
+  threshold_or_ranking_changes_allowed: false
+  note: Any later change requires a new experiment version and cannot reuse this Validation gate.
+future_paid_design_if_passed:
+  baseline_experiment_id: exp-baseline-v2-validation-v1
+  relevant_experiment_id: exp-experience-v2-validation-v2
+  repetitions_per_task: 2
+  tasks_per_arm: 5
+  total_paid_calls: 20
+  selective_reruns_allowed: false
+  new_paid_authorization_required: true
