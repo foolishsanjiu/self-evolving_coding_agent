@@ -4,16 +4,20 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Literal
 
 from mcp import StdioServerParameters
+from pydantic import BaseModel, ConfigDict, Field
 
 from evodev import __version__
 from evodev.agent import ReActAgent
 from evodev.agent.react_agent import SYSTEM_PROMPT
 from evodev.benchmark import BenchmarkLoader
+from evodev.benchmark.models import BenchmarkSplit
 from evodev.config import AppSettings, load_settings
 from evodev.evaluation.evaluator import IndependentEvaluator
 from evodev.evaluation.experiment import ExperimentReporter
@@ -47,6 +51,106 @@ def _sandbox_digest(image: str) -> str:
     return completed.stdout.strip()
 
 
+class BaselineRunSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    task_id: str
+    split: BenchmarkSplit
+    repetition: int = Field(gt=0)
+    agent_run_id: str
+
+
+class BaselinePreflight(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    experiment_id: str
+    benchmark_root: str
+    benchmark_version: str
+    benchmark_hash: str
+    benchmark_splits: list[BenchmarkSplit]
+    task_ids: list[str]
+    repetitions: int = Field(gt=0)
+    expected_agent_runs: int = Field(gt=0)
+    policy_version: Literal["fixed-react-v1"] = "fixed-react-v1"
+    policy_hash: str
+    experience_mode: Literal["disabled"] = "disabled"
+    model_provider: str
+    model: str
+    temperature: float = Field(ge=0, le=2)
+    max_steps: int = Field(gt=0)
+    context_budget: int = Field(gt=0)
+    requires_paid_confirmation: Literal[True] = True
+    selective_reruns_allowed: Literal[False] = False
+    runs: list[BaselineRunSpec]
+
+
+_ALL_SPLITS: tuple[BenchmarkSplit, ...] = ("train", "validation", "test")
+
+
+def _normalize_splits(splits: tuple[BenchmarkSplit, ...]) -> tuple[BenchmarkSplit, ...]:
+    if not splits:
+        raise ValueError("At least one benchmark split is required")
+    if len(set(splits)) != len(splits):
+        raise ValueError("Benchmark splits must not be repeated")
+    return tuple(split for split in _ALL_SPLITS if split in splits)
+
+
+def build_baseline_preflight(
+    project_root: Path,
+    settings: AppSettings,
+    *,
+    experiment_id: str,
+    repetitions: int,
+    benchmark_root: Path,
+    benchmark_splits: tuple[BenchmarkSplit, ...],
+) -> BaselinePreflight:
+    if repetitions < 1:
+        raise ValueError("repetitions must be positive")
+    root = project_root.resolve()
+    resolved_benchmark = (
+        benchmark_root.resolve()
+        if benchmark_root.is_absolute()
+        else (root / benchmark_root).resolve()
+    )
+    relative_benchmark = resolved_benchmark.relative_to(root).as_posix()
+    splits = _normalize_splits(benchmark_splits)
+    loader = BenchmarkLoader(resolved_benchmark)
+    manifest = loader.verify_manifest()
+    tasks = [task for task in loader.load_tasks() if task.split in splits]
+    runs = [
+        BaselineRunSpec(
+            task_id=task.config.task_id,
+            split=task.split,
+            repetition=repetition,
+            agent_run_id=f"run_{task.config.task_id}_r{repetition:02d}",
+        )
+        for repetition in range(1, repetitions + 1)
+        for task in tasks
+    ]
+    return BaselinePreflight(
+        experiment_id=experiment_id,
+        benchmark_root=relative_benchmark,
+        benchmark_version=manifest.benchmark_version,
+        benchmark_hash=manifest.manifest_hash,
+        benchmark_splits=list(splits),
+        task_ids=[task.config.task_id for task in tasks],
+        repetitions=repetitions,
+        expected_agent_runs=len(runs),
+        policy_hash=_sha256_text(SYSTEM_PROMPT),
+        model_provider=settings.model.provider,
+        model=settings.model.model,
+        temperature=settings.model.temperature,
+        max_steps=settings.agent.max_steps,
+        context_budget=settings.agent.max_context_chars,
+        runs=runs,
+    )
+
+
+def require_baseline_paid_confirmation(confirmed: bool) -> None:
+    if not confirmed:
+        raise PermissionError("Baseline execution requires --confirm-paid")
+
+
 class FixedPolicyBaselineRunner:
     """Run one frozen ReAct configuration over every benchmark task."""
 
@@ -57,6 +161,7 @@ class FixedPolicyBaselineRunner:
         experiment_id: str = "exp-baseline-v1",
         repetitions: int = 1,
         benchmark_root: Path = Path("benchmarks"),
+        benchmark_splits: tuple[BenchmarkSplit, ...] = _ALL_SPLITS,
     ) -> None:
         if repetitions < 1:
             raise ValueError("repetitions must be positive")
@@ -64,12 +169,18 @@ class FixedPolicyBaselineRunner:
         self.settings = settings
         self.experiment_id = experiment_id
         self.repetitions = repetitions
+        self.benchmark_splits = _normalize_splits(benchmark_splits)
         if benchmark_root.is_absolute():
             self.benchmark_root = benchmark_root.resolve()
         else:
             self.benchmark_root = (self.project_root / benchmark_root).resolve()
         self.loader = BenchmarkLoader(self.benchmark_root)
         self.benchmark_manifest = self.loader.verify_manifest()
+        self.tasks = [
+            task
+            for task in self.loader.load_tasks()
+            if task.split in self.benchmark_splits
+        ]
         self.runs_root = self.project_root / "runs" / experiment_id
         self.experiment_path = self.project_root / "evaluation_runs" / experiment_id
         self.agent_workspaces = WorkspaceManager(self.runs_root)
@@ -104,7 +215,7 @@ class FixedPolicyBaselineRunner:
         catalog_hash: str | None = None
         llm = LLMClient(self.settings.model)
         for repetition in range(1, self.repetitions + 1):
-            for task in self.loader.load_tasks():
+            for task in self.tasks:
                 run_id = f"run_{task.config.task_id}_r{repetition:02d}"
                 run = self.loader.create_agent_workspace(
                     task, self.agent_workspaces, run_id=run_id
@@ -189,6 +300,7 @@ class FixedPolicyBaselineRunner:
             benchmark_version=self.benchmark_manifest.benchmark_version,
             benchmark_hash=self.benchmark_manifest.manifest_hash,
             benchmark_root=self.benchmark_root.relative_to(self.project_root).as_posix(),
+            benchmark_splits=list(self.benchmark_splits),
         )
         summary = ExperimentReporter(self.experiment_path, manifest).summarize(
             results, trajectory_paths
@@ -202,15 +314,38 @@ def main() -> None:
     parser.add_argument("--experiment-id", default="exp-baseline-v1")
     parser.add_argument("--repetitions", type=int, default=1)
     parser.add_argument("--benchmark-root", type=Path, default=Path("benchmarks"))
+    parser.add_argument(
+        "--split",
+        dest="splits",
+        action="append",
+        choices=_ALL_SPLITS,
+        help="Limit execution to one or more benchmark splits.",
+    )
+    parser.add_argument("--plan", action="store_true")
+    parser.add_argument("--confirm-paid", action="store_true")
     arguments = parser.parse_args()
     project_root = arguments.project_root.resolve()
     settings = load_settings(project_root / "configs", project_root / ".env")
+    benchmark_splits = tuple(arguments.splits or _ALL_SPLITS)
+    preflight = build_baseline_preflight(
+        project_root,
+        settings,
+        experiment_id=arguments.experiment_id,
+        repetitions=arguments.repetitions,
+        benchmark_root=arguments.benchmark_root,
+        benchmark_splits=benchmark_splits,
+    )
+    if arguments.plan:
+        print(json.dumps(preflight.model_dump(mode="json"), indent=2))
+        return
+    require_baseline_paid_confirmation(arguments.confirm_paid)
     _, summary = FixedPolicyBaselineRunner(
         project_root,
         settings,
         experiment_id=arguments.experiment_id,
         repetitions=arguments.repetitions,
         benchmark_root=arguments.benchmark_root,
+        benchmark_splits=benchmark_splits,
     ).run()
     print(summary.model_dump_json(indent=2))
 

@@ -29,3 +29,9 @@ Gold Patch。正式冻结证据见 [`formal-qa.json`](formal-qa.json)，Manifest
 `c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6`。
 
 本次冻结没有运行 Coding Agent 或产生付费调用，因此不提供新的策略效果结论。
+
+下一阶段的正式 Baseline 已固化为只运行 Train：task_101–108 每题重复 2 次，共 16 次固定
+Policy 调用，不允许选择性补跑。Validation 与 Test 不参与本轮，也不用于调参。当前仅完成
+离线预案，尚未产生调用或结果；执行前仍需单独的付费授权和 Docker 预检。详见
+[`BENCHMARK_V2_BASELINE_PLAN.md`](../docs/BENCHMARK_V2_BASELINE_PLAN.md) 与
+[`benchmark-v2-train-baseline-v1.yaml`](../configs/experiments/benchmark-v2-train-baseline-v1.yaml)。

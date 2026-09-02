@@ -256,7 +256,7 @@ Task 和 Final Experiment 均接受独立的 Benchmark Root。命令行入口使
 
 ```powershell
 evodev-benchmark-qa --benchmark-root benchmarks
-evodev-baseline --benchmark-root benchmarks --experiment-id exp-baseline-v1
+evodev-baseline --benchmark-root benchmarks --experiment-id exp-baseline-v1 --confirm-paid
 evodev-evolve --benchmark-root benchmarks collect-train `
   --experiment-id exp-policy-train-v1 --repetitions 2 --confirm-paid
 ```
@@ -385,6 +385,29 @@ Evaluation 失败、Gold 后通过；完整库存测试还为每道题创建 Age
 该阶段 Agent Runs 与付费调用均为 0，只能证明 Benchmark 的完整性、可判别性和隔离边界，不能
 证明 Baseline、Experience 或 Evolved Policy 在 V2 上的效果。
 
+### Benchmark v2 Train Baseline 预案
+
+正式 Baseline 的目的不是给出最终性能，而是在不接触 Validation/Test 的前提下收集固定策略的
+Train 失败证据。运行矩阵固定为 task_101–108 × 2 次重复，共 16 次 Agent Run；模型为 DeepSeek
+`deepseek-v4-flash`，temperature 0.1，`fixed-react-v1`，最多 15 个 ReAct Step，上下文预算
+60,000 字符，Experience 关闭。所有有效失败必须保留，不允许选择性补跑。
+
+`evodev-baseline` 新增 Split 过滤、静态 `--plan` 与 `--confirm-paid` 门禁。下面的命令只验证
+Benchmark Hash、配置和确定性 Run ID，不启动 Docker，也不调用模型：
+
+```powershell
+evodev-baseline --project-root . --benchmark-root benchmarks-v2 `
+  --experiment-id exp-baseline-v2-train-v1 --repetitions 2 --split train --plan
+```
+
+根据 8-call Pilot 的 589,813 input / 61,812 output tokens 线性外推，16-call 预估为
+1,179,626 input / 123,624 output tokens。按 2026-09-02 DeepSeek 官方
+`deepseek-v4-flash` cache-miss 价格估算，低峰约 0.3411 美元、峰值约 0.6822 美元；再按
+Token 翻倍的峰值压力场景为 1.3644 美元，因此单轮授权上限固定为 2.00 美元。实际账单以供应商
+用量和执行时有效价格为准，正式运行前必须重新核价、完成 Docker 与环境身份预检，并获得单独的
+付费授权。机器可读配置位于 `configs/experiments/benchmark-v2-train-baseline-v1.yaml`；当前预案
+尚未执行，不能据此报告 V2 解决率或策略结论。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和
@@ -436,7 +459,8 @@ Regression、Timeout 或 Environment Failure。可审计冻结快照位于
 `evaluation_runs/`。再次运行会产生 API 费用：
 
 ```powershell
-evodev-baseline --experiment-id exp-baseline-v1-new
+evodev-baseline --experiment-id exp-baseline-v1-new `
+  --confirm-paid
 ```
 
 ## Reflection 与 Experience Store
@@ -964,6 +988,7 @@ python -m evodev.run `
 - `configs/sandbox.yaml`：Docker 安全与资源限制；
 - `configs/evolution.yaml`：Policy Evolution 搜索与验证预算；
 - `configs/experiments/final-v1.yaml`：Task 14 固定 2×2 Final Experiment 设计。
+- `configs/experiments/benchmark-v2-train-baseline-v1.yaml`：V2 Train-only Baseline 运行与预算预案。
 
 密钥只从环境变量或本地 `.env` 读取：
 
@@ -976,7 +1001,7 @@ Copy-Item .env.example .env
 ```text
 LLM_API_KEY=your-key
 LLM_BASE_URL=https://api.deepseek.com
-LLM_MODEL=deepseek-chat
+LLM_MODEL=deepseek-v4-flash
 ```
 
 `.env` 已被 Git 忽略。`LLM_MODEL` 与 `LLM_BASE_URL` 会覆盖 YAML 默认值；配置对象只保存

@@ -80,7 +80,8 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 另有 4 题 [Benchmark v2 Pilot](benchmarks-pilot-v2/README.md) 完成离线 QA 与 8-call 付费
 难度校准；总体 3/8 Accepted，没有题目被两种策略同时解决。基于该结论，正式 V2 的
 8 道 Train、5 道 Validation 与 5 道 Test 均已完成分 Split 和统一库存离线 QA，正式 Manifest
-已冻结。Validation/Test 构建与正式冻结阶段没有 Agent 运行或付费调试，因此 V2 尚无策略效果结论。
+已冻结。正式 Baseline 预案已固定为仅运行 8 道 Train、每题重复 2 次，共 16 次付费调用；
+Validation/Test 仍保持未暴露。该预案尚未执行，因此 V2 仍无策略效果结论。
 
 ## 工程亮点
 
@@ -91,7 +92,7 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：295 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：301 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -128,6 +129,15 @@ python -m ruff check .
 python -m pip check
 evodev-benchmark-qa --benchmark-root benchmarks-v2
 ```
+
+无需 Docker 或 API Key 即可检查 V2 Train Baseline 的冻结运行矩阵：
+
+```powershell
+evodev-baseline --project-root . --benchmark-root benchmarks-v2 `
+  --experiment-id exp-baseline-v2-train-v1 --repetitions 2 --split train --plan
+```
+
+真实执行还必须增加 `--confirm-paid`，且只有收到单独的付费授权后才会进行。
 
 ## 项目结构
 
@@ -191,6 +201,8 @@ EvoDev/
 - [Benchmark v2 Test QA](benchmarks-v2/test-qa.json)
 - [Benchmark v2 正式 Manifest](benchmarks-v2/manifest.json)
 - [Benchmark v2 正式冻结 QA](benchmarks-v2/formal-qa.json)
+- [Benchmark v2 Train Baseline 预案](docs/BENCHMARK_V2_BASELINE_PLAN.md)
+- [Benchmark v2 Train Baseline 配置](configs/experiments/benchmark-v2-train-baseline-v1.yaml)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

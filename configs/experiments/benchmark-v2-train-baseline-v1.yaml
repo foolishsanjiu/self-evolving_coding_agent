@@ -1,0 +1,63 @@
+schema_version: "1.0"
+experiment_id: exp-baseline-v2-train-v1
+purpose: Collect fixed-policy Train-only failure evidence without exposing Validation or Test.
+benchmark:
+  root: benchmarks-v2
+  version: "2.0"
+  manifest_hash: c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6
+  split: train
+  task_ids:
+    - task_101
+    - task_102
+    - task_103
+    - task_104
+    - task_105
+    - task_106
+    - task_107
+    - task_108
+runtime:
+  provider: deepseek
+  model: deepseek-v4-flash
+  temperature: 0.1
+  policy_version: fixed-react-v1
+  max_react_steps: 15
+  context_budget: 60000
+  experience_mode: disabled
+design:
+  repetitions_per_task: 2
+  expected_paid_agent_runs: 16
+  selective_reruns_allowed: false
+  retain_all_valid_failures: true
+  validation_access: forbidden
+  test_access: forbidden
+execution:
+  plan_command: >-
+    evodev-baseline --project-root . --benchmark-root benchmarks-v2
+    --experiment-id exp-baseline-v2-train-v1 --repetitions 2 --split train --plan
+  paid_command_requires_authorization: >-
+    evodev-baseline --project-root . --benchmark-root benchmarks-v2
+    --experiment-id exp-baseline-v2-train-v1 --repetitions 2 --split train --confirm-paid
+  explicit_paid_authorization_required: true
+pricing_snapshot:
+  checked_on: "2026-09-02"
+  source: https://api-docs.deepseek.com/quick_start/pricing/
+  currency: USD
+  model: deepseek-v4-flash
+  per_million_tokens:
+    off_peak_cache_miss_input: 0.22
+    off_peak_output: 0.66
+    peak_cache_miss_input: 0.44
+    peak_output: 1.32
+historical_token_basis:
+  source: experiments/benchmark-v2-pilot-v1/summary.csv
+  paid_agent_runs: 8
+  input_tokens: 589813
+  output_tokens: 61812
+projection_for_16_runs:
+  input_tokens: 1179626
+  output_tokens: 123624
+  off_peak_cache_miss_usd: 0.3411
+  peak_cache_miss_usd: 0.6822
+  double_token_peak_usd: 1.3644
+  authorization_ceiling_usd: 2.0
+  note: Actual billing follows provider-reported usage and the current official price table.
