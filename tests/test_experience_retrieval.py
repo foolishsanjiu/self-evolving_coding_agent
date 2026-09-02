@@ -174,6 +174,7 @@ def test_experience_metrics_use_retrieval_and_public_trace_features(
     )
 
     assert metrics.retrieval_hit_rate == 1
+    assert metrics.experience_adherence_rate == 1
     assert metrics.experience_utilization_rate == 1
 
     (baseline_path / "trace_features.json").write_text(
@@ -184,6 +185,7 @@ def test_experience_metrics_use_retrieval_and_public_trace_features(
         {"run_task_008_r01": run_path},
         {"run_task_008_r01": baseline_path},
     )
+    assert unchanged.experience_adherence_rate == 1
     assert unchanged.experience_utilization_rate == 0
 
 

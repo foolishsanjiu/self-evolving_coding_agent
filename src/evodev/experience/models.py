@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from evodev.benchmark.models import TaskCategory
 from evodev.evaluation import FailureType
@@ -103,6 +103,42 @@ class ExperienceStatus(StrEnum):
     DEPRECATED = "deprecated"
 
 
+BehaviorFeature = Literal[
+    "searched_before_edit",
+    "inspected_tests_before_edit",
+    "unique_files_read",
+    "patch_attempts",
+    "test_runs",
+]
+
+
+class BehaviorTarget(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    feature: BehaviorFeature
+    operator: Literal["eq", "gte", "lte"]
+    value: bool | int
+
+    @model_validator(mode="after")
+    def validate_feature_value(self) -> BehaviorTarget:
+        boolean_features = {"searched_before_edit", "inspected_tests_before_edit"}
+        if self.feature in boolean_features:
+            if self.operator != "eq" or type(self.value) is not bool:
+                raise ValueError("Boolean trace targets require eq with a boolean value")
+        elif type(self.value) is not int:
+            raise ValueError("Numeric trace targets require an integer value")
+        return self
+
+
+class ExperienceExecutionContract(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    inspect: list[str] = Field(min_length=1, max_length=3)
+    act: list[str] = Field(min_length=1, max_length=3)
+    verify: list[str] = Field(min_length=1, max_length=3)
+    behavior_targets: list[BehaviorTarget] = Field(min_length=1, max_length=5)
+
+
 class StoredExperience(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -116,6 +152,7 @@ class StoredExperience(BaseModel):
     status: ExperienceStatus
     created_at: str
     updated_at: str
+    execution_contract: ExperienceExecutionContract | None = None
 
 
 class ExperienceSource(BaseModel):
@@ -149,6 +186,7 @@ class ScoredExperience(BaseModel):
     confidence_weight: float = Field(ge=0, le=1)
     score: float = Field(ge=0)
     behavior_targets: list[str] = Field(default_factory=list)
+    execution_targets: list[BehaviorTarget] = Field(default_factory=list)
 
 
 class RetrievalResult(BaseModel):

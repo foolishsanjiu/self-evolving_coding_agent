@@ -56,3 +56,7 @@ DeepSeek 非峰时段；按全部 input 均为 cache miss 的保守估算为 **0
 机器可读比较见 [comparison.json](comparison.json)，原始文件 Hash 见
 [evidence-manifest.json](evidence-manifest.json)。提交目录只保留公开摘要；完整轨迹与 Docker 输出
 位于本地 gitignored `runs/` 和 `evaluation_runs/`。
+
+后续状态：项目已回到 Train-only 路径，将自然语言经验迁移为结构化、可测量的 v004 消费合同，
+详见 [`benchmark-v2-experience-consumption-v1`](../benchmark-v2-experience-consumption-v1/README.md)。
+该工程升级没有改写本目录的 Validation 结果，也尚未产生新的性能结论。

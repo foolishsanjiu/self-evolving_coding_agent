@@ -90,6 +90,7 @@ class ExperimentManifest(BaseModel):
     experience_version: str = Field(min_length=1)
     experience_hash: str = Field(min_length=1)
     experience_mode: Literal["disabled", "relevant", "random"] = "disabled"
+    experience_consumer: Literal["legacy-v1", "execution-contract-v1"] = "legacy-v1"
     experience_top_k: int = Field(default=0, ge=0, le=3)
     experience_max_chars: int = Field(default=0, ge=0, le=3_000)
     experience_random_seed: int = 0

@@ -540,6 +540,32 @@ gitignored 目录保存；Test split 未运行，hidden tests 与 Gold Patch 未
 本阶段不接受 Experience 净收益假设，也不依据 Validation 继续修改 Retriever、v003 或补跑。
 若继续研究，应只在 Train 创建新的可执行/可测经验消费机制，并使用新的实验版本重新立项。
 
+### Benchmark v2 Train-only Experience 消费合同
+
+后续没有从 Validation 题意、逐题 Patch 或 hidden tests 继续调 Retriever，而是回到已有 Train
+Experience，修复更一般的消费与测量契约。v003 的自然语言 `Trigger/Prefer/Why` 只能通过
+“test/search before”等短语启发式推导两个布尔目标，导致大多数 Retrieval Hit 无法进入
+Utilization 分母；同时 Agent Prompt 没有明确的执行阶段。
+
+`experience-v004` 在不修改原 recommendation、rationale、task types、confidence、时间戳和
+8 个 Sources 的前提下，为 7/7 active Experience 增加 `Inspect → Act → Verify` 合同和 16 个
+公共轨迹目标。目标只使用既有五项 Trace Feature 与 `eq/gte/lte` 运算，因而无需保存模型思维链
+或解析自由文本。新 Hash 为
+`f71ac3984674ba98e52ae02fd939dbc5bf2d4ad998a7013b547ff756f6054988`。
+
+为保护历史 Gate，锁定的 `retrieval.py` 未修改，规范化 SHA-256 仍为
+`bb1f50b47462d0d5f8f5af84dc9efd3332d3e493902b79dc72ab128d182499d2`。新
+`ContractExperienceRetriever` 独立渲染合同；含合同的快照使用 `execution-contract-v1`，旧快照
+继续使用 `legacy-v1`。consumer 版本进入 Preflight、Experiment Manifest 和 Run Metadata。
+
+指标现在区分 Measurable、Adherent 与 Utilized：Treatment 满足某条合同的全部目标才算
+Adherent；Treatment 达成而配对 Baseline 未达成才算 Utilized。Train leave-one-task-out 仍是
+1/8，task_101 选择两条来自 task_106 的合同，Prompt 1,177 字符；没有为了提高覆盖率扩大关键词。
+完整审计位于 `experiments/benchmark-v2-experience-consumption-v1/`。
+
+本阶段没有模型调用、Docker、Validation/Test 访问或新费用，只证明新合同可执行、可测和向后
+兼容，不构成成功率提升。任何后续付费 Train 对照都必须先冻结新方案并获得新的明确授权。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

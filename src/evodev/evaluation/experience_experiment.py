@@ -27,8 +27,8 @@ from evodev.evaluation.models import (
 )
 from evodev.experience import (
     ExperienceMetrics,
-    ExperienceRetriever,
     build_retrieval_query,
+    build_versioned_retriever,
     load_snapshot,
     summarize_experience_metrics,
 )
@@ -102,7 +102,7 @@ def audit_retrieval(
     snapshot = load_snapshot(resolved_snapshot)
     loader = BenchmarkLoader(resolved_benchmark)
     manifest = loader.load_manifest()
-    retriever = ExperienceRetriever(
+    retriever = build_versioned_retriever(
         snapshot.experiences,
         snapshot.sources,
         top_k=top_k,
@@ -227,6 +227,11 @@ def build_experience_arm_preflight(
         "snapshot_path": relative_snapshot,
         "experience_version": snapshot.version,
         "experience_hash": snapshot.content_hash,
+        "experience_consumer": (
+            "execution-contract-v1"
+            if any(item.execution_contract is not None for item in snapshot.experiences)
+            else "legacy-v1"
+        ),
         "baseline_manifest_path": relative_baseline,
         "baseline_manifest_ready": baseline_ready,
         "model_provider": settings.model.provider,
@@ -255,6 +260,7 @@ def assert_controlled_conditions(
         "experiment_id",
         "experiment_version",
         "experience_hash",
+        "experience_consumer",
         "experience_max_chars",
         "experience_mode",
         "experience_random_seed",
@@ -347,6 +353,11 @@ class ExperienceExperimentRunner:
         self.project_root = project_root.resolve()
         self.settings = settings
         self.snapshot = load_snapshot(snapshot_path)
+        self.experience_consumer = (
+            "execution-contract-v1"
+            if any(item.execution_contract is not None for item in self.snapshot.experiences)
+            else "legacy-v1"
+        )
         self.experiment_id = experiment_id
         self.mode = mode
         self.repetitions = repetitions
@@ -379,7 +390,7 @@ class ExperienceExperimentRunner:
         self.experiment_path = self.project_root / "evaluation_runs" / experiment_id
         self.agent_workspaces = WorkspaceManager(self.runs_root)
         self.evaluation_workspaces = WorkspaceManager(self.experiment_path / ".workspaces")
-        self.retriever = ExperienceRetriever(
+        self.retriever = build_versioned_retriever(
             self.snapshot.experiences,
             self.snapshot.sources,
             top_k=settings.experience.top_k,
@@ -449,6 +460,7 @@ class ExperienceExperimentRunner:
                             policy_hash=_sha256_text(SYSTEM_PROMPT),
                             experience_version=self.snapshot.version,
                             experience_hash=self.snapshot.content_hash,
+                            experience_consumer=self.experience_consumer,
                             model=self.settings.model.model,
                             temperature=self.settings.model.temperature,
                             prompt_version="react-system-v1",
@@ -519,6 +531,7 @@ class ExperienceExperimentRunner:
             experience_version=self.snapshot.version,
             experience_hash=self.snapshot.content_hash,
             experience_mode=self.mode,
+            experience_consumer=self.experience_consumer,
             experience_top_k=self.settings.experience.top_k,
             experience_max_chars=self.settings.experience.max_chars,
             experience_random_seed=self.random_seed,

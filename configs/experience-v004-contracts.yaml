@@ -1,0 +1,115 @@
+schema_version: "1.0"
+contract_id: benchmark-v2-experience-consumption-v1
+source_snapshot: experiences/experience-v003.json
+target_version: experience-v004
+authorship_boundary:
+  source_split: train
+  validation_feedback_used: false
+  test_split_used: false
+  hidden_tests_used: false
+  gold_patches_used: false
+contracts:
+  exp_242f9076fcdd413085a70c719c9a07fc:
+    inspect:
+      - Read the current target file, the relevant tests, and the exact patch failure before retrying.
+    act:
+      - Apply the smallest patch with current context; change patch strategy after the first failure.
+    verify:
+      - Run the focused tests after a successful edit.
+    behavior_targets:
+      - feature: inspected_tests_before_edit
+        operator: eq
+        value: true
+      - feature: test_runs
+        operator: gte
+        value: 1
+  exp_498fc99571d64663b5b8d975a4fb5a65:
+    inspect:
+      - Read the injected factory interface, its callers, and compatibility tests before editing.
+    act:
+      - Use explicit try/finally cleanup and only capabilities guaranteed by the factory contract.
+    verify:
+      - Run focused and regression tests covering custom executor doubles.
+    behavior_targets:
+      - feature: inspected_tests_before_edit
+        operator: eq
+        value: true
+      - feature: unique_files_read
+        operator: gte
+        value: 2
+      - feature: test_runs
+        operator: gte
+        value: 1
+  exp_550ea328a87b488bbed05cae71d5c263:
+    inspect:
+      - Read existing duplicate, invalid-input, and completion tests before changing acceptance behavior.
+    act:
+      - Preserve the error contract and change only the order-independent completion logic.
+    verify:
+      - Run both the new feature tests and the existing error-contract regression suite.
+    behavior_targets:
+      - feature: inspected_tests_before_edit
+        operator: eq
+        value: true
+      - feature: test_runs
+        operator: gte
+        value: 1
+  exp_6454167886074dad967e4b4486bf483c:
+    inspect:
+      - Read the state model and tests for out-of-order, duplicate, and final-piece cases.
+    act:
+      - Key stored pieces by logical identity and recompute completeness after every update.
+    verify:
+      - Run focused tests for multiple arrival orders and duplicate handling.
+    behavior_targets:
+      - feature: inspected_tests_before_edit
+        operator: eq
+        value: true
+      - feature: test_runs
+        operator: gte
+        value: 1
+  exp_975124e62db3481c8d106a0fedfe8bd4:
+    inspect:
+      - Read pricing sources, date-boundary code, and upgrade/downgrade tests before editing.
+    act:
+      - Use inclusive remaining days, integer cents, and explicit half-up rounding.
+    verify:
+      - Run focused upgrade, downgrade, boundary, and rounding tests.
+    behavior_targets:
+      - feature: inspected_tests_before_edit
+        operator: eq
+        value: true
+      - feature: unique_files_read
+        operator: gte
+        value: 2
+      - feature: test_runs
+        operator: gte
+        value: 1
+  exp_ea8b144e5c3f462a8b9e0f5c99a4772d:
+    inspect:
+      - Read callable interfaces and compatibility tests for accepted and rejected signatures.
+    act:
+      - Validate the complete signature before invocation and branch only for recognized forms.
+    verify:
+      - Run current, legacy, unsupported-signature, and error-message tests.
+    behavior_targets:
+      - feature: inspected_tests_before_edit
+        operator: eq
+        value: true
+      - feature: test_runs
+        operator: gte
+        value: 1
+  exp_fd35be210da44269ba9f10fd1e65a8c4:
+    inspect:
+      - Read precedence, missing-key, false-like, and invalid-value tests before editing.
+    act:
+      - Coerce through explicit true/false sets and reject unknown values before defaulting.
+    verify:
+      - Run tests for truthy, false-like, missing, invalid, and precedence cases.
+    behavior_targets:
+      - feature: inspected_tests_before_edit
+        operator: eq
+        value: true
+      - feature: test_runs
+        operator: gte
+        value: 1

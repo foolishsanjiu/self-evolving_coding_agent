@@ -6,12 +6,17 @@ import hashlib
 import json
 from pathlib import Path
 
-from evodev.experience.models import ExperienceSnapshot, ExperienceSource, StoredExperience
+from evodev.experience.models import (
+    ExperienceExecutionContract,
+    ExperienceSnapshot,
+    ExperienceSource,
+    StoredExperience,
+)
 
 
 def _canonical_hash(experiences: list[StoredExperience], sources: list[ExperienceSource]) -> str:
     payload = {
-        "experiences": [item.model_dump(mode="json") for item in experiences],
+        "experiences": [item.model_dump(mode="json", exclude_none=True) for item in experiences],
         "sources": [item.model_dump(mode="json") for item in sources],
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -69,9 +74,29 @@ def add_source_task_types(
     return create_snapshot(version, experiences, snapshot.sources)
 
 
+def add_execution_contracts(
+    snapshot: ExperienceSnapshot,
+    version: str,
+    contracts: dict[str, ExperienceExecutionContract],
+) -> ExperienceSnapshot:
+    """Attach Train-authored execution contracts to every active Experience."""
+    experience_ids = {item.experience_id for item in snapshot.experiences}
+    missing = sorted(experience_ids - set(contracts))
+    unknown = sorted(set(contracts) - experience_ids)
+    if missing or unknown:
+        raise ValueError(
+            f"Execution contract IDs differ from snapshot: missing={missing}, unknown={unknown}"
+        )
+    experiences = [
+        item.model_copy(update={"execution_contract": contracts[item.experience_id]})
+        for item in snapshot.experiences
+    ]
+    return create_snapshot(version, experiences, snapshot.sources)
+
+
 def write_snapshot(snapshot: ExperienceSnapshot, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(snapshot.model_dump_json(indent=2), encoding="utf-8")
+    path.write_text(snapshot.model_dump_json(indent=2, exclude_none=True), encoding="utf-8")
 
 
 def load_snapshot(path: Path) -> ExperienceSnapshot:
