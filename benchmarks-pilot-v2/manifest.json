@@ -1,0 +1,45 @@
+{
+  "benchmark_version": "2.0",
+  "task_count": 4,
+  "split_counts": {
+    "train": 2,
+    "validation": 1,
+    "test": 1
+  },
+  "category_counts": {
+    "cross_module_bug": 1,
+    "state_data_flow": 2,
+    "error_resilience": 1
+  },
+  "tasks": [
+    {
+      "task_id": "task_101",
+      "split": "train",
+      "category": "cross_module_bug",
+      "repository_template": "product_view_cache_v2",
+      "checksum": "c81560bfe2c01c33a2bf4d8677cdd2a525213e67e0dc1ab302f5c48b08f1e2ea"
+    },
+    {
+      "task_id": "task_102",
+      "split": "train",
+      "category": "state_data_flow",
+      "repository_template": "opaque_cursor_paging_v2",
+      "checksum": "c5875d06b87e385de1a531b94c9c9dfe6c9d80c93c42cbac9611eb5cfee57040"
+    },
+    {
+      "task_id": "task_103",
+      "split": "validation",
+      "category": "error_resilience",
+      "repository_template": "typed_config_precedence_v2",
+      "checksum": "da29262fa1bdcc6a7daeffca87f18b18e090bd530b4c239d3973b6dad08147e5"
+    },
+    {
+      "task_id": "task_104",
+      "split": "test",
+      "category": "state_data_flow",
+      "repository_template": "inventory_compensation_v2",
+      "checksum": "cd1e58af317aa85cec9334ab1039ae5133d8ce2e395af093d9fd6404eb81a09f"
+    }
+  ],
+  "manifest_hash": "6143ff702fffaf4f29b96ac65c222b85214ecaa6fa51cc777b623418a79285b1"
+}

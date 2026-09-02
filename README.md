@@ -77,6 +77,8 @@ flowchart LR
 当前公开结果仍基于冻结的 Benchmark v1。Benchmark Loader 与 Baseline、Experience、
 Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-root` 选择独立版本；
 每个新版本使用 `benchmark.yaml` 声明版本、任务总数、Split 和类别配额，不覆盖 v1 历史数据。
+另有 4 题 [Benchmark v2 Pilot](benchmarks-pilot-v2/README.md) 完成离线 QA，但尚未执行付费
+Agent 校准，也不作为新的性能结果。
 
 ## 工程亮点
 
@@ -87,7 +89,7 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：208 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：221 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -131,6 +133,7 @@ EvoDev/
 ├── src/evodev/          # ReAct Agent、LLM、Policy、Experience、Evaluation
 ├── mcp_servers/         # DevTools MCP stdio Server
 ├── benchmarks/          # 6 Train + 3 Validation + 3 Test
+├── benchmarks-pilot-v2/ # 4 题 V2 离线校准集，非正式 Test
 ├── docker/sandbox/      # 隔离测试镜像
 ├── policies/            # Candidate、Champion 与版本索引
 ├── evolution/           # Proposal、Gate 与 Generation 状态
@@ -162,6 +165,7 @@ EvoDev/
 ## 局限性
 
 - Final Test Set 只有 3 个 Python 任务，不宣称统计显著性或通用 Coding 能力；
+- V2 Pilot 当前只有离线题目 QA，尚不能作为 Agent 能力提升证据；
 - 成功率改善集中在 `task_010`，尚未完成 SWE-bench 或大型真实仓库评测；
 - Experience 快照当前只有一个 Train 来源经验，检索采用结构化与词法匹配；
 - Policy Search Space 人工限制为三个字段，没有进行模型微调；
@@ -174,6 +178,7 @@ EvoDev/
 - [最终结果 Summary](results/final-v1/summary.json)
 - [逐次运行数据](results/final-v1/summary.csv)
 - [Benchmark Manifest](benchmarks/manifest.json)
+- [Benchmark v2 Pilot](benchmarks-pilot-v2/README.md)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

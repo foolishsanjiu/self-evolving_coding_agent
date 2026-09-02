@@ -267,6 +267,29 @@ Final Runner 的计划长度由冻结 Test Task 数量计算，不再写死为�
 产生 36 次，计划中的 v2 五题在三次重复、四个 Variant 下产生 60 次。以上兼容层不引入
 新依赖，Benchmark v2 题目与 Pilot 运行属于下一独立阶段。
 
+### Benchmark v2 Pilot 离线资格验证
+
+`benchmarks-pilot-v2/` 保存 4 道不进入正式 V2 Test 的校准题。目录中的 2/1/1 Split
+只是复用通用 Loader 的完整库存合同；校准后合格题只考虑迁入正式 Train，正式
+Validation/Test 使用新的未调试任务。当前任务为：
+
+| Task | 主题 | 难度 | 源码文件 | Public | Hidden Target / Regression | Gold 修改文件 |
+|---|---|---|---:|---:|---:|---:|
+| `task_101` | locale/tax 请求参数完整参与缓存键 | Medium | 5 | 2 | 2 / 2 | 2 |
+| `task_102` | 不透明 cursor 的多页与空页遍历 | Medium | 4 | 2 | 2 / 2 | 1 |
+| `task_103` | CLI/env/file/default 优先级与类型转换 | Medium | 5 | 2 | 4 / 3 | 2 |
+| `task_104` | 多行库存预留的异常补偿 | Hard | 5 | 2 | 2 / 3 | 1 |
+
+所有原始仓库的 Public Tests 均通过，避免把公开测试直接作为失败位置提示；完整 Hidden
+Evaluation 在原始仓库失败，应用 Gold Patch 后通过。最终 Pilot Manifest Hash 为
+`6143ff702fffaf4f29b96ac65c222b85214ecaa6fa51cc777b623418a79285b1`。相同 Hash 的完整
+QA 使用五个独立临时根重复执行，5/5 轮均为 4/4 valid。
+
+此外，`tests/test_pilot_benchmark.py` 为每题构造两种合理但不完整的修复，共 8 个负向
+变体，例如只把 locale 或 tax 放入缓存键、只修配置优先级、只回滚最后一条库存记录。
+Hidden Target/Regression Tests 对 8/8 变体均返回失败，防止测试只会接受 Gold 正例。
+该阶段只使用 Python 标准库和现有 pytest；题目 QA 不依赖 Docker，未调用模型、未产生费用。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

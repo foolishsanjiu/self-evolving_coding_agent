@@ -1,0 +1,10 @@
+benchmark_version: "2.0"
+task_count: 4
+split_counts:
+  train: 2
+  validation: 1
+  test: 1
+category_counts:
+  cross_module_bug: 1
+  state_data_flow: 2
+  error_resilience: 1

@@ -1,0 +1,2 @@
+class InsufficientStockError(ValueError):
+    pass

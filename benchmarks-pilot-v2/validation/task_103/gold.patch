@@ -1,0 +1,31 @@
+diff --git a/settings/coercion.py b/settings/coercion.py
+--- a/settings/coercion.py
++++ b/settings/coercion.py
+@@ -2,7 +2,14 @@ def coerce_value(name: str, value: object) -> object:
+     if name == "timeout":
+         return int(value)
+     if name == "debug":
+-        return bool(value)
++        if isinstance(value, bool):
++            return value
++        normalized = str(value).strip().lower()
++        if normalized in {"1", "true", "yes", "on"}:
++            return True
++        if normalized in {"0", "false", "no", "off"}:
++            return False
++        raise ValueError(f"invalid boolean: {value}")
+     if name == "region":
+         return str(value)
+     raise KeyError(name)
+diff --git a/settings/resolver.py b/settings/resolver.py
+--- a/settings/resolver.py
++++ b/settings/resolver.py
+@@ -11,7 +11,7 @@ def resolve_value(
+ ) -> object:
+     if name not in DEFAULTS:
+         raise KeyError(name)
+-    for source in (cli, file_values, environment, DEFAULTS):
++    for source in (cli, environment, file_values, DEFAULTS):
+         if name in source:
+             return coerce_value(name, source[name])
+     raise AssertionError("default configuration is incomplete")

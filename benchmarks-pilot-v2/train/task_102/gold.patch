@@ -1,0 +1,10 @@
+diff --git a/paging/service.py b/paging/service.py
+--- a/paging/service.py
++++ b/paging/service.py
+@@ -13,5 +13,5 @@ def collect_items(client: InMemoryPageClient, max_pages: int = 100) -> list[Item
+         collected.extend(page.items)
+         if page.next_cursor is None:
+             return collected
+-        cursor = page.items[-1].item_id if page.items else None
++        cursor = page.next_cursor
+     raise RuntimeError("pagination exceeded max_pages")
