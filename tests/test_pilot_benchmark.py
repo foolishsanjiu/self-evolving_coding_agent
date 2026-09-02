@@ -1,3 +1,5 @@
+import csv
+import json
 import os
 import shutil
 import subprocess
@@ -9,6 +11,7 @@ import pytest
 from evodev.benchmark import BenchmarkLoader, BenchmarkQA
 
 PILOT_ROOT = Path("benchmarks-pilot-v2")
+PILOT_EXPERIMENT_ROOT = Path("experiments/benchmark-v2-pilot-v1")
 LOADER = BenchmarkLoader(PILOT_ROOT)
 TASKS = LOADER.load_tasks()
 TASKS_BY_ID = {task.config.task_id: task for task in TASKS}
@@ -161,6 +164,33 @@ def test_pilot_inventory_and_manifest_are_frozen() -> None:
     assert manifest.split_counts == {"train": 2, "validation": 1, "test": 1}
     assert {task.config.difficulty for task in TASKS} <= {"medium", "hard"}
     assert len({task.config.repository_template for task in TASKS}) == 4
+
+
+def test_paid_pilot_summary_matches_frozen_plan() -> None:
+    manifest = json.loads(
+        (PILOT_EXPERIMENT_ROOT / "manifest.json").read_text(encoding="utf-8")
+    )
+    summary = json.loads(
+        (PILOT_EXPERIMENT_ROOT / "summary.json").read_text(encoding="utf-8")
+    )
+    with (PILOT_EXPERIMENT_ROOT / "summary.csv").open(
+        encoding="utf-8", newline=""
+    ) as stream:
+        rows = list(csv.DictReader(stream))
+
+    planned_ids = {
+        run_id for variant in manifest["variants"] for run_id in variant["run_ids"]
+    }
+    assert manifest["benchmark"]["manifest_hash"] == LOADER.verify_manifest().manifest_hash
+    assert manifest["paid_agent_calls"] == 8
+    assert manifest["selective_reruns"] is False
+    assert len(rows) == len(planned_ids) == 8
+    assert {row["run_id"] for row in rows} == planned_ids
+    assert all(row["valid_evaluation"] == "true" for row in rows)
+    assert sum(row["resolved"] == "true" for row in rows) == 3
+    assert sum(int(row["total_tokens"]) for row in rows) == 651625
+    assert summary["variants"]["baseline"]["resolved"] == 2
+    assert summary["variants"]["champion"]["resolved"] == 1
 
 
 @pytest.mark.parametrize("task", TASKS, ids=lambda task: task.config.task_id)

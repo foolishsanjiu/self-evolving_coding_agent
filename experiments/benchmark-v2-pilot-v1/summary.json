@@ -1,0 +1,75 @@
+{
+  "experiment_id": "benchmark-v2-pilot-v1",
+  "total_attempts": 8,
+  "valid_evaluated_attempts": 8,
+  "resolved_attempts": 3,
+  "resolution_rate": 0.375,
+  "token_usage": {
+    "input_tokens": 589813,
+    "output_tokens": 61812,
+    "total_tokens": 651625,
+    "currency_cost": null,
+    "currency_cost_note": "The provider invoice and price schedule are not stored in public trajectories; no currency amount is inferred."
+  },
+  "variants": {
+    "baseline": {
+      "policy_id": "policy-v001",
+      "attempts": 4,
+      "resolved": 2,
+      "resolution_rate": 0.5,
+      "average_react_steps": 13.0,
+      "average_tool_calls": 19.75,
+      "average_tokens": 100867.25,
+      "average_latency_ms": 65260.0,
+      "average_patch_attempts": 6.25,
+      "failure_distribution": {
+        "RESOLVED": 2,
+        "SYNTAX_ERROR": 1,
+        "TARGET_TEST_FAILED": 1
+      }
+    },
+    "champion": {
+      "policy_id": "policy-v003",
+      "attempts": 4,
+      "resolved": 1,
+      "resolution_rate": 0.25,
+      "average_react_steps": 10.0,
+      "average_tool_calls": 17.25,
+      "average_tokens": 62039.0,
+      "average_latency_ms": 49068.75,
+      "average_patch_attempts": 5.0,
+      "failure_distribution": {
+        "RESOLVED": 1,
+        "AGENT_MAX_STEPS": 1,
+        "SYNTAX_ERROR": 2
+      }
+    }
+  },
+  "paired_task_outcomes": [
+    {
+      "task_id": "task_101",
+      "baseline_resolved": false,
+      "champion_resolved": true
+    },
+    {
+      "task_id": "task_102",
+      "baseline_resolved": true,
+      "champion_resolved": false
+    },
+    {
+      "task_id": "task_103",
+      "baseline_resolved": false,
+      "champion_resolved": false
+    },
+    {
+      "task_id": "task_104",
+      "baseline_resolved": true,
+      "champion_resolved": false
+    }
+  ],
+  "conclusion": {
+    "difficulty_calibration": "The pilot is not trivially easy: only 3 of 8 attempts resolved, and no task was resolved by both policies.",
+    "policy_comparison": "Inconclusive. Champion used fewer steps and tokens but resolved fewer tasks; one repetition on four tasks is insufficient for a stable policy-effect claim.",
+    "benchmark_decision": "Retain all four tasks as candidate Benchmark v2 Train difficulty anchors. Do not reuse them in formal Validation or Test, and do not report this pilot as a formal capability score."
+  }
+}

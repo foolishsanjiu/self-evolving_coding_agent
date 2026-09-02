@@ -27,5 +27,8 @@ python -m pytest tests/test_pilot_benchmark.py
 6143ff702fffaf4f29b96ac65c222b85214ecaa6fa51cc777b623418a79285b1
 ```
 
-该阶段没有运行 Agent、没有产生 API 费用，也没有将任何隐藏测试或 Gold Patch 复制到
-Agent Workspace。
+离线 QA 后已执行一次冻结的 8-call 付费校准：Baseline 与 Champion 各在四题上运行一次，
+不启用 Experience、不选择性补跑。结果为 Baseline 2/4、Champion 1/4，总体 3/8；没有题目
+被两种策略同时解决，因此 Pilot 并不简单。完整条件、逐次指标与结论见
+[`experiments/benchmark-v2-pilot-v1`](../experiments/benchmark-v2-pilot-v1/README.md)。隐藏测试与
+Gold Patch 仍未复制到 Agent Workspace，成功只由独立 Fresh Workspace 评测决定。

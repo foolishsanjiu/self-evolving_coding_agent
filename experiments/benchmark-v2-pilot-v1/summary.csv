@@ -1,0 +1,9 @@
+variant,policy_id,task_id,run_id,agent_status,resolved,valid_evaluation,failure_type,react_steps,tool_calls,input_tokens,output_tokens,total_tokens,latency_ms,searched_before_edit,inspected_tests_before_edit,patch_attempts
+baseline,policy-v001,task_101,pilot-v2-baseline-task_101-r01,MAX_STEPS,false,true,SYNTAX_ERROR,15,22,75153,5070,80223,36263,true,true,9
+baseline,policy-v001,task_102,pilot-v2-baseline-task_102-r01,SUCCESS,true,true,RESOLVED,7,10,22045,1886,23931,17425,true,true,1
+baseline,policy-v001,task_103,pilot-v2-baseline-task_103-r01,MAX_STEPS,false,true,TARGET_TEST_FAILED,15,26,153878,14418,168296,101454,true,true,7
+baseline,policy-v001,task_104,pilot-v2-baseline-task_104-r01,MAX_STEPS,true,true,RESOLVED,15,21,116267,14752,131019,105898,false,true,8
+champion,policy-v003,task_101,pilot-v2-champion-task_101-r01,MAX_STEPS,true,true,RESOLVED,10,19,60781,5153,65934,42141,true,true,4
+champion,policy-v003,task_102,pilot-v2-champion-task_102-r01,MAX_STEPS,false,true,AGENT_MAX_STEPS,10,15,38165,5006,43171,43273,false,true,6
+champion,policy-v003,task_103,pilot-v2-champion-task_103-r01,MAX_STEPS,false,true,SYNTAX_ERROR,10,19,81490,10081,91571,67321,true,true,5
+champion,policy-v003,task_104,pilot-v2-champion-task_104-r01,MAX_STEPS,false,true,SYNTAX_ERROR,10,16,42034,5446,47480,43540,false,true,5

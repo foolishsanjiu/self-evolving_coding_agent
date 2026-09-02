@@ -288,7 +288,31 @@ QA 使用五个独立临时根重复执行，5/5 轮均为 4/4 valid。
 此外，`tests/test_pilot_benchmark.py` 为每题构造两种合理但不完整的修复，共 8 个负向
 变体，例如只把 locale 或 tax 放入缓存键、只修配置优先级、只回滚最后一条库存记录。
 Hidden Target/Regression Tests 对 8/8 变体均返回失败，防止测试只会接受 Gold 正例。
-该阶段只使用 Python 标准库和现有 pytest；题目 QA 不依赖 Docker，未调用模型、未产生费用。
+离线 QA 只使用 Python 标准库和现有 pytest，不依赖 Docker，也未调用模型。
+
+### Benchmark v2 Pilot 付费难度校准
+
+离线资格验证通过后，在 Git Commit
+`def7814a5ee234f3b7a61124adc09455a6162678` 上冻结执行 8 次 Agent Call：
+`policy-v001` Baseline（15 步上限）与 `policy-v003` Champion（10 步上限）分别对四题运行
+一次，均关闭 Experience。模型固定为 DeepSeek `deepseek-v4-flash`、temperature 0.1；
+Benchmark Hash、Docker Image Digest、Tool Catalog Hash 与 8 个 Run ID 写入
+`experiments/benchmark-v2-pilot-v1/manifest.json`。实验不选择性补跑，8/8 均进入独立评测。
+
+| Variant | Resolved | Resolution Rate | Avg Steps | Avg Tokens | Avg Latency |
+|---|---:|---:|---:|---:|---:|
+| Baseline · `policy-v001` | 2 / 4 | 50% | 13.00 | 100,867 | 65.3 s |
+| Champion · `policy-v003` | 1 / 4 | 25% | 10.00 | 62,039 | 49.1 s |
+
+逐题上，task_101 仅 Champion 通过，task_102 和 task_104 仅 Baseline 通过，task_103 两者均未
+通过；总体 3/8，且没有题目被两种策略同时解决。因此 Pilot 排除了“题目太简单”的担忧，
+四题可保留为正式 V2 Train 候选难度锚点，但不能进入已参与校准之外的 Validation/Test。
+
+该结果不支持 Champion 优于或劣于 Baseline 的稳定结论。Champion 的平均步骤、Token 和延迟
+更低，但解决数也更低，说明 10 步上限可能在复杂任务上产生提前截断风险；四题、每格一次的
+样本不足以分离模型随机性、题目构成和 Policy 效应。8 次轨迹合计 651,625 tokens；公开轨迹
+未保存供应商账单与价格表，因此不推断货币成本。机器可读摘要位于
+`experiments/benchmark-v2-pilot-v1/summary.json` 与 `summary.csv`。
 
 ## Independent Evaluation 与 Baseline
 

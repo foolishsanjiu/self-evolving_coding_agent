@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "benchmark-v2-pilot-v1",
+  "purpose": "Paid difficulty and policy-sensitivity calibration; not a formal Benchmark v2 result",
+  "git_commit": "def7814a5ee234f3b7a61124adc09455a6162678",
+  "execution_window_utc": {
+    "started_at": "2026-09-02T04:35:58.161527+00:00",
+    "finished_at": "2026-09-02T04:46:14.698842+00:00"
+  },
+  "benchmark": {
+    "root": "benchmarks-pilot-v2",
+    "version": "2.0",
+    "manifest_hash": "6143ff702fffaf4f29b96ac65c222b85214ecaa6fa51cc777b623418a79285b1",
+    "task_ids": [
+      "task_101",
+      "task_102",
+      "task_103",
+      "task_104"
+    ]
+  },
+  "runtime": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "temperature": 0.1,
+    "docker_server_version": "29.7.2",
+    "sandbox_image": "evodev-python:3.11",
+    "sandbox_digest": "sha256:52b485a7b17bb160572782f342398329285ee45654cfb560c83b40cab2b065c3",
+    "tool_provider": "mcp-devtools-v1",
+    "tool_catalog_hash": "6b9879a000c06d27b75fbc5c46d95a41268fab4e9a3bb60fd0866178304ab3c2"
+  },
+  "experience": {
+    "enabled": false,
+    "version": "none",
+    "content_hash": "140bedbf9c3f6d56a9846d2ba7088798683f4da0c248231336e6a05679e4fdfe"
+  },
+  "repetitions_per_task": 1,
+  "paid_agent_calls": 8,
+  "selective_reruns": false,
+  "variants": [
+    {
+      "variant_id": "baseline",
+      "policy_id": "policy-v001",
+      "policy_hash": "fc3df9ac90a3b19bd0f7600e307057101b1b0e71345318bcf1ddb5328fa99d4c",
+      "max_react_steps": 15,
+      "run_ids": [
+        "pilot-v2-baseline-task_101-r01",
+        "pilot-v2-baseline-task_102-r01",
+        "pilot-v2-baseline-task_103-r01",
+        "pilot-v2-baseline-task_104-r01"
+      ]
+    },
+    {
+      "variant_id": "champion",
+      "policy_id": "policy-v003",
+      "policy_hash": "0444b7c0a49dd5482ee1ce2748aedab1f8b07019d6a48ca4e89ace4bc81c4a65",
+      "max_react_steps": 10,
+      "run_ids": [
+        "pilot-v2-champion-task_101-r01",
+        "pilot-v2-champion-task_102-r01",
+        "pilot-v2-champion-task_103-r01",
+        "pilot-v2-champion-task_104-r01"
+      ]
+    }
+  ]
+}
