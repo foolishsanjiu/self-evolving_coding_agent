@@ -130,6 +130,19 @@ class BehaviorTarget(BaseModel):
         return self
 
 
+class ExperienceGuardrails(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    inspect_after_patch_failure: bool = False
+    verify_after_last_edit: bool = False
+
+    @model_validator(mode="after")
+    def require_enabled_guardrail(self) -> ExperienceGuardrails:
+        if not self.inspect_after_patch_failure and not self.verify_after_last_edit:
+            raise ValueError("At least one execution guardrail must be enabled")
+        return self
+
+
 class ExperienceExecutionContract(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -137,6 +150,7 @@ class ExperienceExecutionContract(BaseModel):
     act: list[str] = Field(min_length=1, max_length=3)
     verify: list[str] = Field(min_length=1, max_length=3)
     behavior_targets: list[BehaviorTarget] = Field(min_length=1, max_length=5)
+    guardrails: ExperienceGuardrails | None = None
 
 
 class StoredExperience(BaseModel):

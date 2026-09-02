@@ -8,6 +8,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel, ConfigDict
 
 from evodev.agent.context import ContextManager
+from evodev.agent.contracts import ExecutionGuard
 from evodev.agent.events import AgentEvent, EventSink, NoOpEventSink
 from evodev.agent.state import AgentState, AgentStatus, should_retry, update_state
 from evodev.llm.schemas import ModelTurn
@@ -63,6 +64,7 @@ class ReActAgent:
         max_context_chars: int = 60_000,
         event_sink: EventSink | None = None,
         experience_section: str = "",
+        execution_guard: ExecutionGuard | None = None,
         policy: AgentPolicy | None = None,
     ) -> None:
         if max_steps < 1:
@@ -78,6 +80,7 @@ class ReActAgent:
         self.max_context_chars = max_context_chars
         self.event_sink = event_sink or NoOpEventSink()
         self.experience_section = experience_section
+        self.execution_guard = execution_guard or ExecutionGuard()
         self.policy = policy
 
     def _emit(self, event_type: str, **data: Any) -> None:
@@ -137,6 +140,71 @@ class ReActAgent:
             duration_ms=0,
         )
 
+    def _contract_tool_guard(
+        self, tool_call: ToolCall, state: AgentState
+    ) -> ToolResult | None:
+        if (
+            self.execution_guard.verify_after_last_edit
+            and state.patch_needs_verification
+            and state.step_count >= self.max_steps - 1
+            and tool_call.name != "run_tests"
+        ):
+            return ToolResult(
+                call_id=tool_call.call_id,
+                tool_name=tool_call.name,
+                success=False,
+                content=(
+                    "Execution contract reserves the remaining step budget for verification. "
+                    "Run tests for the latest successful edit now."
+                ),
+                error_type="CONTRACT_PRECONDITION_NOT_MET",
+                data={"required_action": "run_tests_before_step_budget_expires"},
+                duration_ms=0,
+            )
+        if (
+            self.execution_guard.verify_after_last_edit
+            and tool_call.name == "apply_patch"
+            and state.step_count == self.max_steps
+        ):
+            return ToolResult(
+                call_id=tool_call.call_id,
+                tool_name=tool_call.name,
+                success=False,
+                content=(
+                    "Execution contract blocks a new patch on the final step because no "
+                    "verification step would remain."
+                ),
+                error_type="CONTRACT_PRECONDITION_NOT_MET",
+                data={"required_action": "do_not_edit_without_verification_budget"},
+                duration_ms=0,
+            )
+        if not (
+            self.execution_guard.inspect_after_patch_failure
+            and tool_call.name == "apply_patch"
+            and state.patch_recovery_required
+        ):
+            return None
+        return ToolResult(
+            call_id=tool_call.call_id,
+            tool_name=tool_call.name,
+            success=False,
+            content=(
+                "Execution contract blocks another patch after PATCH_APPLY_FAILED. "
+                "Read the current target file, then retry with current context."
+            ),
+            error_type="CONTRACT_PRECONDITION_NOT_MET",
+            data={"required_action": "read_current_file_after_patch_failure"},
+            duration_ms=0,
+        )
+
+    def _final_contract_feedback(self, state: AgentState) -> str | None:
+        if self.execution_guard.verify_after_last_edit and state.patch_needs_verification:
+            return (
+                "The latest successful edit has not been verified. "
+                "Call run_tests before providing the final answer."
+            )
+        return None
+
     def _policy_tool_guidance(self, tools: list[ToolSpec]) -> list[ToolSpec]:
         if not (self.policy and self.policy.prefer_search_before_read):
             return tools
@@ -164,6 +232,8 @@ class ReActAgent:
             tools_by_name = {tool.name: tool for tool in tools}
             for step_count in range(1, self.max_steps + 1):
                 state.step_count = step_count
+                if state.contract_feedback and not self._final_contract_feedback(state):
+                    state.contract_feedback = None
                 turn = self.llm.generate(messages=context.build_messages(state), tools=tools)
                 self._emit(
                     "MODEL_TURN",
@@ -175,6 +245,14 @@ class ReActAgent:
                 )
 
                 if not turn.tool_calls:
+                    if feedback := self._final_contract_feedback(state):
+                        state.contract_feedback = feedback
+                        self._emit(
+                            "CONTRACT_BLOCKED",
+                            step_count=step_count,
+                            required_action="run_tests_after_last_edit",
+                        )
+                        continue
                     state.status = AgentStatus.SUCCESS
                     self._emit(
                         "FINAL_ANSWER",
@@ -189,8 +267,10 @@ class ReActAgent:
                     self._emit(
                         "TOOL_CALL", step_count=step_count, tool_call=tool_call.model_dump()
                     )
-                    result = self._policy_guard(tool_call, state) or self._call_tool(
-                        tool_call, tools_by_name.get(tool_call.name)
+                    result = (
+                        self._policy_guard(tool_call, state)
+                        or self._contract_tool_guard(tool_call, state)
+                        or self._call_tool(tool_call, tools_by_name.get(tool_call.name))
                     )
                     update_state(state, result)
                     exchange_results.append(result)

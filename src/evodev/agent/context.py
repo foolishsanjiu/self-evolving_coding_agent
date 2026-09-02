@@ -66,6 +66,8 @@ class ContextManager:
                 "Latest test result:\n"
                 + json.dumps(state.test_results[-1], ensure_ascii=False, sort_keys=True)
             )
+        if state.contract_feedback:
+            state_lines.append("Execution contract feedback:\n" + state.contract_feedback)
         if state_lines:
             messages.append({"role": "system", "content": "\n\n".join(state_lines)})
         return messages

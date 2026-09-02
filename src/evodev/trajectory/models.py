@@ -17,6 +17,7 @@ PersistedEventType = Literal[
     "MODEL_TURN",
     "TOOL_CALL",
     "TOOL_RESULT",
+    "CONTRACT_BLOCKED",
     "FINAL_ANSWER",
     "RUN_FINISHED",
     "RUN_ERROR",
@@ -47,7 +48,9 @@ class RunMetadata(BaseModel):
     policy_hash: str = Field(min_length=1)
     experience_version: str = Field(min_length=1)
     experience_hash: str = Field(min_length=1)
-    experience_consumer: Literal["legacy-v1", "execution-contract-v1"] = "legacy-v1"
+    experience_consumer: Literal[
+        "legacy-v1", "execution-contract-v1", "execution-contract-v2"
+    ] = "legacy-v1"
     model: str = Field(min_length=1)
     temperature: float = Field(ge=0, le=2)
     prompt_version: str = Field(min_length=1)

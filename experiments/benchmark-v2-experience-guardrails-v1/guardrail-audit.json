@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "source_snapshot": {
+    "version": "experience-v004",
+    "hash": "f71ac3984674ba98e52ae02fd939dbc5bf2d4ad998a7013b547ff756f6054988"
+  },
+  "target_snapshot": {
+    "version": "experience-v005",
+    "hash": "622a19135c144e1e9a8b1d787933add4a8299491888e6e31463c1bbc18919602",
+    "consumer": "execution-contract-v2"
+  },
+  "migration": {
+    "experiences": 7,
+    "recommendations_changed": 0,
+    "contracts_changed_excluding_guardrails": 0,
+    "verify_after_last_edit_enabled": 7,
+    "inspect_after_patch_failure_enabled": 1
+  },
+  "train_leave_one_task_out": {
+    "task_count": 8,
+    "hit_tasks": 1,
+    "hit_rate": 0.125,
+    "hit_task_ids": ["task_101"],
+    "task_101_selected_experience_ids": [
+      "exp_975124e62db3481c8d106a0fedfe8bd4",
+      "exp_242f9076fcdd413085a70c719c9a07fc"
+    ],
+    "selection_changed_vs_v004": false,
+    "task_101_prompt_chars": 1431,
+    "max_prompt_chars": 2500,
+    "activated_guard": {
+      "inspect_after_patch_failure": true,
+      "verify_after_last_edit": true
+    }
+  },
+  "execution": {
+    "model_calls": 0,
+    "paid_calls": 0,
+    "docker_runs": 0,
+    "performance_claim": false
+  }
+}

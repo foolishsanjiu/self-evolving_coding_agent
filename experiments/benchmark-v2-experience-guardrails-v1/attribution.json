@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "source_result": "experiments/benchmark-v2-experience-train-holdout-paid-v1",
+  "source_commit": "48f3d3992799b9e66eb276f26230cb0538c64aac",
+  "public_events_only": true,
+  "runs": {
+    "v003": {
+      "run_task_101_r01": {
+        "resolved": false,
+        "failure_type": "TARGET_TEST_FAILED",
+        "patch_attempts": 4,
+        "patch_failures": 3,
+        "uninspected_patch_retries": 2,
+        "max_consecutive_patch_failures": 3,
+        "test_calls": 3,
+        "test_executions": 3,
+        "last_successful_edit_verified": true,
+        "finish_status": "MAX_STEPS"
+      },
+      "run_task_101_r02": {
+        "resolved": true,
+        "failure_type": "RESOLVED",
+        "patch_attempts": 6,
+        "patch_failures": 3,
+        "uninspected_patch_retries": 1,
+        "max_consecutive_patch_failures": 1,
+        "test_calls": 2,
+        "test_executions": 2,
+        "last_successful_edit_verified": true,
+        "finish_status": "MAX_STEPS"
+      }
+    },
+    "v004": {
+      "run_task_101_r01": {
+        "resolved": true,
+        "failure_type": "RESOLVED",
+        "patch_attempts": 10,
+        "patch_failures": 7,
+        "uninspected_patch_retries": 7,
+        "max_consecutive_patch_failures": 4,
+        "test_calls": 0,
+        "test_executions": 0,
+        "last_successful_edit_verified": false,
+        "finish_status": "MAX_STEPS"
+      },
+      "run_task_101_r02": {
+        "resolved": false,
+        "failure_type": "SYNTAX_ERROR",
+        "patch_attempts": 6,
+        "patch_failures": 4,
+        "uninspected_patch_retries": 1,
+        "max_consecutive_patch_failures": 1,
+        "test_calls": 4,
+        "test_executions": 3,
+        "last_successful_edit_verified": true,
+        "finish_status": "MAX_STEPS"
+      }
+    }
+  },
+  "aggregate": {
+    "v003": {
+      "patch_attempts": 10,
+      "patch_failures": 6,
+      "uninspected_patch_retries": 3,
+      "test_calls": 5,
+      "test_executions": 5,
+      "unverified_final_edits": 0
+    },
+    "v004": {
+      "patch_attempts": 16,
+      "patch_failures": 11,
+      "uninspected_patch_retries": 8,
+      "test_calls": 4,
+      "test_executions": 3,
+      "unverified_final_edits": 1
+    }
+  },
+  "root_cause": {
+    "retrieval_failure": false,
+    "contract_rendering_failure": false,
+    "repeated_patch_failure_loop": true,
+    "verification_budget_exhaustion": true,
+    "text_instruction_was_enforceable": false,
+    "interpretation": "v004 made the correct contract visible but did not control tool ordering. Repeated PATCH_APPLY_FAILED retries consumed the fixed step budget; one run ended with no test execution and the other retained a syntactically incomplete patch."
+  },
+  "decision": {
+    "create_text_only_v005": false,
+    "create_guarded_v005": true,
+    "runtime_guards": [
+      "inspect_after_patch_failure",
+      "verify_after_last_edit",
+      "reserve_verification_window"
+    ],
+    "performance_result": "not_run"
+  }
+}

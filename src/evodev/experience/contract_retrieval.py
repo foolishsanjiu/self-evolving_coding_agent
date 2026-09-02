@@ -55,12 +55,25 @@ class ContractExperienceRetriever:
         inspect = "\n".join(f"- {step}" for step in contract.inspect)
         act = "\n".join(f"- {step}" for step in contract.act)
         verify = "\n".join(f"- {step}" for step in contract.verify)
+        guardrails = []
+        if contract.guardrails is not None:
+            if contract.guardrails.inspect_after_patch_failure:
+                guardrails.append(
+                    "- After PATCH_APPLY_FAILED, read the current file before another patch."
+                )
+            if contract.guardrails.verify_after_last_edit:
+                guardrails.append("- After the last successful edit, run tests before finishing.")
+        guardrail_section = (
+            "\nHarness-enforced guardrails:\n" + "\n".join(guardrails)
+            if guardrails
+            else ""
+        )
         return (
             f"Experience {experience.experience_id} Execution Contract\n"
             f"Apply only if this trigger matches: {experience.trigger}\n"
             f"Inspect before editing:\n{inspect}\n"
             f"Act:\n{act}\n"
-            f"Verify before finishing:\n{verify}"
+            f"Verify before finishing:\n{verify}{guardrail_section}"
         )
 
     def _format(self, selected: list[ScoredExperience]) -> tuple[str, list[ScoredExperience]]:
@@ -120,3 +133,16 @@ def build_versioned_retriever(
         max_chars=max_chars,
         random_seed=random_seed,
     )
+
+
+def experience_consumer_version(experiences: list[StoredExperience]) -> str:
+    active = [item for item in experiences if item.status.value == "active"]
+    if any(
+        item.execution_contract is not None
+        and item.execution_contract.guardrails is not None
+        for item in active
+    ):
+        return "execution-contract-v2"
+    if any(item.execution_contract is not None for item in active):
+        return "execution-contract-v1"
+    return "legacy-v1"

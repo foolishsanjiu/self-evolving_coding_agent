@@ -1,0 +1,430 @@
+{
+  "version": "experience-v005",
+  "experiences": [
+    {
+      "experience_id": "exp_242f9076fcdd413085a70c719c9a07fc",
+      "task_types": [
+        "code_editing",
+        "cross_module_bug",
+        "debugging",
+        "test_driven_debugging"
+      ],
+      "trigger": "When apply_patch returns PATCH_APPLY_FAILED repeatedly, especially when no file has been successfully modified yet and the agent is operating under a finite step budget.",
+      "recommendation": "Treat the first patch-apply failure as a signal to change tactics. Inspect the current file content and the exact diff error, then make the smallest possible patch with only the necessary context. After a successful edit, run the focused test suite. If a patch fails twice, stop using that patch format and use an alternative file-modification approach to avoid consuming the step budget on nonproductive retries.",
+      "rationale": "Unsuccessful apply_patch calls do not change the code but consume budget, causing step-limit failures even when the investigation itself was sound. Small precise patches are easier to apply and validate, and proactively changing strategy after a failure avoids repeating the same nonproductive action.",
+      "keywords": [
+        "apply_patch",
+        "edit_loop",
+        "minimal_patch",
+        "patch_apply_failed",
+        "step_limit"
+      ],
+      "confidence": 0.8,
+      "status": "active",
+      "created_at": "2026-09-02T08:38:44.698713+00:00",
+      "updated_at": "2026-09-02T08:43:40.489726+00:00",
+      "execution_contract": {
+        "inspect": [
+          "Read the current target file, the relevant tests, and the exact patch failure before retrying."
+        ],
+        "act": [
+          "Apply the smallest patch with current context; change patch strategy after the first failure."
+        ],
+        "verify": [
+          "Run the focused tests after a successful edit."
+        ],
+        "behavior_targets": [
+          {
+            "feature": "inspected_tests_before_edit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "feature": "test_runs",
+            "operator": "gte",
+            "value": 1
+          }
+        ],
+        "guardrails": {
+          "inspect_after_patch_failure": true,
+          "verify_after_last_edit": true
+        }
+      }
+    },
+    {
+      "experience_id": "exp_498fc99571d64663b5b8d975a4fb5a65",
+      "task_types": [
+        "concurrency_resource",
+        "concurrent_resource",
+        "injected_executor_factory",
+        "parallel_execution"
+      ],
+      "trigger": "When changing or fixing code that uses an executor-like factory, hidden tests often inject a custom executor fake that implements only the core methods needed by the contract rather than all conveniences from ThreadPoolExecutor.",
+      "recommendation": "Avoid wrapping an injected factory in a `with` statement unless context manager support is explicitly part of the interface. Instead, instantiate the executor, use bounded submission to preserve result order, and guarantee cleanup via `try/finally` with an explicit `shutdown` call that can cancel pending work on failure.",
+      "rationale": "Standard library classes may provide extra conveniences, but injected test doubles are usually minimal. Relying on incidental capabilities creates avoidable regressions when the real-world callers use custom factories that satisfy only the documented core interface.",
+      "keywords": [
+        "context manager",
+        "dependency injection",
+        "executor_factory",
+        "parallel_map",
+        "shutdown",
+        "test double"
+      ],
+      "confidence": 0.88,
+      "status": "active",
+      "created_at": "2026-09-02T08:39:05.112598+00:00",
+      "updated_at": "2026-09-02T08:43:40.493726+00:00",
+      "execution_contract": {
+        "inspect": [
+          "Read the injected factory interface, its callers, and compatibility tests before editing."
+        ],
+        "act": [
+          "Use explicit try/finally cleanup and only capabilities guaranteed by the factory contract."
+        ],
+        "verify": [
+          "Run focused and regression tests covering custom executor doubles."
+        ],
+        "behavior_targets": [
+          {
+            "feature": "inspected_tests_before_edit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "feature": "unique_files_read",
+            "operator": "gte",
+            "value": 2
+          },
+          {
+            "feature": "test_runs",
+            "operator": "gte",
+            "value": 1
+          }
+        ],
+        "guardrails": {
+          "inspect_after_patch_failure": false,
+          "verify_after_last_edit": true
+        }
+      }
+    },
+    {
+      "experience_id": "exp_550ea328a87b488bbed05cae71d5c263",
+      "task_types": [
+        "API compatibility maintenance",
+        "feature",
+        "feature implementation"
+      ],
+      "trigger": "When adding order-independence or duplicate tolerance to an API that collects or assembles items, while existing behavior explicitly rejects duplicate or invalid items.",
+      "recommendation": "Audit the existing error contract before relaxing checks. Keep rejection for duplicates and invalid items as early, isolated logic; change only the completion or aggregation logic to be order-independent. Always run the previous regression suite for error cases before finishing.",
+      "rationale": "Feature changes to acceptance or completion semantics often accidentally turn documented error cases into silent successes. Hidden regressions frequently test the old error contract, so preserving it and running old tests prevents this common failure mode.",
+      "keywords": [
+        "API compatibility",
+        "error contract",
+        "idempotency",
+        "order-independence",
+        "regression suite"
+      ],
+      "confidence": 0.8,
+      "status": "active",
+      "created_at": "2026-09-02T08:38:00.261464+00:00",
+      "updated_at": "2026-09-02T08:43:40.498898+00:00",
+      "execution_contract": {
+        "inspect": [
+          "Read existing duplicate, invalid-input, and completion tests before changing acceptance behavior."
+        ],
+        "act": [
+          "Preserve the error contract and change only the order-independent completion logic."
+        ],
+        "verify": [
+          "Run both the new feature tests and the existing error-contract regression suite."
+        ],
+        "behavior_targets": [
+          {
+            "feature": "inspected_tests_before_edit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "feature": "test_runs",
+            "operator": "gte",
+            "value": 1
+          }
+        ],
+        "guardrails": {
+          "inspect_after_patch_failure": false,
+          "verify_after_last_edit": true
+        }
+      }
+    },
+    {
+      "experience_id": "exp_6454167886074dad967e4b4486bf483c",
+      "task_types": [
+        "feature",
+        "feature_implementation",
+        "stateful_processing",
+        "test_failure_resolution"
+      ],
+      "trigger": "When a stateful API collects chunks or parts across multiple calls and a test supplies them out of order, the final missing part is added but the API still returns a not-complete sentinel instead of the assembled output.",
+      "recommendation": "Store accepted pieces in a structure keyed by a stable logical key such as part index. After every update, use a separate completeness check over the stored state to determine whether all required pieces for the declared total are present. Return the assembled result only when that check succeeds, regardless of the order in which pieces arrived.",
+      "rationale": "Order-independent assembly is a state-reachability problem: an operation should produce output exactly when the accumulated set of pieces is complete. Checking only the current chunk's index or returning only when a particular 'last' chunk arrives makes completeness dependent on call order. Recomputing readiness from accumulated state after each call is order-independent and also makes duplicate handling straightforward because the same logical key stores one piece.",
+      "keywords": [
+        "chunked-upload",
+        "completion-predicate",
+        "deduplication",
+        "order-independent",
+        "out-of-order",
+        "stateful-api"
+      ],
+      "confidence": 0.82,
+      "status": "active",
+      "created_at": "2026-09-02T08:37:27.875841+00:00",
+      "updated_at": "2026-09-02T08:43:40.503897+00:00",
+      "execution_contract": {
+        "inspect": [
+          "Read the state model and tests for out-of-order, duplicate, and final-piece cases."
+        ],
+        "act": [
+          "Key stored pieces by logical identity and recompute completeness after every update."
+        ],
+        "verify": [
+          "Run focused tests for multiple arrival orders and duplicate handling."
+        ],
+        "behavior_targets": [
+          {
+            "feature": "inspected_tests_before_edit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "feature": "test_runs",
+            "operator": "gte",
+            "value": 1
+          }
+        ],
+        "guardrails": {
+          "inspect_after_patch_failure": false,
+          "verify_after_last_edit": true
+        }
+      }
+    },
+    {
+      "experience_id": "exp_975124e62db3481c8d106a0fedfe8bd4",
+      "task_types": [
+        "cross_module_bug",
+        "date_range_billing",
+        "integer_currency_rounding",
+        "proration_calculation",
+        "subscription_plan_change"
+      ],
+      "trigger": "When implementing or fixing a subscription plan-change proration, tests fail because the resulting amount_cents is far too small or inconsistent for both upgrades and downgrades.",
+      "recommendation": "Model proration using the inclusive remaining days between the change date and the end of the current service period. Use catalog monthly prices to compute the remaining value on the old and new plans, work entirely in integer cents, and apply half-up rounding when producing a negative credit. Validate both upgrade and downgrade flows before editing.",
+      "rationale": "Plan-change adjustments require comparing value already paid under the current plan with value that will be used under the new plan. Inclusive day counting avoids off-by-one errors, integer-cent arithmetic avoids rounding drift, and catalog prices keep the calculation consistent with invoiced amounts.",
+      "keywords": [
+        "catalog_price",
+        "half_up_rounding",
+        "inclusive_days",
+        "integer_cents",
+        "proration",
+        "subscription_plan_change"
+      ],
+      "confidence": 0.82,
+      "status": "active",
+      "created_at": "2026-09-02T08:38:23.712486+00:00",
+      "updated_at": "2026-09-02T08:43:40.508000+00:00",
+      "execution_contract": {
+        "inspect": [
+          "Read pricing sources, date-boundary code, and upgrade/downgrade tests before editing."
+        ],
+        "act": [
+          "Use inclusive remaining days, integer cents, and explicit half-up rounding."
+        ],
+        "verify": [
+          "Run focused upgrade, downgrade, boundary, and rounding tests."
+        ],
+        "behavior_targets": [
+          {
+            "feature": "inspected_tests_before_edit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "feature": "unique_files_read",
+            "operator": "gte",
+            "value": 2
+          },
+          {
+            "feature": "test_runs",
+            "operator": "gte",
+            "value": 1
+          }
+        ],
+        "guardrails": {
+          "inspect_after_patch_failure": false,
+          "verify_after_last_edit": true
+        }
+      }
+    },
+    {
+      "experience_id": "exp_ea8b144e5c3f462a8b9e0f5c99a4772d",
+      "task_types": [
+        "dispatch_protocol_compatibility",
+        "signature_validation",
+        "test_repair_compatibility"
+      ],
+      "trigger": "A dispatcher is extended to support both current keyword-only callables and legacy positional callables, but hidden tests require that callables with unsupported signatures are rejected before invocation with a specific error message.",
+      "recommendation": "When adding backward-compatible dispatch paths, do not branch solely on whether the callable is keyword-only. Use callable signature inspection to validate the full accepted parameter surface before any invocation, and reject unsupported signatures with the intended error message proactively.",
+      "rationale": "Fallback invocation without signature validation can turn a clean pre-invocation compatibility error into a raw runtime TypeError from inside the callable. Hidden tests frequently assert the exact validation behavior, so dispatch logic must distinguish recognized legacy signatures from unsupported ones rather than assuming every non-keyword-only callable is valid.",
+      "keywords": [
+        "TypeError",
+        "backward-compatibility",
+        "dispatch",
+        "keyword-only",
+        "legacy-positional",
+        "pre-invocation-validation",
+        "signature-inspection"
+      ],
+      "confidence": 0.79,
+      "status": "active",
+      "created_at": "2026-09-02T08:39:41.991748+00:00",
+      "updated_at": "2026-09-02T08:43:40.514002+00:00",
+      "execution_contract": {
+        "inspect": [
+          "Read callable interfaces and compatibility tests for accepted and rejected signatures."
+        ],
+        "act": [
+          "Validate the complete signature before invocation and branch only for recognized forms."
+        ],
+        "verify": [
+          "Run current, legacy, unsupported-signature, and error-message tests."
+        ],
+        "behavior_targets": [
+          {
+            "feature": "inspected_tests_before_edit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "feature": "test_runs",
+            "operator": "gte",
+            "value": 1
+          }
+        ],
+        "guardrails": {
+          "inspect_after_patch_failure": false,
+          "verify_after_last_edit": true
+        }
+      }
+    },
+    {
+      "experience_id": "exp_fd35be210da44269ba9f10fd1e65a8c4",
+      "task_types": [
+        "boolean coercion",
+        "config parsing",
+        "error_resilience",
+        "validation regression fixes"
+      ],
+      "trigger": "A layered configuration bug causes valid false-like values (false, 0) to be treated as missing, while the current tests exercise only truthy values and missing keys.",
+      "recommendation": "When fixing false-like handling, preserve typed values and validation together: parse every value into an explicit true-like/false-like set and raise for anything outside those sets before applying precedence/defaulting rules.",
+      "rationale": "The common root cause is truthiness-based defaulting. Broadening the presence check to accept all strings lets false values through but silently weakens type validation, causing hidden validation tests to fail. A single validate-or-raise coercion point prevents this regression while keeping false-like values from being dropped.",
+      "keywords": [],
+      "confidence": 0.84,
+      "status": "active",
+      "created_at": "2026-09-02T08:36:30.680912+00:00",
+      "updated_at": "2026-09-02T08:43:40.518000+00:00",
+      "execution_contract": {
+        "inspect": [
+          "Read precedence, missing-key, false-like, and invalid-value tests before editing."
+        ],
+        "act": [
+          "Coerce through explicit true/false sets and reject unknown values before defaulting."
+        ],
+        "verify": [
+          "Run tests for truthy, false-like, missing, invalid, and precedence cases."
+        ],
+        "behavior_targets": [
+          {
+            "feature": "inspected_tests_before_edit",
+            "operator": "eq",
+            "value": true
+          },
+          {
+            "feature": "test_runs",
+            "operator": "gte",
+            "value": 1
+          }
+        ],
+        "guardrails": {
+          "inspect_after_patch_failure": false,
+          "verify_after_last_edit": true
+        }
+      }
+    }
+  ],
+  "sources": [
+    {
+      "experience_id": "exp_242f9076fcdd413085a70c719c9a07fc",
+      "reflection_id": "reflection_d5c359bf88c34ca4beb94549eaf0253d",
+      "task_id": "task_106",
+      "run_id": "run_task_106_r02",
+      "trajectory_path": "runs/exp-baseline-v2-train-v1/run_task_106_r02",
+      "evaluation_report_path": "evaluation_runs/exp-baseline-v2-train-v1/instances/task_106/attempt_02/report.json"
+    },
+    {
+      "experience_id": "exp_498fc99571d64663b5b8d975a4fb5a65",
+      "reflection_id": "reflection_4fc4613c56e24a8aa42815b0ca88c1b0",
+      "task_id": "task_107",
+      "run_id": "run_task_107_r02",
+      "trajectory_path": "runs/exp-baseline-v2-train-v1/run_task_107_r02",
+      "evaluation_report_path": "evaluation_runs/exp-baseline-v2-train-v1/instances/task_107/attempt_02/report.json"
+    },
+    {
+      "experience_id": "exp_498fc99571d64663b5b8d975a4fb5a65",
+      "reflection_id": "reflection_c52a45f6e7dc458a9cb0e82bbd9e4ec3",
+      "task_id": "task_107",
+      "run_id": "run_task_107_r01",
+      "trajectory_path": "runs/exp-baseline-v2-train-v1/run_task_107_r01",
+      "evaluation_report_path": "evaluation_runs/exp-baseline-v2-train-v1/instances/task_107/attempt_01/report.json"
+    },
+    {
+      "experience_id": "exp_550ea328a87b488bbed05cae71d5c263",
+      "reflection_id": "reflection_0cbf659e4d8e4ebebe94d9ee7fd89cc6",
+      "task_id": "task_105",
+      "run_id": "run_task_105_r02",
+      "trajectory_path": "runs/exp-baseline-v2-train-v1/run_task_105_r02",
+      "evaluation_report_path": "evaluation_runs/exp-baseline-v2-train-v1/instances/task_105/attempt_02/report.json"
+    },
+    {
+      "experience_id": "exp_6454167886074dad967e4b4486bf483c",
+      "reflection_id": "reflection_618ed74d8e5341a18e416853b9d353a0",
+      "task_id": "task_105",
+      "run_id": "run_task_105_r01",
+      "trajectory_path": "runs/exp-baseline-v2-train-v1/run_task_105_r01",
+      "evaluation_report_path": "evaluation_runs/exp-baseline-v2-train-v1/instances/task_105/attempt_01/report.json"
+    },
+    {
+      "experience_id": "exp_975124e62db3481c8d106a0fedfe8bd4",
+      "reflection_id": "reflection_b382b4843d4c4e7aaeb498a86ee93c4a",
+      "task_id": "task_106",
+      "run_id": "run_task_106_r01",
+      "trajectory_path": "runs/exp-baseline-v2-train-v1/run_task_106_r01",
+      "evaluation_report_path": "evaluation_runs/exp-baseline-v2-train-v1/instances/task_106/attempt_01/report.json"
+    },
+    {
+      "experience_id": "exp_ea8b144e5c3f462a8b9e0f5c99a4772d",
+      "reflection_id": "reflection_aa2576e5449c4ffea63a91ead7365fe0",
+      "task_id": "task_108",
+      "run_id": "run_task_108_r02",
+      "trajectory_path": "runs/exp-baseline-v2-train-v1/run_task_108_r02",
+      "evaluation_report_path": "evaluation_runs/exp-baseline-v2-train-v1/instances/task_108/attempt_02/report.json"
+    },
+    {
+      "experience_id": "exp_fd35be210da44269ba9f10fd1e65a8c4",
+      "reflection_id": "reflection_21a6a717f7cf4347a6237df6052f6c38",
+      "task_id": "task_103",
+      "run_id": "run_task_103_r02",
+      "trajectory_path": "runs/exp-baseline-v2-train-v1/run_task_103_r02",
+      "evaluation_report_path": "evaluation_runs/exp-baseline-v2-train-v1/instances/task_103/attempt_02/report.json"
+    }
+  ],
+  "content_hash": "622a19135c144e1e9a8b1d787933add4a8299491888e6e31463c1bbc18919602"
+}

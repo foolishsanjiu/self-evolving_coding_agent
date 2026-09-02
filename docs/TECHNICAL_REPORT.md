@@ -589,6 +589,31 @@ r01 是 v004 胜、r02 是 v003 胜，双侧 exact McNemar p=1.0。v004 r01 虽 
 因果效率改善。实际保守费用估算为 0.1302 美元，无补跑。冻结摘要和证据 Hash 位于
 `experiments/benchmark-v2-experience-train-holdout-paid-v1/`。
 
+### Benchmark v2 Experience v005 Runtime Guardrails
+
+对上述四条公开轨迹按统一事件算法重算后，v003 两次共 10 次 Patch、6 次失败、3 次未检查重试；
+v004 两次共 16 次 Patch、11 次失败、8 次未检查重试。v004 r01 的 10 次 Patch 中 7 次失败，
+全部在下一次 Patch 前没有重新读取当前文件，最终 15 步耗尽且 `test_runs=0`。v004 r02 的四次
+Test Calls 中只有三次实际执行，最终保留不完整函数体并产生 Syntax Error。检索选择和合同渲染
+均正常，因此根因是 Prompt 无法控制工具顺序与验证预算，而不是 Retrieval Miss。
+
+本轮拒绝只加强文案的 text-only v005，改用默认关闭、由快照显式激活的运行时门禁：
+
+- `inspect_after_patch_failure` 在 `PATCH_APPLY_FAILED` 后阻止再次 Patch，直至成功 `read_file`；
+- `verify_after_last_edit` 在最后成功编辑未经测试时拒绝 Final Answer；
+- 倒数第二步已有未验证编辑时只允许测试，最后一步禁止创建无法再验证的新 Patch。
+
+`experience-v005` 是 v004 的确定性 guardrail-only 迁移：7/7 Experience 启用编辑后验证，仅具备
+对应恢复合同的 `exp_242f9076fcdd413085a70c719c9a07fc` 启用 Patch 失败恢复。recommendation、
+rationale、task types、行为目标与 Sources 均不变，Canonical Hash 为
+`622a19135c144e1e9a8b1d787933add4a8299491888e6e31463c1bbc18919602`，consumer 升级为
+`execution-contract-v2`。v001–v004 的 Hash 与行为保持不变。
+
+Train leave-one-task-out 仍为 1/8，task_101 选择与 v004 相同的两条 Experience，Prompt 从 1,177
+增至 1,431 字符但仍低于 2,500 上限。FakeLLM 测试覆盖连续失败 Patch、提前 Final、验证窗口和
+最后一步 Patch；本阶段模型调用、Docker 与费用均为 0，不构成性能提升。完整归因和审计位于
+`experiments/benchmark-v2-experience-guardrails-v1/`。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

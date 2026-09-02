@@ -8,6 +8,7 @@ from pathlib import Path
 
 from evodev.experience.models import (
     ExperienceExecutionContract,
+    ExperienceGuardrails,
     ExperienceSnapshot,
     ExperienceSource,
     StoredExperience,
@@ -91,6 +92,35 @@ def add_execution_contracts(
         item.model_copy(update={"execution_contract": contracts[item.experience_id]})
         for item in snapshot.experiences
     ]
+    return create_snapshot(version, experiences, snapshot.sources)
+
+
+def add_execution_guardrails(
+    snapshot: ExperienceSnapshot,
+    version: str,
+    guardrails: dict[str, ExperienceGuardrails],
+) -> ExperienceSnapshot:
+    """Attach runtime-enforceable guards without changing contract instructions."""
+    experience_ids = {item.experience_id for item in snapshot.experiences}
+    missing = sorted(experience_ids - set(guardrails))
+    unknown = sorted(set(guardrails) - experience_ids)
+    if missing or unknown:
+        raise ValueError(
+            f"Execution guardrail IDs differ from snapshot: missing={missing}, unknown={unknown}"
+        )
+    experiences = []
+    for item in snapshot.experiences:
+        if item.execution_contract is None:
+            raise ValueError(f"Experience lacks an execution contract: {item.experience_id}")
+        experiences.append(
+            item.model_copy(
+                update={
+                    "execution_contract": item.execution_contract.model_copy(
+                        update={"guardrails": guardrails[item.experience_id]}
+                    )
+                }
+            )
+        )
     return create_snapshot(version, experiences, snapshot.sources)
 
 

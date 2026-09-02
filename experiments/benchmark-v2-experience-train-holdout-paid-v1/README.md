@@ -60,3 +60,7 @@ Validation/Test，也不根据本结果补跑。
 [behavior-comparison.json](behavior-comparison.json)，原始本地证据 Hash 见
 [evidence-manifest.json](evidence-manifest.json)。完整轨迹、Agent Patch 和隐藏评估输出仍只保存在
 本地 Git ignored 目录。
+
+后续离线归因已将重复 Patch 失败与验证预算耗尽固化为 v005 运行时门禁；该阶段没有付费调用，
+也没有改写本目录结果，见
+[`benchmark-v2-experience-guardrails-v1`](../benchmark-v2-experience-guardrails-v1/README.md)。

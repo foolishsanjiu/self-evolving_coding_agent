@@ -27,8 +27,10 @@ from evodev.evaluation.models import (
 )
 from evodev.experience import (
     ExperienceMetrics,
+    build_execution_guard,
     build_retrieval_query,
     build_versioned_retriever,
+    experience_consumer_version,
     load_snapshot,
     summarize_experience_metrics,
 )
@@ -247,11 +249,7 @@ def build_experience_arm_preflight(
         "snapshot_path": relative_snapshot,
         "experience_version": snapshot.version,
         "experience_hash": snapshot.content_hash,
-        "experience_consumer": (
-            "execution-contract-v1"
-            if any(item.execution_contract is not None for item in snapshot.experiences)
-            else "legacy-v1"
-        ),
+        "experience_consumer": experience_consumer_version(snapshot.experiences),
         "baseline_manifest_path": relative_baseline,
         "baseline_manifest_ready": baseline_ready,
         "model_provider": settings.model.provider,
@@ -375,11 +373,7 @@ class ExperienceExperimentRunner:
         self.project_root = project_root.resolve()
         self.settings = settings
         self.snapshot = load_snapshot(snapshot_path)
-        self.experience_consumer = (
-            "execution-contract-v1"
-            if any(item.execution_contract is not None for item in self.snapshot.experiences)
-            else "legacy-v1"
-        )
+        self.experience_consumer = experience_consumer_version(self.snapshot.experiences)
         self.experiment_id = experiment_id
         self.mode = mode
         self.repetitions = repetitions
@@ -456,6 +450,7 @@ class ExperienceExperimentRunner:
             for task in selected_tasks:
                 run_id = f"run_{task.config.task_id}_r{repetition:02d}"
                 retrieval = self.retriever.retrieve(build_retrieval_query(task), self.mode)
+                execution_guard = build_execution_guard(retrieval)
                 run = self.loader.create_agent_workspace(
                     task, self.agent_workspaces, run_id=run_id
                 )
@@ -505,6 +500,7 @@ class ExperienceExperimentRunner:
                         max_context_chars=self.settings.agent.max_context_chars,
                         event_sink=recorder,
                         experience_section=retrieval.prompt_section,
+                        execution_guard=execution_guard,
                     )
                     agent.run(self.loader.to_task_spec(task, run.workspace_path))
                 self.agent_workspaces.cleanup(run, redact=recorder.redactor.redact_text)

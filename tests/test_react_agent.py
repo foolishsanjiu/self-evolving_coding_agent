@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from evodev.agent import AgentStatus, ReActAgent
+from evodev.agent import AgentStatus, ExecutionGuard, ReActAgent
 from evodev.agent.events import AgentEvent
 from evodev.llm import FakeLLM, ModelTurn
 from evodev.policy import AgentPolicy, InspectTestsMode
@@ -72,6 +72,53 @@ class PolicyToolProvider(ToolProvider):
         data = dict(tool_call.arguments)
         if tool_call.name == "apply_patch":
             data = {"patch": tool_call.arguments["patch"]}
+        return ToolResult(
+            call_id=tool_call.call_id,
+            tool_name=tool_call.name,
+            success=True,
+            content=f"completed {tool_call.name}",
+            data=data,
+            duration_ms=0,
+        )
+
+
+class ContractToolProvider(ToolProvider):
+    def __init__(self, patch_successes: list[bool]) -> None:
+        self.patch_successes = list(patch_successes)
+        self.calls: list[ToolCall] = []
+        self.specs = [
+            ToolSpec(
+                name=name,
+                description=f"Use {name}.",
+                input_schema={"type": "object"},
+                source="fake",
+                read_only=name != "apply_patch",
+                destructive=name == "apply_patch",
+                idempotent=name != "apply_patch",
+            )
+            for name in ["read_file", "apply_patch", "run_tests"]
+        ]
+
+    def list_tools(self) -> list[ToolSpec]:
+        return self.specs
+
+    def call_tool(self, tool_call: ToolCall) -> ToolResult:
+        self.calls.append(tool_call)
+        if tool_call.name == "apply_patch":
+            success = self.patch_successes.pop(0)
+            return ToolResult(
+                call_id=tool_call.call_id,
+                tool_name=tool_call.name,
+                success=success,
+                content="patch applied" if success else "patch failed",
+                data={"patch": tool_call.arguments["patch"]} if success else {},
+                error_type=None if success else "PATCH_APPLY_FAILED",
+                duration_ms=0,
+            )
+        if tool_call.name == "read_file":
+            data = {"path": tool_call.arguments["path"], "content": "source"}
+        else:
+            data = {"exit_code": 0, "passed": True}
         return ToolResult(
             call_id=tool_call.call_id,
             tool_name=tool_call.name,
@@ -276,6 +323,121 @@ def test_prefer_policy_is_visible_guidance_without_hard_block() -> None:
         tool.name: tool.description for tool in llm.requests[0][1] if tool.name != "apply_patch"
     }
     assert all("Policy guidance: prefer search_code" in text for text in guided_tools.values())
+
+
+def test_contract_guard_blocks_patch_retry_until_file_is_reinspected() -> None:
+    calls = [
+        ToolCall(call_id="patch-fails", name="apply_patch", arguments={"patch": "bad"}),
+        ToolCall(call_id="patch-blocked", name="apply_patch", arguments={"patch": "retry"}),
+        ToolCall(call_id="read-current", name="read_file", arguments={"path": "app.py"}),
+        ToolCall(call_id="patch-works", name="apply_patch", arguments={"patch": "good"}),
+        ToolCall(call_id="verify", name="run_tests", arguments={}),
+    ]
+    llm = FakeLLM([ModelTurn(tool_calls=[call]) for call in calls] + [ModelTurn(content="done")])
+    provider = ContractToolProvider([False, True])
+
+    result = ReActAgent(
+        llm,
+        provider,
+        execution_guard=ExecutionGuard(
+            inspect_after_patch_failure=True,
+            verify_after_last_edit=True,
+        ),
+    ).run(_task())
+
+    assert result.status == AgentStatus.SUCCESS
+    assert result.tool_results[1].error_type == "CONTRACT_PRECONDITION_NOT_MET"
+    assert [call.call_id for call in provider.calls] == [
+        "patch-fails",
+        "read-current",
+        "patch-works",
+        "verify",
+    ]
+    assert result.state.patch_recovery_required is False
+    assert result.state.patch_needs_verification is False
+
+
+def test_contract_guard_rejects_final_answer_until_latest_edit_is_verified() -> None:
+    patch = ToolCall(call_id="patch", name="apply_patch", arguments={"patch": "good"})
+    verify = ToolCall(call_id="verify", name="run_tests", arguments={})
+    sink = RecordingEventSink()
+    llm = FakeLLM(
+        [
+            ModelTurn(tool_calls=[patch]),
+            ModelTurn(content="premature"),
+            ModelTurn(tool_calls=[verify]),
+            ModelTurn(content="done"),
+        ]
+    )
+
+    result = ReActAgent(
+        llm,
+        ContractToolProvider([True]),
+        event_sink=sink,
+        execution_guard=ExecutionGuard(verify_after_last_edit=True),
+    ).run(_task())
+
+    assert result.status == AgentStatus.SUCCESS
+    assert result.final_answer == "done"
+    assert result.step_count == 4
+    assert [event.type for event in sink.events].count("CONTRACT_BLOCKED") == 1
+    assert any(
+        "latest successful edit has not been verified" in message["content"]
+        for message in llm.requests[2][0]
+    )
+
+
+def test_contract_guard_reserves_penultimate_step_for_verification() -> None:
+    patch = ToolCall(call_id="patch", name="apply_patch", arguments={"patch": "good"})
+    late_read = ToolCall(
+        call_id="late-read", name="read_file", arguments={"path": "app.py"}
+    )
+    verify = ToolCall(call_id="verify", name="run_tests", arguments={})
+    provider = ContractToolProvider([True])
+
+    result = ReActAgent(
+        FakeLLM(
+            [
+                ModelTurn(tool_calls=[patch]),
+                ModelTurn(tool_calls=[late_read]),
+                ModelTurn(tool_calls=[verify]),
+            ]
+        ),
+        provider,
+        max_steps=3,
+        execution_guard=ExecutionGuard(verify_after_last_edit=True),
+    ).run(_task())
+
+    assert result.status == AgentStatus.MAX_STEPS
+    assert result.tool_results[1].error_type == "CONTRACT_PRECONDITION_NOT_MET"
+    assert result.tool_results[1].data["required_action"] == (
+        "run_tests_before_step_budget_expires"
+    )
+    assert [call.call_id for call in provider.calls] == ["patch", "verify"]
+    assert result.state.patch_needs_verification is False
+
+
+def test_contract_guard_blocks_unverifiable_patch_on_final_step() -> None:
+    read = ToolCall(call_id="read", name="read_file", arguments={"path": "app.py"})
+    late_patch = ToolCall(
+        call_id="late-patch", name="apply_patch", arguments={"patch": "too late"}
+    )
+    provider = ContractToolProvider([])
+
+    result = ReActAgent(
+        FakeLLM([ModelTurn(tool_calls=[read]), ModelTurn(tool_calls=[late_patch])]),
+        provider,
+        max_steps=2,
+        execution_guard=ExecutionGuard(verify_after_last_edit=True),
+    ).run(_task())
+
+    assert result.status == AgentStatus.MAX_STEPS
+    assert result.tool_results[-1].error_type == "CONTRACT_PRECONDITION_NOT_MET"
+    assert result.tool_results[-1].data["required_action"] == (
+        "do_not_edit_without_verification_budget"
+    )
+    assert [call.call_id for call in provider.calls] == ["read"]
+    assert result.state.current_patch is None
 
 
 def test_agent_emits_events_through_replaceable_sink() -> None:

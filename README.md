@@ -100,6 +100,11 @@ Hash；该阶段解决“如何执行和测量经验”的工程合同问题，�
 定向对照。两臂均为 1/2 Accepted，两个配对结果互换；按同一套 v004 合同重算，v003 为 2/2
 遵循、v004 为 1/2，增量利用仍为 0/2。v004 平均 Tokens 少 23.9%、延迟少 27.7%，但样本仅
 一题两次，只能作为描述性效率信号，不能证明成功率、合同遵循或利用率改善。
+对四条公开轨迹的后续离线归因发现，v004 两次运行共 16 次 Patch、11 次
+`PATCH_APPLY_FAILED`，其中 8 次没有重新读取文件就继续 Patch；一条 Accepted 轨迹甚至没有
+运行测试。由此冻结 `experience-v005` 与 `execution-contract-v2`：Patch 失败后必须先重新读取，
+最后成功编辑后必须测试，并为固定步数保留验证窗口。该机制默认关闭且不改变 v001–v004；目前
+只通过离线 FakeLLM 验证，尚无新的付费性能结论。
 
 ## 工程亮点
 
@@ -110,7 +115,7 @@ Hash；该阶段解决“如何执行和测量经验”的工程合同问题，�
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：333 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：343 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -208,7 +213,7 @@ EvoDev/
 - 成功率改善集中在 `task_010`，尚未完成 SWE-bench 或大型真实仓库评测；
 - v1 Final 使用的 Experience 快照只有一个 Train 来源；V2 的 20-call Validation 对照未证明
   v003 带来净收益；v004 已补齐可执行/可测合同，但单题 4-call Train holdout 对照也未证明
-  成功率、合同遵循或增量利用改善；
+  成功率、合同遵循或增量利用改善；v005 运行时门禁只有离线验证，尚未运行真实模型；
 - Policy Search Space 人工限制为三个字段，没有进行模型微调；
 - B、C、D 在 Primary Metric 上并列，尚无 Experience 与 Policy 额外互补增益的证据；
 - Docker Sandbox 面向受控 Coding Task，不应视为恶意代码的完整安全边界。
@@ -241,6 +246,8 @@ EvoDev/
 - [Benchmark v2 Train-only Experience 消费合同](experiments/benchmark-v2-experience-consumption-v1/README.md)
 - [Benchmark v2 Experience v003/v004 Train Holdout](experiments/benchmark-v2-experience-train-holdout-paid-v1/README.md)
 - [Benchmark v2 Experience v004 快照](experiences/experience-v004.json)
+- [Benchmark v2 Experience v005 Runtime Guardrails](experiments/benchmark-v2-experience-guardrails-v1/README.md)
+- [Benchmark v2 Experience v005 快照](experiences/experience-v005.json)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

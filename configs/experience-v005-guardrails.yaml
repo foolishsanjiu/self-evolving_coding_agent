@@ -1,0 +1,19 @@
+schema_version: "1.0"
+source_version: experience-v004
+target_version: experience-v005
+guardrails:
+  exp_242f9076fcdd413085a70c719c9a07fc:
+    inspect_after_patch_failure: true
+    verify_after_last_edit: true
+  exp_498fc99571d64663b5b8d975a4fb5a65:
+    verify_after_last_edit: true
+  exp_550ea328a87b488bbed05cae71d5c263:
+    verify_after_last_edit: true
+  exp_6454167886074dad967e4b4486bf483c:
+    verify_after_last_edit: true
+  exp_975124e62db3481c8d106a0fedfe8bd4:
+    verify_after_last_edit: true
+  exp_ea8b144e5c3f462a8b9e0f5c99a4772d:
+    verify_after_last_edit: true
+  exp_fd35be210da44269ba9f10fd1e65a8c4:
+    verify_after_last_edit: true

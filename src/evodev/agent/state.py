@@ -31,6 +31,9 @@ class AgentState(BaseModel):
     tests_inspected_before_edit: bool = False
     tool_history: list[ToolResult] = Field(default_factory=list)
     current_patch: str | None = None
+    patch_recovery_required: bool = False
+    patch_needs_verification: bool = False
+    contract_feedback: str | None = None
     test_results: list[dict[str, Any]] = Field(default_factory=list)
     last_error: str | None = None
 
@@ -51,11 +54,15 @@ def update_state(state: AgentState, result: ToolResult) -> None:
     state.tool_history.append(result)
     if result.tool_name == "run_tests" and result.data:
         state.test_results.append(result.data)
+        state.patch_needs_verification = False
     if not result.success:
+        if result.tool_name == "apply_patch" and result.error_type == "PATCH_APPLY_FAILED":
+            state.patch_recovery_required = True
         state.last_error = result.error_type or result.content
         return
 
     if result.tool_name == "read_file" and (path := result.data.get("path")):
+        state.patch_recovery_required = False
         path = str(path)
         state.files_inspected.add(path)
         if state.current_patch is None and _is_test_path(path):
@@ -68,6 +75,8 @@ def update_state(state: AgentState, result: ToolResult) -> None:
     elif result.tool_name == "apply_patch":
         patch = result.data.get("patch") or result.data.get("diff")
         state.current_patch = str(patch or result.content)
+        state.patch_recovery_required = False
+        state.patch_needs_verification = True
 
 
 def _is_test_path(path: str) -> bool:

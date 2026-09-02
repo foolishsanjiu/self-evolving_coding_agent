@@ -1,0 +1,49 @@
+schema_version: "1.0"
+experiment_id: benchmark-v2-experience-guardrails-v1
+status: offline_complete
+source_evidence:
+  paid_result: experiments/benchmark-v2-experience-train-holdout-paid-v1
+  result_commit: 48f3d3992799b9e66eb276f26230cb0538c64aac
+  benchmark_split: train
+  task_ids:
+    - task_101
+boundaries:
+  model_calls: 0
+  paid_calls: 0
+  docker_runs: 0
+  validation_accessed: false
+  test_accessed: false
+  hidden_test_content_accessed: false
+  gold_patch_accessed: false
+decision:
+  text_only_v005_rejected: true
+  selected_change: versioned_runtime_guardrails
+  reason: >-
+    Retrieval and rendering succeeded, but explicit instructions did not prevent repeated
+    patch failures or unverified step exhaustion. Tool-order constraints must therefore be
+    machine-enforced and remain disabled for historical snapshots.
+snapshot:
+  source: experiences/experience-v004.json
+  source_hash: f71ac3984674ba98e52ae02fd939dbc5bf2d4ad998a7013b547ff756f6054988
+  target: experiences/experience-v005.json
+  target_hash: 622a19135c144e1e9a8b1d787933add4a8299491888e6e31463c1bbc18919602
+  consumer: execution-contract-v2
+guardrails:
+  verify_after_last_edit:
+    enabled_experiences: 7
+    behavior: >-
+      Reject premature final answers, reserve the penultimate step for tests when an edit
+      is unverified, and block a new patch on the final step.
+  inspect_after_patch_failure:
+    enabled_experiences: 1
+    experience_id: exp_242f9076fcdd413085a70c719c9a07fc
+    behavior: >-
+      After PATCH_APPLY_FAILED, block another patch until read_file succeeds.
+compatibility:
+  historical_snapshots_unchanged:
+    - experience-v001
+    - experience-v002
+    - experience-v003
+    - experience-v004
+  default_guardrails_disabled: true
+  performance_claim: none
