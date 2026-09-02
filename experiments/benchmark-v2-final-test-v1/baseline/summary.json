@@ -1,0 +1,20 @@
+{
+  "experiment_id": "exp-baseline-v2-test-final-v1",
+  "total_attempts": 10,
+  "valid_evaluated_attempts": 10,
+  "resolved_attempts": 3,
+  "resolution_rate": 0.3,
+  "average_react_steps": 15.0,
+  "average_tool_calls": 22.0,
+  "average_tokens": 231138.1,
+  "average_latency_ms": 154181.8,
+  "search_before_edit_rate": 0.8,
+  "test_inspection_before_edit_rate": 1.0,
+  "average_patch_attempts": 4.8,
+  "failure_distribution": {
+    "SYNTAX_ERROR": 3,
+    "TARGET_TEST_FAILED": 3,
+    "AGENT_MAX_STEPS": 1,
+    "RESOLVED": 3
+  }
+}

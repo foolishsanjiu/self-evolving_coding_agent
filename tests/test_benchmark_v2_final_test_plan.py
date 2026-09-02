@@ -56,7 +56,7 @@ def test_final_test_candidate_preflight_supports_test_without_baseline_result() 
         repetitions=2,
         benchmark_root=BENCHMARK_ROOT,
         baseline_manifest_path=Path(
-            "evaluation_runs/exp-baseline-v2-test-final-v1/manifest.json"
+            "evaluation_runs/offline-missing-test-baseline/manifest.json"
         ),
         split="test",
     )

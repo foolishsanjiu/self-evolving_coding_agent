@@ -631,9 +631,19 @@ Experience 执行器的付费运行路径已最小扩展为支持 `--split test`
 Token 外推，淡时约 0.7946 美元、峰时约 1.5892 美元；峰时 Token 翻倍估算为 3.1785 美元，
 拟申请硬上限 3.50 美元。机器契约与离线状态位于
 `configs/experiments/benchmark-v2-final-test-v1.yaml` 和
-`experiments/benchmark-v2-final-test-v1/`。协议冻结时尚未执行 Test Agent 或模型调用；API Key、
-Docker 29.7.2 和固定镜像摘要均已核验，用户已明确授权 20 次调用与 3.50 美元硬上限。执行协议
-将在第一笔付费调用前提交 Git。
+`experiments/benchmark-v2-final-test-v1/`。协议在第一笔付费调用前以 Git `dea968e` 冻结；随后
+严格执行 Baseline/Candidate 各 10 次，20/20 均进入独立评测且无补跑。
+
+终局结果为 Baseline 3/10、Candidate 3/10，Resolution Rate 均为 30%。10 个逐 Run 配对中两臂
+各胜 2 次、平 6 次，exact McNemar 双侧 p=1.0。Candidate 平均 Token 与延迟分别低 9.125% 和
+9.667%，但 Tool Calls 高 1.3；该小样本只能作为描述性效率结果，不能证明因果改善。Candidate
+检索和可测遵循均为 10/10，增量利用为 0/10，说明经验虽被检索且满足已定义行为目标，却没有
+产生相对 Baseline 的新可测行为或净成功率收益。
+
+Runtime Guard 共阻断 2 次目标文件未重读重试和 8 次验证窗口违规，最终编辑验证从 8/10 变为
+9/10；机制路径成立但未转化为性能提升。两臂实际合计 3,996,951 Input、414,906 Output Tokens，
+按淡时且全部输入缓存未命中保守估算 1.1532 美元，低于授权上限。Test 至此永久关闭，不再用于
+调整 Retriever、Experience、Prompt 或 Guardrail。
 
 ## Independent Evaluation 与 Baseline
 

@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "source": "local raw events recomputed with analyze_guardrail_trace",
+  "baseline": {
+    "patch_attempts": 48,
+    "patch_failures": 30,
+    "uninspected_patch_retry_attempts": 22,
+    "blocked_uninspected_patch_retries": 0,
+    "executed_uninspected_patch_retries": 22,
+    "verification_window_blocks": 0,
+    "final_answer_blocks": 0,
+    "total_contract_blocks": 0,
+    "test_calls": 30,
+    "test_executions": 28,
+    "last_successful_edit_verified_runs": 8
+  },
+  "candidate": {
+    "patch_attempts": 48,
+    "patch_failures": 23,
+    "uninspected_patch_retry_attempts": 20,
+    "blocked_uninspected_patch_retries": 2,
+    "executed_uninspected_patch_retries": 18,
+    "verification_window_blocks": 8,
+    "final_answer_blocks": 0,
+    "total_contract_blocks": 10,
+    "test_calls": 34,
+    "test_executions": 33,
+    "last_successful_edit_verified_runs": 9
+  },
+  "interpretation": "The candidate runtime blocked two target-file retry violations and eight verification-window violations. The inspect-after-patch-failure guard was retrieved only on task_114, so other uninspected retry attempts were outside that selected contract. These behavior differences demonstrate enforcement paths but do not establish a performance uplift."
+}

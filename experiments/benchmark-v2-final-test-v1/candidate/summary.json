@@ -1,0 +1,20 @@
+{
+  "experiment_id": "exp-experience-v005-test-final-v1",
+  "total_attempts": 10,
+  "valid_evaluated_attempts": 10,
+  "resolved_attempts": 3,
+  "resolution_rate": 0.3,
+  "average_react_steps": 14.8,
+  "average_tool_calls": 23.3,
+  "average_tokens": 210047.6,
+  "average_latency_ms": 139277.7,
+  "search_before_edit_rate": 0.9,
+  "test_inspection_before_edit_rate": 1.0,
+  "average_patch_attempts": 4.8,
+  "failure_distribution": {
+    "RESOLVED": 3,
+    "SYNTAX_ERROR": 2,
+    "TARGET_TEST_FAILED": 4,
+    "REGRESSION_FAILED": 1
+  }
+}

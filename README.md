@@ -112,11 +112,11 @@ v004 的 9 次降为 0 次，证明门禁真实生效。v005 为 2/2 Accepted、
 解除门禁；归因器也分别报告违规尝试、运行时阻断和实际执行。该加固没有新增模型调用，也没有
 改写冻结实验结论。
 
-Benchmark v2 Final Test 已完成离线冻结预案：最终只比较未使用 Experience 的 Baseline 与
+Benchmark v2 Final Test 已完成：最终只比较未使用 Experience 的 Baseline 与
 `experience-v005 + execution-contract-v2` 完整候选，覆盖全部 5 个 Test 任务、每臂每题 2 次，
-共 20 次预注册调用。Test 结果将作为终局结果，不允许据此调参或选择性补跑。当前尚未运行
-Test Agent、没有新增模型调用；20 次调用与 3.50 美元硬上限现已获得明确授权，Docker 与固定
-沙箱镜像也已通过预检，协议将在付费执行前提交 Git。
+共 20 次预注册调用；20/20 均进入独立评测且无补跑。Baseline 与 Candidate 均为 3/10 Resolved，
+逐 Run 配对各胜 2 次、平 6 次，exact McNemar p=1.0。Candidate 检索和可测遵循均为 10/10，
+但增量利用仍为 0/10，因此终局结果不支持成功率或因果效率提升；Test 已关闭，不用于后续调参。
 
 ## 工程亮点
 
@@ -127,7 +127,7 @@ Test Agent、没有新增模型调用；20 次调用与 3.50 美元硬上限现�
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：361 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：367 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -227,7 +227,7 @@ EvoDev/
   v003 带来净收益；v004 已补齐可执行/可测合同，但单题 4-call Train holdout 对照也未证明
   成功率、合同遵循或增量利用改善；v005 真实模型对照证明门禁生效，但单题两次重复不足以证明
   成功率改善，且观察到更高 Tokens、Tool Calls 与延迟；
-- Benchmark v2 Final Test 目前只完成 20-call 冻结预案，尚无 Test 性能结果；
+- Benchmark v2 Final Test 只有 5 题×2 次；Baseline/Candidate 同为 30%，不支持净性能提升结论；
 - Policy Search Space 人工限制为三个字段，没有进行模型微调；
 - B、C、D 在 Primary Metric 上并列，尚无 Experience 与 Policy 额外互补增益的证据；
 - Docker Sandbox 面向受控 Coding Task，不应视为恶意代码的完整安全边界。

@@ -1,0 +1,11 @@
+task_id,agent_run_id,resolved,valid_evaluation,failure_type,react_steps,tool_calls,tokens,latency_ms,searched_before_edit,inspected_tests_before_edit,patch_attempts
+task_114,run_task_114_r01,False,True,SYNTAX_ERROR,15,21,172885,118266,True,True,6
+task_115,run_task_115_r01,False,True,SYNTAX_ERROR,15,26,261410,158332,True,True,4
+task_116,run_task_116_r01,False,True,TARGET_TEST_FAILED,15,23,221022,152685,False,True,4
+task_117,run_task_117_r01,False,True,AGENT_MAX_STEPS,15,21,198755,138513,True,True,6
+task_118,run_task_118_r01,False,True,TARGET_TEST_FAILED,15,22,215156,137166,True,True,7
+task_114,run_task_114_r02,True,True,RESOLVED,15,24,157294,83205,True,True,5
+task_115,run_task_115_r02,False,True,SYNTAX_ERROR,15,22,240269,176678,True,True,1
+task_116,run_task_116_r02,True,True,RESOLVED,15,21,273321,171871,True,True,5
+task_117,run_task_117_r02,True,True,RESOLVED,15,17,266012,211757,False,True,5
+task_118,run_task_118_r02,False,True,TARGET_TEST_FAILED,15,23,305257,193345,True,True,5
