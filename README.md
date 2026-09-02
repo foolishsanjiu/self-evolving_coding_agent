@@ -104,7 +104,9 @@ Hash；该阶段解决“如何执行和测量经验”的工程合同问题，�
 `PATCH_APPLY_FAILED`，其中 8 次没有重新读取文件就继续 Patch；一条 Accepted 轨迹甚至没有
 运行测试。由此冻结 `experience-v005` 与 `execution-contract-v2`：Patch 失败后必须先重新读取，
 最后成功编辑后必须测试，并为固定步数保留验证窗口。该机制默认关闭且不改变 v001–v004；目前
-只通过离线 FakeLLM 验证，尚无新的付费性能结论。
+只通过离线 FakeLLM 验证，尚无新的付费性能结论。v004/v005 的 Train-only 定向机制测试现已
+冻结并获得 4-call 付费授权：两臂对唯一跨任务检索命中的 `task_101` 各重新运行 2 次，禁止
+选择性补跑；结果尚未产生。
 
 ## 工程亮点
 
@@ -248,6 +250,7 @@ EvoDev/
 - [Benchmark v2 Experience v004 快照](experiences/experience-v004.json)
 - [Benchmark v2 Experience v005 Runtime Guardrails](experiments/benchmark-v2-experience-guardrails-v1/README.md)
 - [Benchmark v2 Experience v005 快照](experiences/experience-v005.json)
+- [Benchmark v2 Experience v004/v005 Runtime Guardrail Holdout](experiments/benchmark-v2-experience-guardrails-paid-v1/README.md)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

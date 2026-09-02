@@ -1,0 +1,87 @@
+schema_version: "1.0"
+execution_id: benchmark-v2-experience-guardrails-paid-v1
+status: authorized_before_execution
+authorization:
+  explicitly_authorized: true
+  authorized_scope: frozen_4_call_v004_vs_v005_train_guardrail_comparison
+  authorization_date: "2026-09-02"
+  maximum_projected_cost_usd: 0.50
+scientific_scope:
+  design: targeted_runtime_guardrail_test
+  benchmark_split: train
+  selected_tasks:
+    - task_101
+  selection_rule: >-
+    The frozen Train leave-one-task-out audit selected task_101 because it is the only
+    task with a cross-task relevant Experience hit. The task was selected before any
+    outcome from this paid comparison was available.
+  repetitions_per_arm: 2
+  selective_reruns_allowed: false
+inputs:
+  benchmark_root: benchmarks-v2
+  benchmark_version: "2.0"
+  benchmark_hash: c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6
+  v004_snapshot: experiences/experience-v004.json
+  v004_hash: f71ac3984674ba98e52ae02fd939dbc5bf2d4ad998a7013b547ff756f6054988
+  v005_snapshot: experiences/experience-v005.json
+  v005_hash: 622a19135c144e1e9a8b1d787933add4a8299491888e6e31463c1bbc18919602
+controlled_conditions:
+  model: deepseek-v4-flash
+  model_version_at_preflight: DeepSeek-V4-Flash-0731
+  temperature: 0.1
+  policy_version: fixed-react-v1
+  policy_hash: 45cc1142fee0fc096d587dcb265bec789687b63242bc979aa341ca23a3762947
+  max_steps: 15
+  context_budget: 60000
+  top_k: 3
+  max_experience_chars: 2500
+  retrieval_mode: relevant
+  sandbox_image: evodev-python:3.11
+  sandbox_digest: sha256:52b485a7b17bb160572782f342398329285ee45654cfb560c83b40cab2b065c3
+pricing_preflight:
+  checked_at: "2026-09-02T13:04:28Z"
+  source: https://api-docs.deepseek.com/quick_start/pricing/
+  pricing_period_at_check: off_peak
+  off_peak_cache_miss_input_usd_per_million: 0.22
+  off_peak_output_usd_per_million: 0.66
+  peak_cache_miss_input_usd_per_million: 0.44
+  peak_output_usd_per_million: 1.32
+  projected_input_tokens: 399996
+  projected_output_tokens: 35698
+  projected_off_peak_all_cache_miss_usd: 0.1116
+  projected_peak_all_cache_miss_usd: 0.2231
+  projection_basis: >-
+    Twice the prior two-run v004 task_101 arm, once for each fresh paid arm.
+runtime_preflight:
+  docker_desktop_ready: true
+  docker_engine_version: 29.7.2
+  api_key_present: true
+  model_listed_by_provider: true
+execution:
+  v004_experiment_id: exp-experience-v004-train-guardrail-control-v1
+  v005_experiment_id: exp-experience-v005-train-guardrail-v1
+  v004_control_manifest: evaluation_runs/exp-experience-v003-train-holdout-v1/manifest.json
+  v005_control_manifest: evaluation_runs/exp-experience-v004-train-guardrail-control-v1/manifest.json
+  calls_per_arm: 2
+  total_paid_calls: 4
+  v004_command: >-
+    evodev-experience-experiment --project-root . --benchmark-root benchmarks-v2
+    --snapshot experiences/experience-v004.json --mode relevant
+    --experiment-id exp-experience-v004-train-guardrail-control-v1 --repetitions 2
+    --split train --task-id task_101
+    --baseline-manifest evaluation_runs/exp-experience-v003-train-holdout-v1/manifest.json
+    --confirm-paid
+  v005_command: >-
+    evodev-experience-experiment --project-root . --benchmark-root benchmarks-v2
+    --snapshot experiences/experience-v005.json --mode relevant
+    --experiment-id exp-experience-v005-train-guardrail-v1 --repetitions 2
+    --split train --task-id task_101
+    --baseline-manifest evaluation_runs/exp-experience-v004-train-guardrail-control-v1/manifest.json
+    --confirm-paid
+boundaries:
+  same_task_experience_sources_excluded: true
+  validation_split_accessed: false
+  test_split_accessed: false
+  gold_patch_exposed_to_agent: false
+  hidden_tests_exposed_to_agent: false
+  hidden_tests_used_only_by_independent_evaluator: true
