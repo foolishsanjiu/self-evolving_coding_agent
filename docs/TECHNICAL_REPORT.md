@@ -314,6 +314,19 @@ Benchmark Hash、Docker Image Digest、Tool Catalog Hash 与 8 个 Run ID 写入
 未保存供应商账单与价格表，因此不推断货币成本。机器可读摘要位于
 `experiments/benchmark-v2-pilot-v1/summary.json` 与 `summary.csv`。
 
+### Benchmark v2 正式任务蓝图
+
+Pilot 校准后冻结正式 V2 的 18 题设计合同：8 Train / 5 Validation / 5 Test，类别配额为
+Cross-module Bug 4、State/Data Flow 3、Feature 3、Error Resilience 3、Concurrency/Resource 2、
+Test Repair/Compatibility 3。四道 Pilot 题统一迁入 Train 候选；正式 Validation/Test 共十道题
+全部使用无 Agent 历史运行的新 Repository Template。
+
+机器可读蓝图位于 `configs/benchmarks/v2-blueprint.yaml`，逐题固定故障机制、Hidden Target、
+Regression Focus 和 Gold Patch 最小范围。当前只有 task_101–104 标记为 `qualified_pilot`，其余
+14 题均为 `planned`；在全部实现和离线 QA 通过前，不生成正式 `benchmarks-v2/manifest.json`，
+也不把蓝图状态表述为已完成 Benchmark。完整任务表与实施顺序见
+`docs/BENCHMARK_V2_BLUEPRINT.md`。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

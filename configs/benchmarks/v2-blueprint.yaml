@@ -1,0 +1,421 @@
+schema_version: "1.0"
+benchmark_version: "2.0"
+status: blueprint_frozen
+inventory:
+  task_count: 18
+  split_counts:
+    train: 8
+    validation: 5
+    test: 5
+  category_counts:
+    cross_module_bug: 4
+    state_data_flow: 3
+    feature: 3
+    error_resilience: 3
+    concurrency_resource: 2
+    test_repair_compatibility: 3
+quality_gates:
+  original_public_tests_pass: true
+  original_hidden_evaluation_fails: true
+  gold_hidden_evaluation_passes: true
+  incomplete_fix_mutations_per_task: 2
+  repository_template_cross_split: forbidden
+  hidden_assets_in_agent_workspace: forbidden
+  validation_paid_debugging: forbidden
+  test_paid_debugging: forbidden
+tasks:
+  - task_id: task_101
+    title: Request-complete product cache keys
+    split: train
+    category: cross_module_bug
+    difficulty: medium
+    repository_template: product_view_cache_v2
+    source: pilot_calibrated
+    implementation_status: qualified_pilot
+    evaluation_usage: train_only
+    prior_agent_runs: true
+    calibration_experiment_id: benchmark-v2-pilot-v1
+    failure_mechanism: Cache identity omits locale and tax mode while rendering depends on both.
+    hidden_target_focus:
+      - Isolate cached representations across locale and tax-mode combinations.
+      - Preserve cache hits for identical requests.
+    regression_focus:
+      - Preserve missing-product behavior.
+      - Keep rendering and repository lookup contracts unchanged.
+    gold_scope:
+      - Introduce one canonical composite cache key.
+      - Use the same key for cache reads and writes.
+
+  - task_id: task_102
+    title: Opaque cursor traversal
+    split: train
+    category: state_data_flow
+    difficulty: medium
+    repository_template: opaque_cursor_paging_v2
+    source: pilot_calibrated
+    implementation_status: qualified_pilot
+    evaluation_usage: train_only
+    prior_agent_runs: true
+    calibration_experiment_id: benchmark-v2-pilot-v1
+    failure_mechanism: Pagination derives continuation state from item data instead of the opaque next cursor.
+    hidden_target_focus:
+      - Follow opaque cursors through empty intermediate pages.
+      - Detect a cursor cycle without duplicating page items.
+    regression_focus:
+      - Preserve single-page and terminal-page collection.
+      - Preserve item ordering and multiplicity.
+    gold_scope:
+      - Advance only from the response continuation cursor.
+      - Track visited non-terminal cursors.
+
+  - task_id: task_103
+    title: Typed configuration precedence
+    split: train
+    category: error_resilience
+    difficulty: medium
+    repository_template: typed_config_precedence_v2
+    source: pilot_calibrated
+    implementation_status: qualified_pilot
+    evaluation_usage: train_only
+    prior_agent_runs: true
+    calibration_experiment_id: benchmark-v2-pilot-v1
+    failure_mechanism: Source precedence is wrong and truthiness-based conversion loses valid false-like values.
+    hidden_target_focus:
+      - Enforce CLI over environment over file over defaults.
+      - Normalize accepted booleans and reject invalid spellings.
+    regression_focus:
+      - Preserve integer timeout conversion.
+      - Preserve defaults when all higher-priority sources are absent.
+    gold_scope:
+      - Correct source ordering without truthiness fallbacks.
+      - Centralize strict boolean conversion.
+
+  - task_id: task_104
+    title: Atomic multi-line inventory reservation
+    split: train
+    category: state_data_flow
+    difficulty: hard
+    repository_template: inventory_compensation_v2
+    source: pilot_calibrated
+    implementation_status: qualified_pilot
+    evaluation_usage: train_only
+    prior_agent_runs: true
+    calibration_experiment_id: benchmark-v2-pilot-v1
+    failure_mechanism: A later reservation error leaves earlier order lines applied.
+    hidden_target_focus:
+      - Roll back every reservation made by the failing order in reverse order.
+      - Re-raise the original exception for duplicate and distinct SKU lines.
+    regression_focus:
+      - Preserve all reservations after a successful order.
+      - Leave unrelated pre-existing stock state unchanged.
+    gold_scope:
+      - Track only reservations completed by the current call.
+      - Compensate tracked reservations on any exception.
+
+  - task_id: task_105
+    title: Out-of-order chunk assembly
+    split: train
+    category: feature
+    difficulty: medium
+    repository_template: chunked_upload_assembler_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: train_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: The repository has chunk models and storage but no complete order-independent assembler.
+    hidden_target_focus:
+      - Assemble only after every bounded chunk index is present.
+      - Accept identical duplicate chunks but reject conflicting duplicates.
+    regression_focus:
+      - Keep incomplete uploads unreadable.
+      - Isolate chunks belonging to different upload identifiers.
+    gold_scope:
+      - Implement validated chunk insertion.
+      - Implement deterministic completion and assembly.
+
+  - task_id: task_106
+    title: Cross-module subscription proration
+    split: train
+    category: cross_module_bug
+    difficulty: hard
+    repository_template: subscription_proration_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: train_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: Billing mixes plan identifiers, decimal currency values, and inclusive date boundaries across modules.
+    hidden_target_focus:
+      - Prorate upgrades and downgrades using remaining service days and integer cents.
+      - Resolve plan prices through the catalog rather than treating identifiers as prices.
+    regression_focus:
+      - Preserve no-op plan changes and full-period invoices.
+      - Avoid float rounding drift and negative zero-value credits.
+    gold_scope:
+      - Align catalog, subscription, and invoice units.
+      - Centralize date-boundary and rounding rules.
+
+  - task_id: task_107
+    title: Ordered bounded parallel map
+    split: train
+    category: concurrency_resource
+    difficulty: hard
+    repository_template: ordered_parallel_map_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: train_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: Worker completion order leaks into results and error paths leave pending work running.
+    hidden_target_focus:
+      - Return results in input order while bounding active workers.
+      - Cancel pending futures and propagate the first worker failure.
+    regression_focus:
+      - Shut down executor resources on success and failure.
+      - Handle empty and single-item inputs without spawning excess work.
+    gold_scope:
+      - Associate futures with stable input positions.
+      - Add deterministic cancellation and shutdown handling.
+
+  - task_id: task_108
+    title: Transport protocol compatibility adapter
+    split: train
+    category: test_repair_compatibility
+    difficulty: medium
+    repository_template: transport_protocol_compat_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: train_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: A keyword-only transport protocol update breaks legacy fakes and adapters with positional call signatures.
+    hidden_target_focus:
+      - Support the declared keyword-only transport contract.
+      - Keep an explicit compatibility adapter for legacy positional transports.
+    regression_focus:
+      - Do not swallow TypeError raised inside a transport implementation.
+      - Preserve request headers, timeout, and response values.
+    gold_scope:
+      - Repair protocol-conformance tests and fakes.
+      - Add signature-aware adaptation without broad exception fallback.
+
+  - task_id: task_109
+    title: Time-zone-safe token expiry
+    split: validation
+    category: cross_module_bug
+    difficulty: hard
+    repository_template: timezone_token_expiry_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: policy_gate_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: Parser, model, and service mix naive local datetimes with UTC expiry instants.
+    hidden_target_focus:
+      - Normalize offset timestamps before expiry comparison.
+      - Define the exact-boundary instant as expired.
+    regression_focus:
+      - Preserve malformed timestamp errors.
+      - Avoid dependence on the machine local timezone.
+    gold_scope:
+      - Establish one aware UTC representation across modules.
+      - Compare against an injected aware clock.
+
+  - task_id: task_110
+    title: Contiguous acknowledgement checkpoints
+    split: validation
+    category: state_data_flow
+    difficulty: hard
+    repository_template: contiguous_checkpoint_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: policy_gate_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: Out-of-order acknowledgements advance a durable checkpoint past unprocessed sequence gaps.
+    hidden_target_focus:
+      - Advance only through the highest contiguous acknowledged sequence.
+      - Merge duplicate and late acknowledgements without losing pending gaps.
+    regression_focus:
+      - Reject acknowledgement identifiers from another stream.
+      - Preserve checkpoint state when persistence fails.
+    gold_scope:
+      - Track acknowledged sequences above the durable checkpoint.
+      - Commit checkpoint and pending state atomically.
+
+  - task_id: task_111
+    title: Conditional HTTP cache refresh
+    split: validation
+    category: feature
+    difficulty: medium
+    repository_template: conditional_http_cache_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: policy_gate_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: The client cache lacks conditional refresh semantics for ETag and 304 responses.
+    hidden_target_focus:
+      - Send If-None-Match only for an existing cache entry and reuse content on 304.
+      - Replace content and metadata together on a fresh 200 response.
+    regression_focus:
+      - Do not cache error responses.
+      - Keep cache entries isolated by full request identity.
+    gold_scope:
+      - Implement conditional request construction.
+      - Add atomic cache update and 304 handling.
+
+  - task_id: task_112
+    title: Failure-preserving resource cleanup
+    split: validation
+    category: error_resilience
+    difficulty: medium
+    repository_template: cleanup_exception_chain_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: policy_gate_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: Cleanup stops at the first close error and can replace the primary operation failure.
+    hidden_target_focus:
+      - Attempt every acquired cleanup in reverse order.
+      - Preserve the primary exception while retaining cleanup failure context.
+    regression_focus:
+      - Raise a cleanup error when no primary operation failed.
+      - Never clean resources that were not acquired.
+    gold_scope:
+      - Separate primary and cleanup failure collection.
+      - Make acquisition and reverse cleanup bookkeeping explicit.
+
+  - task_id: task_113
+    title: Versioned serializer compatibility
+    split: validation
+    category: test_repair_compatibility
+    difficulty: medium
+    repository_template: versioned_serializer_compat_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: policy_gate_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: A renamed model field breaks v1 fixture loading while v2 snapshots accidentally emit both names.
+    hidden_target_focus:
+      - Read the legacy field only for v1 payloads and the canonical field for v2.
+      - Emit exactly the schema-version-appropriate field set.
+    regression_focus:
+      - Reject conflicting aliases and unknown schema versions.
+      - Preserve null, empty, and Unicode values without coercion.
+    gold_scope:
+      - Repair versioned fixtures and schema assertions.
+      - Implement explicit version-aware alias mapping.
+
+  - task_id: task_114
+    title: Hierarchical permission resolution
+    split: test
+    category: cross_module_bug
+    difficulty: hard
+    repository_template: hierarchical_permissions_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: final_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: Group traversal, inherited roles, and explicit deny rules are evaluated inconsistently across modules.
+    hidden_target_focus:
+      - Resolve transitive group membership with explicit deny precedence.
+      - Detect membership cycles while preserving permissions from acyclic branches.
+    regression_focus:
+      - Keep direct user grants and resource scoping intact.
+      - Avoid sharing traversal state across independent checks.
+    gold_scope:
+      - Centralize graph traversal and precedence semantics.
+      - Pass scoped permission identities across service boundaries.
+
+  - task_id: task_115
+    title: Stable dependency installation order
+    split: test
+    category: feature
+    difficulty: hard
+    repository_template: stable_dependency_order_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: final_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: The package model exists but dependency validation and deterministic installation ordering are missing.
+    hidden_target_focus:
+      - Produce a stable topological order with dependencies before dependants.
+      - Report a concrete cycle path and reject missing dependencies.
+    regression_focus:
+      - Preserve input order between otherwise independent packages.
+      - Deduplicate repeated dependency declarations without dropping packages.
+    gold_scope:
+      - Implement stable graph validation and ordering.
+      - Add actionable missing-dependency and cycle errors.
+
+  - task_id: task_116
+    title: Transient-only request retries
+    split: test
+    category: error_resilience
+    difficulty: medium
+    repository_template: transient_retry_policy_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: final_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: A broad retry loop repeats permanent failures and miscounts attempts and Retry-After delays.
+    hidden_target_focus:
+      - Retry only declared transient failures within the attempt budget.
+      - Prefer a valid Retry-After delay and otherwise use the injected backoff policy.
+    regression_focus:
+      - Preserve the final exception identity and cause.
+      - Never sleep after success or after the last allowed attempt.
+    gold_scope:
+      - Centralize transient classification and attempt accounting.
+      - Route all waiting through the injected sleeper.
+
+  - task_id: task_117
+    title: Cancellation-safe async worker pool
+    split: test
+    category: concurrency_resource
+    difficulty: hard
+    repository_template: async_pool_cancellation_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: final_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: Timeout and cancellation paths leak tasks and semaphore permits from the async worker pool.
+    hidden_target_focus:
+      - Cancel and await every outstanding task after timeout or parent cancellation.
+      - Release concurrency permits when workers fail before producing a result.
+    regression_focus:
+      - Preserve bounded concurrency and input-order results on success.
+      - Avoid cancelling work that completed before shutdown began.
+    gold_scope:
+      - Use structured task cleanup in a finally path.
+      - Make semaphore ownership local to each worker execution.
+
+  - task_id: task_118
+    title: Plugin hook signature compatibility
+    split: test
+    category: test_repair_compatibility
+    difficulty: medium
+    repository_template: plugin_hook_compat_v2
+    source: new_unseen
+    implementation_status: planned
+    evaluation_usage: final_only
+    prior_agent_runs: false
+    calibration_experiment_id: null
+    failure_mechanism: Hook fixtures and dispatch code disagree on legacy sync and current async keyword-only signatures.
+    hidden_target_focus:
+      - Dispatch declared sync and async hooks through one normalized result contract.
+      - Adapt only recognized legacy signatures without masking plugin TypeError failures.
+    regression_focus:
+      - Preserve hook ordering and short-circuit semantics.
+      - Reject unsupported signatures before invoking plugin code.
+    gold_scope:
+      - Repair compatibility fixtures and signature assertions.
+      - Add explicit signature inspection and awaitable normalization.

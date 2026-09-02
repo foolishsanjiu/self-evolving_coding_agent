@@ -10,6 +10,7 @@ from evodev.benchmark import BenchmarkLoader, BenchmarkQA
 from evodev.sandbox import WorkspaceManager
 
 BENCHMARK_ROOT = Path("benchmarks")
+V2_BLUEPRINT_PATH = Path("configs/benchmarks/v2-blueprint.yaml")
 LOADER = BenchmarkLoader(BENCHMARK_ROOT)
 TASKS = LOADER.load_tasks()
 
@@ -85,6 +86,52 @@ def test_declared_v2_inventory_is_not_limited_to_v1_counts(tmp_path: Path) -> No
         tasks.append(TASKS[0].model_copy(update={"split": split, "config": config}))
 
     loader._validate_inventory(tasks)
+
+
+def test_v2_blueprint_freezes_inventory_and_leakage_boundaries() -> None:
+    blueprint = yaml.safe_load(V2_BLUEPRINT_PATH.read_text(encoding="utf-8"))
+    tasks = blueprint["tasks"]
+    split_counts = Counter(task["split"] for task in tasks)
+    category_counts = Counter(task["category"] for task in tasks)
+
+    assert blueprint["status"] == "blueprint_frozen"
+    assert blueprint["inventory"]["task_count"] == len(tasks) == 18
+    assert split_counts == blueprint["inventory"]["split_counts"]
+    assert category_counts == blueprint["inventory"]["category_counts"]
+    assert [task["task_id"] for task in tasks] == [
+        f"task_{number}" for number in range(101, 119)
+    ]
+    assert {task["difficulty"] for task in tasks} <= {"medium", "hard"}
+    assert len({task["repository_template"] for task in tasks}) == 18
+    assert not ({task.config.repository_template for task in TASKS} & {
+        task["repository_template"] for task in tasks
+    })
+
+    pilots = [task for task in tasks if task["source"] == "pilot_calibrated"]
+    assert [task["task_id"] for task in pilots] == [
+        "task_101",
+        "task_102",
+        "task_103",
+        "task_104",
+    ]
+    assert all(task["split"] == "train" for task in pilots)
+    assert all(task["implementation_status"] == "qualified_pilot" for task in pilots)
+    assert all(task["prior_agent_runs"] is True for task in pilots)
+
+    unseen = [task for task in tasks if task["split"] in {"validation", "test"}]
+    assert len(unseen) == 10
+    assert all(task["source"] == "new_unseen" for task in unseen)
+    assert all(task["prior_agent_runs"] is False for task in unseen)
+    assert all(task["calibration_experiment_id"] is None for task in unseen)
+    assert {task["evaluation_usage"] for task in unseen if task["split"] == "validation"} == {
+        "policy_gate_only"
+    }
+    assert {task["evaluation_usage"] for task in unseen if task["split"] == "test"} == {
+        "final_only"
+    }
+    assert all(len(task["hidden_target_focus"]) >= 2 for task in tasks)
+    assert all(len(task["regression_focus"]) >= 2 for task in tasks)
+    assert all(task["failure_mechanism"] and task["gold_scope"] for task in tasks)
 
 
 def test_repository_template_cannot_cross_splits() -> None:
