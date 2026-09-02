@@ -1,0 +1,8 @@
+task_id: task_106
+category: cross_module_bug
+difficulty: hard
+description: Fix subscription plan-change proration so catalog prices, inclusive service dates, and invoice cents agree for upgrades and downgrades.
+test_command: pytest -q
+expected_behavior: Plan changes resolve both catalog prices, prorate the remaining inclusive service period in integer cents with half-up rounding, and preserve no-op changes.
+repository_template: subscription_proration_v2
+benchmark_version: "2.0"

@@ -1,0 +1,8 @@
+task_id: task_102
+category: state_data_flow
+difficulty: medium
+description: Fix collection across an opaque cursor API so every page is visited once, in order, without deriving cursors from item contents.
+test_command: pytest -q
+expected_behavior: Collection follows each page's continuation cursor, supports empty intermediate pages, returns all items once, and rejects cursor cycles.
+repository_template: opaque_cursor_paging_v2
+benchmark_version: "2.0"

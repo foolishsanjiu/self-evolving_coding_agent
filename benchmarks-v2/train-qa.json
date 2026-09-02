@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "benchmark_version": "2.0",
+  "stage": "train_qualified",
+  "formal_manifest_created": false,
+  "task_count": 8,
+  "qa": {
+    "independent_rounds": 5,
+    "public_original_passed": 8,
+    "hidden_original_failed": 8,
+    "hidden_gold_passed": 8,
+    "new_task_incomplete_fixes_rejected": 8
+  },
+  "checksum_algorithm": "BenchmarkLoader tree SHA-256 with normalized LF content",
+  "tasks": [
+    {
+      "task_id": "task_101",
+      "source": "pilot_calibrated",
+      "checksum": "c81560bfe2c01c33a2bf4d8677cdd2a525213e67e0dc1ab302f5c48b08f1e2ea"
+    },
+    {
+      "task_id": "task_102",
+      "source": "pilot_calibrated",
+      "checksum": "c5875d06b87e385de1a531b94c9c9dfe6c9d80c93c42cbac9611eb5cfee57040"
+    },
+    {
+      "task_id": "task_103",
+      "source": "pilot_calibrated",
+      "checksum": "da29262fa1bdcc6a7daeffca87f18b18e090bd530b4c239d3973b6dad08147e5"
+    },
+    {
+      "task_id": "task_104",
+      "source": "pilot_calibrated",
+      "checksum": "cd1e58af317aa85cec9334ab1039ae5133d8ce2e395af093d9fd6404eb81a09f"
+    },
+    {
+      "task_id": "task_105",
+      "source": "new_unseen",
+      "checksum": "87916285c0c70394f068a011e95cf0ae3051378f4b85364a18138b1fb35d4611"
+    },
+    {
+      "task_id": "task_106",
+      "source": "new_unseen",
+      "checksum": "dc9b5a55bd62249ded64fbcc7be80765c16148845ef165bb32118a322c828966"
+    },
+    {
+      "task_id": "task_107",
+      "source": "new_unseen",
+      "checksum": "a046db4cdd6ed7c61093c94294805714304181830cad2caddeb042e0cc3de6eb"
+    },
+    {
+      "task_id": "task_108",
+      "source": "new_unseen",
+      "checksum": "2029620bbb6518827755b1752b8f7eec37e2cc6186968a62e2533354324e5f89"
+    }
+  ]
+}

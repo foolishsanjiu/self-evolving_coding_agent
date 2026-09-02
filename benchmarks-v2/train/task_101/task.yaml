@@ -1,0 +1,8 @@
+task_id: task_101
+category: cross_module_bug
+difficulty: medium
+description: Fix product view caching so request-specific inputs never reuse another request's representation while identical requests still hit the cache.
+test_command: pytest -q
+expected_behavior: Product views are cached independently by product, locale, and tax mode; repeated identical requests reuse the cached view.
+repository_template: product_view_cache_v2
+benchmark_version: "2.0"

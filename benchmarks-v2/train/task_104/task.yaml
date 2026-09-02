@@ -1,0 +1,8 @@
+task_id: task_104
+category: state_data_flow
+difficulty: hard
+description: Make multi-line inventory reservation atomic so a failed order cannot leave earlier lines reserved, while preserving successful reservations and unrelated state.
+test_command: pytest -q
+expected_behavior: Every line is reserved on success; any exception restores only changes made by that order and re-raises the original error.
+repository_template: inventory_compensation_v2
+benchmark_version: "2.0"

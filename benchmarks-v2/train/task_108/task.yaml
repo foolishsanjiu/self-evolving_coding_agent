@@ -1,0 +1,8 @@
+task_id: task_108
+category: test_repair_compatibility
+difficulty: medium
+description: Repair transport dispatch compatibility so the current keyword-only protocol and recognized legacy positional transports both work without masking implementation TypeError failures.
+test_command: pytest -q
+expected_behavior: Dispatch inspects the bound send signature before invocation, passes method, URL, headers, and timeout exactly once, and rejects unsupported signatures explicitly.
+repository_template: transport_protocol_compat_v2
+benchmark_version: "2.0"

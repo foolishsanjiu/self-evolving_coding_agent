@@ -1,0 +1,34 @@
+diff --git a/transport/adapter.py b/transport/adapter.py
+--- a/transport/adapter.py
++++ b/transport/adapter.py
+@@ -1,4 +1,5 @@
+ from collections.abc import Mapping
++from inspect import Parameter, signature
+ 
+ from transport.models import Response
+ 
+@@ -11,4 +12,23 @@ def dispatch_request(
+     headers: Mapping[str, str],
+     timeout: float,
+ ) -> Response:
+-    return transport.send(method, url, headers, timeout)
++    send = transport.send
++    parameters = list(signature(send).parameters.values())
++    expected_names = ["method", "url", "headers", "timeout"]
++    if [parameter.name for parameter in parameters] != expected_names:
++        raise TypeError("unsupported transport.send signature")
++
++    if all(parameter.kind is Parameter.KEYWORD_ONLY for parameter in parameters):
++        return send(
++            method=method,
++            url=url,
++            headers=headers,
++            timeout=timeout,
++        )
++    if all(
++        parameter.kind
++        in {Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD}
++        for parameter in parameters
++    ):
++        return send(method, url, headers, timeout)
++    raise TypeError("unsupported transport.send signature")

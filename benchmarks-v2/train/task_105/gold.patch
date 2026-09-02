@@ -1,0 +1,44 @@
+diff --git a/uploads/assembler.py b/uploads/assembler.py
+--- a/uploads/assembler.py
++++ b/uploads/assembler.py
+@@ -1,4 +1,4 @@
+-from uploads.errors import IncompleteUploadError
++from uploads.errors import ChunkConflictError, IncompleteUploadError
+ from uploads.models import Chunk
+ from uploads.store import ChunkStore
+ 
+@@ -8,11 +8,30 @@ class UploadAssembler:
+         self.store = store or ChunkStore()
+ 
+     def add_chunk(self, chunk: Chunk) -> bytes | None:
+-        self.store.put(chunk)
+-        return None
++        if chunk.total <= 0 or chunk.index < 0 or chunk.index >= chunk.total:
++            raise ChunkConflictError("chunk index is outside the declared upload")
++        known_total = self.store.total_for(chunk.upload_id)
++        if known_total is not None and known_total != chunk.total:
++            raise ChunkConflictError("upload total changed")
++        existing = self.store.chunk_at(chunk.upload_id, chunk.index)
++        if existing is not None:
++            if existing != chunk.data:
++                raise ChunkConflictError("chunk data changed")
++        else:
++            self.store.put(chunk)
++        if self.is_complete(chunk.upload_id):
++            return self.assemble(chunk.upload_id)
++        return None
+ 
+     def is_complete(self, upload_id: str) -> bool:
+-        return False
++        total = self.store.total_for(upload_id)
++        if total is None:
++            return False
++        chunks = self.store.chunks_for(upload_id)
++        return len(chunks) == total and set(chunks) == set(range(total))
+ 
+     def assemble(self, upload_id: str) -> bytes:
+-        raise IncompleteUploadError(upload_id)
++        if not self.is_complete(upload_id):
++            raise IncompleteUploadError(upload_id)
++        chunks = self.store.chunks_for(upload_id)
++        return b"".join(chunks[index] for index in range(len(chunks)))

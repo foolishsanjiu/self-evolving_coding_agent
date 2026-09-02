@@ -1,0 +1,38 @@
+diff --git a/catalog/cache.py b/catalog/cache.py
+--- a/catalog/cache.py
++++ b/catalog/cache.py
+@@ -5,8 +5,12 @@ class ProductViewCache:
+     def __init__(self) -> None:
+-        self._values: dict[str, ProductView] = {}
+-
+-    def get(self, product_id: str) -> ProductView | None:
+-        return self._values.get(product_id)
+-
+-    def put(self, product_id: str, view: ProductView) -> None:
+-        self._values[product_id] = view
++        self._values: dict[tuple[str, str, bool], ProductView] = {}
++
++    def get(
++        self, product_id: str, locale: str, include_tax: bool
++    ) -> ProductView | None:
++        return self._values.get((product_id, locale, include_tax))
++
++    def put(
++        self, product_id: str, locale: str, include_tax: bool, view: ProductView
++    ) -> None:
++        self._values[(product_id, locale, include_tax)] = view
+diff --git a/catalog/service.py b/catalog/service.py
+--- a/catalog/service.py
++++ b/catalog/service.py
+@@ -11,9 +11,9 @@ class CatalogService:
+     def product_view(
+         self, product_id: str, locale: str, include_tax: bool
+     ) -> ProductView:
+-        cached = self.cache.get(product_id)
++        cached = self.cache.get(product_id, locale, include_tax)
+         if cached is not None:
+             return cached
+         view = self.repository.build_view(product_id, locale, include_tax)
+-        self.cache.put(product_id, view)
++        self.cache.put(product_id, locale, include_tax, view)
+         return view

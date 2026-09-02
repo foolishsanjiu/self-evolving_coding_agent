@@ -18,14 +18,14 @@ Concurrency/Resource 2、Test Repair/Compatibility 3。全部题目为 Medium �
 
 | ID | Split | Category | Difficulty | Topic | Status |
 |---|---|---|---|---|---|
-| task_101 | Train | cross_module_bug | Medium | 完整请求维度缓存键 | Pilot qualified |
-| task_102 | Train | state_data_flow | Medium | 不透明 cursor 遍历 | Pilot qualified |
-| task_103 | Train | error_resilience | Medium | 类型化配置优先级 | Pilot qualified |
-| task_104 | Train | state_data_flow | Hard | 库存预留异常补偿 | Pilot qualified |
-| task_105 | Train | feature | Medium | 乱序分片组装 | Planned |
-| task_106 | Train | cross_module_bug | Hard | 跨模块订阅按比例计费 | Planned |
-| task_107 | Train | concurrency_resource | Hard | 有序有界并行映射 | Planned |
-| task_108 | Train | test_repair_compatibility | Medium | Transport 协议兼容适配 | Planned |
+| task_101 | Train | cross_module_bug | Medium | 完整请求维度缓存键 | Migrated + QA |
+| task_102 | Train | state_data_flow | Medium | 不透明 cursor 遍历 | Migrated + QA |
+| task_103 | Train | error_resilience | Medium | 类型化配置优先级 | Migrated + QA |
+| task_104 | Train | state_data_flow | Hard | 库存预留异常补偿 | Migrated + QA |
+| task_105 | Train | feature | Medium | 乱序分片组装 | Implemented + QA |
+| task_106 | Train | cross_module_bug | Hard | 跨模块订阅按比例计费 | Implemented + QA |
+| task_107 | Train | concurrency_resource | Hard | 有序有界并行映射 | Implemented + QA |
+| task_108 | Train | test_repair_compatibility | Medium | Transport 协议兼容适配 | Implemented + QA |
 | task_109 | Validation | cross_module_bug | Hard | 时区安全的 Token 过期判断 | Planned |
 | task_110 | Validation | state_data_flow | Hard | 连续 ACK Checkpoint | Planned |
 | task_111 | Validation | feature | Medium | HTTP ETag 条件刷新 | Planned |
@@ -56,7 +56,7 @@ Concurrency/Resource 2、Test Repair/Compatibility 3。全部题目为 Medium �
 
 ## 后续实施顺序
 
-1. 构建并验证 Train task_105–108，同时把 task_101–104 迁入正式 Train；
+1. **已完成**：构建并验证 Train task_105–108，同时把 task_101–104 迁入正式 Train；
 2. 独立构建 Validation task_109–113，只做离线 Gold/Hidden QA；
 3. 独立构建 Test task_114–118，只做离线 Gold/Hidden QA；
 4. 18 题完整库存 QA 通过后生成 Manifest，再讨论任何新的付费实验。

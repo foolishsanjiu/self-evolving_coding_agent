@@ -1,6 +1,7 @@
 schema_version: "1.0"
 benchmark_version: "2.0"
 status: blueprint_frozen
+implementation_stage: train_qualified
 inventory:
   task_count: 18
   split_counts:
@@ -31,7 +32,7 @@ tasks:
     difficulty: medium
     repository_template: product_view_cache_v2
     source: pilot_calibrated
-    implementation_status: qualified_pilot
+    implementation_status: migrated_train_qa
     evaluation_usage: train_only
     prior_agent_runs: true
     calibration_experiment_id: benchmark-v2-pilot-v1
@@ -53,7 +54,7 @@ tasks:
     difficulty: medium
     repository_template: opaque_cursor_paging_v2
     source: pilot_calibrated
-    implementation_status: qualified_pilot
+    implementation_status: migrated_train_qa
     evaluation_usage: train_only
     prior_agent_runs: true
     calibration_experiment_id: benchmark-v2-pilot-v1
@@ -75,7 +76,7 @@ tasks:
     difficulty: medium
     repository_template: typed_config_precedence_v2
     source: pilot_calibrated
-    implementation_status: qualified_pilot
+    implementation_status: migrated_train_qa
     evaluation_usage: train_only
     prior_agent_runs: true
     calibration_experiment_id: benchmark-v2-pilot-v1
@@ -97,7 +98,7 @@ tasks:
     difficulty: hard
     repository_template: inventory_compensation_v2
     source: pilot_calibrated
-    implementation_status: qualified_pilot
+    implementation_status: migrated_train_qa
     evaluation_usage: train_only
     prior_agent_runs: true
     calibration_experiment_id: benchmark-v2-pilot-v1
@@ -119,7 +120,7 @@ tasks:
     difficulty: medium
     repository_template: chunked_upload_assembler_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_train_qa
     evaluation_usage: train_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -141,7 +142,7 @@ tasks:
     difficulty: hard
     repository_template: subscription_proration_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_train_qa
     evaluation_usage: train_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -163,7 +164,7 @@ tasks:
     difficulty: hard
     repository_template: ordered_parallel_map_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_train_qa
     evaluation_usage: train_only
     prior_agent_runs: false
     calibration_experiment_id: null
@@ -185,7 +186,7 @@ tasks:
     difficulty: medium
     repository_template: transport_protocol_compat_v2
     source: new_unseen
-    implementation_status: planned
+    implementation_status: implemented_train_qa
     evaluation_usage: train_only
     prior_agent_runs: false
     calibration_experiment_id: null

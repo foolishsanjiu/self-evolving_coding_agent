@@ -1,0 +1,8 @@
+task_id: task_103
+category: error_resilience
+difficulty: medium
+description: Correct typed application configuration resolution across command-line, environment, file, and default sources without treating valid false-like values as missing.
+test_command: pytest -q
+expected_behavior: Precedence is CLI over environment over file over defaults; timeout is an integer, accepted boolean spellings are normalized, and invalid booleans raise ValueError.
+repository_template: typed_config_precedence_v2
+benchmark_version: "2.0"

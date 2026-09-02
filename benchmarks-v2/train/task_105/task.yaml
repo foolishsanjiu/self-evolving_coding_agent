@@ -1,0 +1,8 @@
+task_id: task_105
+category: feature
+difficulty: medium
+description: Implement order-independent chunk assembly so uploads complete only when every validated chunk is present, while handling duplicate chunks safely.
+test_command: pytest -q
+expected_behavior: Chunks may arrive out of order; identical duplicates are idempotent, conflicting metadata or data is rejected, and only complete uploads can be assembled.
+repository_template: chunked_upload_assembler_v2
+benchmark_version: "2.0"

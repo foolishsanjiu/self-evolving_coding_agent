@@ -1,0 +1,32 @@
+diff --git a/billing/proration.py b/billing/proration.py
+--- a/billing/proration.py
++++ b/billing/proration.py
+@@ -1,7 +1,12 @@
+ from datetime import date
++from decimal import Decimal, ROUND_HALF_UP
+ 
+ from billing.catalog import PlanCatalog
+-from billing.models import InvoiceAdjustment, Subscription
++from billing.models import InvoiceAdjustment, Plan, Subscription
++
++
++def _price_cents(plan: Plan) -> int:
++    return int((plan.monthly_price * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+ 
+ 
+ def plan_change_adjustment(
+@@ -18,8 +23,11 @@ def plan_change_adjustment(
+     old_plan = catalog.require(subscription.plan_id)
+     new_plan = catalog.require(new_plan_id)
+     period_days = (subscription.period_end - subscription.period_start).days + 1
+-    remaining_days = (subscription.period_end - effective_on).days
+-    price_difference = int(new_plan.monthly_price - old_plan.monthly_price)
++    remaining_days = (subscription.period_end - effective_on).days + 1
++    price_difference_cents = _price_cents(new_plan) - _price_cents(old_plan)
++    amount = (
++        Decimal(price_difference_cents) * remaining_days / Decimal(period_days)
++    )
+     return InvoiceAdjustment(
+-        amount_cents=round(price_difference * remaining_days / period_days)
++        amount_cents=int(amount.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+     )

@@ -327,6 +327,20 @@ Regression Focus 和 Gold Patch 最小范围。当前只有 task_101–104 标�
 也不把蓝图状态表述为已完成 Benchmark。完整任务表与实施顺序见
 `docs/BENCHMARK_V2_BLUEPRINT.md`。
 
+### Benchmark v2 Train 实现与离线 QA
+
+正式 V2 的 8 道 Train 题已完成：task_101–104 从 Pilot 原样迁移，task_105–108 分别实现乱序
+分片组装、跨模块订阅按比例计费、有序有界并行映射和 Transport 协议兼容适配。新题均包含
+Repository、Public Tests、Hidden Target/Regression Tests 和最小 Gold Patch。
+
+Train 专项测试共 25 项：验证 8/8 原始 Public Tests 通过、8/8 原始 Hidden Evaluation 失败、
+8/8 应用 Gold 后通过，并对四道新题各构造两种 Gold 退化，共 8/8 被 Hidden Tests 拒绝。
+考虑 task_107 的线程调度，完整专项 QA 使用独立临时根重复 5 轮，5/5 轮均为 25/25 通过。
+规范化任务树哈希和机器可读阶段结果位于 `benchmarks-v2/train-qa.json`。
+
+该阶段没有生成正式 Benchmark Manifest：Validation task_109–113 与 Test task_114–118 尚未
+实现，`benchmarks-v2/` 故意不提供 `benchmark.yaml`，避免通用 Loader 将部分库存当作完整 V2。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

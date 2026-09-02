@@ -1,0 +1,16 @@
+diff --git a/inventory/service.py b/inventory/service.py
+--- a/inventory/service.py
++++ b/inventory/service.py
+@@ -7,3 +7,10 @@
+ def reserve_order(store: InventoryStore, lines: Iterable[OrderLine]) -> None:
+-    for line in lines:
+-        store.reserve(line.sku, line.quantity)
++    reserved: list[OrderLine] = []
++    try:
++        for line in lines:
++            store.reserve(line.sku, line.quantity)
++            reserved.append(line)
++    except Exception:
++        for line in reversed(reserved):
++            store.release(line.sku, line.quantity)
++        raise

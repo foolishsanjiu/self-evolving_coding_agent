@@ -1,0 +1,8 @@
+task_id: task_107
+category: concurrency_resource
+difficulty: hard
+description: Fix ordered_parallel_map so bounded concurrent work returns in input order and cancels pending futures when a worker fails.
+test_command: pytest -q
+expected_behavior: Results preserve input order regardless of completion order; worker count is bounded, and success or failure always shuts down the executor with pending-work cancellation.
+repository_template: ordered_parallel_map_v2
+benchmark_version: "2.0"
