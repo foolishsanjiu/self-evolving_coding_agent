@@ -81,7 +81,9 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 难度校准；总体 3/8 Accepted，没有题目被两种策略同时解决。基于该结论，正式 V2 的
 8 道 Train、5 道 Validation 与 5 道 Test 均已完成分 Split 和统一库存离线 QA，正式 Manifest
 已冻结。正式 Baseline 预案已固定为仅运行 8 道 Train、每题重复 2 次，共 16 次付费调用；
-Validation/Test 仍保持未暴露。该预案尚未执行，因此 V2 仍无策略效果结论。
+该轮现已完整执行并独立评测，6/16 Resolved（37.5%）：task_101、102、104 均为 2/2，
+其余五题均为 0/2。Validation/Test 仍保持未暴露；该结果只表示固定 Baseline 的 Train
+起点与失败证据，不构成演化收益或最终测试结论。
 
 ## 工程亮点
 
@@ -92,7 +94,7 @@ Validation/Test 仍保持未暴露。该预案尚未执行，因此 V2 仍无策
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：301 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：304 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -203,6 +205,7 @@ EvoDev/
 - [Benchmark v2 正式冻结 QA](benchmarks-v2/formal-qa.json)
 - [Benchmark v2 Train Baseline 预案](docs/BENCHMARK_V2_BASELINE_PLAN.md)
 - [Benchmark v2 Train Baseline 配置](configs/experiments/benchmark-v2-train-baseline-v1.yaml)
+- [Benchmark v2 Train Baseline 结果](experiments/benchmark-v2-train-baseline-v1/README.md)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

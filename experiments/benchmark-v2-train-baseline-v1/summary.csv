@@ -1,0 +1,17 @@
+task_id,run_id,agent_status,resolved,valid_evaluation,failure_type,react_steps,tool_calls,input_tokens,output_tokens,total_tokens,latency_ms,searched_before_edit,inspected_tests_before_edit,patch_attempts
+task_101,run_task_101_r01,SUCCESS,true,true,RESOLVED,10,17,56090,7247,63337,53899,true,true,3
+task_102,run_task_102_r01,SUCCESS,true,true,RESOLVED,11,15,43381,2978,46359,27602,false,true,3
+task_103,run_task_103_r01,MAX_STEPS,false,true,TARGET_TEST_FAILED,15,24,128099,9209,137308,84264,true,true,4
+task_104,run_task_104_r01,MAX_STEPS,true,true,RESOLVED,15,23,107685,10005,117690,73173,false,true,6
+task_105,run_task_105_r01,MAX_STEPS,false,true,TARGET_TEST_FAILED,15,27,162822,19006,181828,149013,true,true,4
+task_106,run_task_106_r01,MAX_STEPS,false,true,TARGET_TEST_FAILED,15,24,207614,21028,228642,150856,true,true,6
+task_107,run_task_107_r01,MAX_STEPS,false,true,REGRESSION_FAILED,15,19,119130,9464,128594,82035,true,true,5
+task_108,run_task_108_r01,MAX_STEPS,false,true,SYNTAX_ERROR,15,23,202764,16876,219640,143931,true,true,5
+task_101,run_task_101_r02,SUCCESS,true,true,RESOLVED,12,16,57617,3645,61262,32398,false,true,5
+task_102,run_task_102_r02,SUCCESS,true,true,RESOLVED,6,13,18596,1526,20122,18426,true,true,1
+task_103,run_task_103_r02,MAX_STEPS,false,true,TARGET_TEST_FAILED,15,23,175265,16872,192137,137688,true,true,9
+task_104,run_task_104_r02,SUCCESS,true,true,RESOLVED,13,18,72202,8787,80989,67958,false,true,6
+task_105,run_task_105_r02,SUCCESS,false,true,REGRESSION_FAILED,15,23,172748,18430,191178,131499,true,true,6
+task_106,run_task_106_r02,MAX_STEPS,false,true,AGENT_MAX_STEPS,15,21,212861,27552,240413,202266,true,true,8
+task_107,run_task_107_r02,MAX_STEPS,false,true,REGRESSION_FAILED,15,21,309773,27553,337326,235027,true,true,4
+task_108,run_task_108_r02,MAX_STEPS,false,true,REGRESSION_FAILED,15,27,242866,25584,268450,200227,true,true,5

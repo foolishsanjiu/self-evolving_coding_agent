@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "exp-baseline-v2-train-v1",
+  "purpose": "Collect fixed-policy Train-only failure evidence without exposing Validation or Test",
+  "git_commit": "e02b7ece0d0494cf89b42b975a1f601395ca28f7",
+  "execution_window_utc": {
+    "started_at": "2026-09-02T07:19:43.6557470Z",
+    "finished_at": "2026-09-02T07:50:51.1559130Z"
+  },
+  "benchmark": {
+    "root": "benchmarks-v2",
+    "version": "2.0",
+    "manifest_hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6",
+    "splits": [
+      "train"
+    ],
+    "task_ids": [
+      "task_101",
+      "task_102",
+      "task_103",
+      "task_104",
+      "task_105",
+      "task_106",
+      "task_107",
+      "task_108"
+    ]
+  },
+  "runtime": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "temperature": 0.1,
+    "docker_desktop_version": "4.88.1",
+    "docker_server_version": "29.7.2",
+    "sandbox_image": "evodev-python:3.11",
+    "sandbox_digest": "sha256:52b485a7b17bb160572782f342398329285ee45654cfb560c83b40cab2b065c3",
+    "tool_provider": "mcp-devtools-v1",
+    "tool_catalog_hash": "6b9879a000c06d27b75fbc5c46d95a41268fab4e9a3bb60fd0866178304ab3c2",
+    "policy_version": "fixed-react-v1",
+    "policy_hash": "45cc1142fee0fc096d587dcb265bec789687b63242bc979aa341ca23a3762947",
+    "max_react_steps": 15,
+    "context_budget": 60000
+  },
+  "experience": {
+    "enabled": false,
+    "version": "none",
+    "content_hash": "140bedbf9c3f6d56a9846d2ba7088798683f4da0c248231336e6a05679e4fdfe"
+  },
+  "repetitions_per_task": 2,
+  "paid_agent_calls": 16,
+  "selective_reruns": false,
+  "run_ids": [
+    "run_task_101_r01",
+    "run_task_102_r01",
+    "run_task_103_r01",
+    "run_task_104_r01",
+    "run_task_105_r01",
+    "run_task_106_r01",
+    "run_task_107_r01",
+    "run_task_108_r01",
+    "run_task_101_r02",
+    "run_task_102_r02",
+    "run_task_103_r02",
+    "run_task_104_r02",
+    "run_task_105_r02",
+    "run_task_106_r02",
+    "run_task_107_r02",
+    "run_task_108_r02"
+  ],
+  "pricing_snapshot": {
+    "checked_on": "2026-09-02",
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "currency": "USD",
+    "rate_window": "peak",
+    "cache_miss_input_per_million": 0.44,
+    "output_per_million": 1.32,
+    "authorization_ceiling": 2.0,
+    "actual_billed_cost": null,
+    "actual_billed_cost_note": "The provider invoice is not stored; summary.json reports a conservative all-cache-miss estimate."
+  }
+}

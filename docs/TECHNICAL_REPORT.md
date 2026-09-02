@@ -405,8 +405,27 @@ evodev-baseline --project-root . --benchmark-root benchmarks-v2 `
 `deepseek-v4-flash` cache-miss 价格估算，低峰约 0.3411 美元、峰值约 0.6822 美元；再按
 Token 翻倍的峰值压力场景为 1.3644 美元，因此单轮授权上限固定为 2.00 美元。实际账单以供应商
 用量和执行时有效价格为准，正式运行前必须重新核价、完成 Docker 与环境身份预检，并获得单独的
-付费授权。机器可读配置位于 `configs/experiments/benchmark-v2-train-baseline-v1.yaml`；当前预案
-尚未执行，不能据此报告 V2 解决率或策略结论。
+付费授权。机器可读配置位于 `configs/experiments/benchmark-v2-train-baseline-v1.yaml`；该预案
+随后于 Git Commit `e02b7ece0d0494cf89b42b975a1f601395ca28f7` 上完整执行，16/16 个
+预定 Run ID 均进入独立评测，没有选择性补跑。
+
+| 指标 | V2 Train Baseline |
+|---|---:|
+| Resolved | 6 / 16 |
+| Resolution Rate | 37.5% |
+| 两次均解决的任务 | 3 / 8 |
+| Average ReAct Steps | 13.5625 |
+| Average Tool Calls | 20.875 |
+| Average Tokens | 157,204.6875 |
+| Average Latency | 111.891 s |
+| Search Before Edit | 75% |
+| Test Inspection Before Edit | 100% |
+
+task_101、102、104 均为 2/2 Resolved，task_103、105、106、107、108 均为 0/2，说明五道
+Train 题提供了跨重复稳定的失败证据。16 次轨迹合计 2,515,275 tokens；按执行时段峰值且全部
+input cache miss 保守估算为 1.3054 USD，低于 2.00 USD 授权上限，但不作为实际供应商账单。
+冻结条件、逐次指标与边界位于 `experiments/benchmark-v2-train-baseline-v1/`。Validation/Test
+未访问，因此本轮不能说明演化收益，也不是正式最终性能分数。
 
 ## Independent Evaluation 与 Baseline
 

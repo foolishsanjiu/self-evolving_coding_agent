@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0",
+  "experiment_id": "exp-baseline-v2-train-v1",
+  "total_attempts": 16,
+  "valid_evaluated_attempts": 16,
+  "resolved_attempts": 6,
+  "resolution_rate": 0.375,
+  "average_react_steps": 13.5625,
+  "average_tool_calls": 20.875,
+  "average_tokens": 157204.6875,
+  "average_latency_ms": 111891.375,
+  "search_before_edit_rate": 0.75,
+  "test_inspection_before_edit_rate": 1.0,
+  "average_patch_attempts": 5.0,
+  "token_usage": {
+    "input_tokens": 2289513,
+    "output_tokens": 225762,
+    "total_tokens": 2515275,
+    "off_peak_all_cache_miss_estimate_usd": 0.6527,
+    "peak_all_cache_miss_estimate_usd": 1.3054,
+    "actual_billed_cost": null
+  },
+  "agent_status_distribution": {
+    "SUCCESS": 6,
+    "MAX_STEPS": 10
+  },
+  "failure_distribution": {
+    "RESOLVED": 6,
+    "TARGET_TEST_FAILED": 4,
+    "REGRESSION_FAILED": 4,
+    "SYNTAX_ERROR": 1,
+    "AGENT_MAX_STEPS": 1
+  },
+  "task_outcomes": [
+    {
+      "task_id": "task_101",
+      "attempts": 2,
+      "resolved": 2,
+      "resolution_rate": 1.0,
+      "failure_types": []
+    },
+    {
+      "task_id": "task_102",
+      "attempts": 2,
+      "resolved": 2,
+      "resolution_rate": 1.0,
+      "failure_types": []
+    },
+    {
+      "task_id": "task_103",
+      "attempts": 2,
+      "resolved": 0,
+      "resolution_rate": 0.0,
+      "failure_types": [
+        "TARGET_TEST_FAILED",
+        "TARGET_TEST_FAILED"
+      ]
+    },
+    {
+      "task_id": "task_104",
+      "attempts": 2,
+      "resolved": 2,
+      "resolution_rate": 1.0,
+      "failure_types": []
+    },
+    {
+      "task_id": "task_105",
+      "attempts": 2,
+      "resolved": 0,
+      "resolution_rate": 0.0,
+      "failure_types": [
+        "TARGET_TEST_FAILED",
+        "REGRESSION_FAILED"
+      ]
+    },
+    {
+      "task_id": "task_106",
+      "attempts": 2,
+      "resolved": 0,
+      "resolution_rate": 0.0,
+      "failure_types": [
+        "TARGET_TEST_FAILED",
+        "AGENT_MAX_STEPS"
+      ]
+    },
+    {
+      "task_id": "task_107",
+      "attempts": 2,
+      "resolved": 0,
+      "resolution_rate": 0.0,
+      "failure_types": [
+        "REGRESSION_FAILED",
+        "REGRESSION_FAILED"
+      ]
+    },
+    {
+      "task_id": "task_108",
+      "attempts": 2,
+      "resolved": 0,
+      "resolution_rate": 0.0,
+      "failure_types": [
+        "SYNTAX_ERROR",
+        "REGRESSION_FAILED"
+      ]
+    }
+  ],
+  "conclusion": {
+    "baseline_difficulty": "The fixed baseline resolved 6 of 16 attempts. Five of eight Train tasks remained unresolved in both repetitions, providing substantial failure evidence for later evolution.",
+    "repeat_consistency": "Attempt-level outcomes were stable across both repetitions: task_101, task_102, and task_104 resolved twice; all other tasks failed twice.",
+    "interpretation_boundary": "This is a Train-only baseline. It does not measure evolution gain and is not a Validation or Test score."
+  }
+}

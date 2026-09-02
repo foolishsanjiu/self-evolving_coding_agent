@@ -28,10 +28,11 @@ Template 唯一且无跨 Split 泄漏，逐题 Agent Workspace 不包含 `task.y
 Gold Patch。正式冻结证据见 [`formal-qa.json`](formal-qa.json)，Manifest Hash 为
 `c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6`。
 
-本次冻结没有运行 Coding Agent 或产生付费调用，因此不提供新的策略效果结论。
+Benchmark 库存冻结阶段没有运行 Coding Agent 或产生付费调用，因此该阶段不提供策略效果结论。
 
-下一阶段的正式 Baseline 已固化为只运行 Train：task_101–108 每题重复 2 次，共 16 次固定
-Policy 调用，不允许选择性补跑。Validation 与 Test 不参与本轮，也不用于调参。当前仅完成
-离线预案，尚未产生调用或结果；执行前仍需单独的付费授权和 Docker 预检。详见
-[`BENCHMARK_V2_BASELINE_PLAN.md`](../docs/BENCHMARK_V2_BASELINE_PLAN.md) 与
-[`benchmark-v2-train-baseline-v1.yaml`](../configs/experiments/benchmark-v2-train-baseline-v1.yaml)。
+正式 Baseline 只运行 Train：task_101–108 每题重复 2 次，共 16 次固定 Policy 调用，不允许
+选择性补跑。16/16 均完成独立评测，6/16 Resolved（37.5%）；task_101、102、104 均为
+2/2，其余五题均为 0/2。Validation 与 Test 未参与本轮，也未用于调参。详见
+[`BENCHMARK_V2_BASELINE_PLAN.md`](../docs/BENCHMARK_V2_BASELINE_PLAN.md)、
+[`benchmark-v2-train-baseline-v1.yaml`](../configs/experiments/benchmark-v2-train-baseline-v1.yaml) 与
+[`benchmark-v2-train-baseline-v1`](../experiments/benchmark-v2-train-baseline-v1/README.md)。

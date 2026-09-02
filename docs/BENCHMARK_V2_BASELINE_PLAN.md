@@ -63,10 +63,16 @@ Image Digest、Tool Catalog Hash、模型配置和 16 个 Run ID，再启动正�
 前必须重新核对官方价格，实际记录以供应商报告的用量为准。若预计超过 2.00 USD，应停止并重新
 申请授权。
 
-## 完成判据与当前状态
+## 完成判据与执行结果
 
 正式运行完成后应冻结 Experiment Manifest、16 份 Trajectory、独立评测结果与汇总，并验证每个
 预定 Run ID 恰好出现一次。Agent 错误与失败结果同样进入汇总，不因结果不理想而补跑。
 
-当前只完成离线预案和静态门禁验证：付费调用为 0，Docker 未参与，尚无 V2 Baseline 结果或性能
-结论。下一阶段必须在用户明确授权付费后才能执行。
+该预案于 2026-09-02 获得单独付费授权后完整执行：16/16 个预定 Run ID 均产生有效独立评测，
+没有选择性补跑。结果为 6/16 Resolved（37.5%）；task_101、102、104 均为 2/2，其余五题均为
+0/2。实际记录 2,289,513 input tokens 与 225,762 output tokens；按峰值且全部 input cache miss
+保守估算为 1.3054 USD，低于 2.00 USD 上限，实际账单以供应商为准。
+
+公开冻结结果位于
+[`experiments/benchmark-v2-train-baseline-v1`](../experiments/benchmark-v2-train-baseline-v1/README.md)。
+该结果只建立 Train Baseline 与失败证据，不能解释为演化收益，也不提供 Validation/Test 成绩。
