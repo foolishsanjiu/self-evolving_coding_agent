@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "experiment_version": "benchmark-v2-experience-validation-paid-v1",
+  "execution_contract_commit": "789f83a",
+  "controlled_conditions_verified": true,
+  "selective_reruns_performed": false,
+  "total_paid_calls": 20,
+  "arms": {
+    "baseline": {
+      "experiment_id": "exp-baseline-v2-validation-v1",
+      "resolved": 4,
+      "valid_attempts": 10,
+      "resolution_rate": 0.4,
+      "total_model_turns": 148,
+      "input_tokens": 1383223,
+      "output_tokens": 149525,
+      "total_tokens": 1532748,
+      "conservative_off_peak_cost_usd": 0.403
+    },
+    "relevant": {
+      "experiment_id": "exp-experience-v2-validation-v2",
+      "resolved": 3,
+      "valid_attempts": 10,
+      "resolution_rate": 0.3,
+      "resolution_delta_vs_baseline": -0.1,
+      "total_model_turns": 146,
+      "input_tokens": 1389835,
+      "output_tokens": 130085,
+      "total_tokens": 1519920,
+      "conservative_off_peak_cost_usd": 0.3916,
+      "retrieval_hits": 8,
+      "retrieval_hit_rate": 0.8,
+      "measurable_retrievals": 2,
+      "utilized_retrievals": 0,
+      "experience_utilization_rate": 0.0
+    }
+  },
+  "paired_outcomes": {
+    "pairs": 10,
+    "baseline_wins": 1,
+    "relevant_wins": 0,
+    "ties": 9,
+    "two_sided_exact_mcnemar_p": 1.0,
+    "experience_hit_pairs": {
+      "pairs": 8,
+      "baseline_resolved": 2,
+      "relevant_resolved": 2,
+      "discordant_pairs": 0
+    },
+    "experience_miss_pairs": {
+      "pairs": 2,
+      "baseline_resolved": 2,
+      "relevant_resolved": 1,
+      "discordant_pairs": 1
+    }
+  },
+  "cost": {
+    "pricing_period": "off_peak",
+    "all_input_assumed_cache_miss": true,
+    "conservative_total_usd": 0.7946,
+    "authorization_ceiling_usd": 2.0,
+    "supplier_invoice_available": false
+  },
+  "interpretation": {
+    "resolution_uplift_demonstrated": false,
+    "resolution_degradation_attributable_to_experience": false,
+    "retrieval_coverage_demonstrated": true,
+    "behavioral_utilization_demonstrated": false,
+    "conclusion": "Retrieval reached four of five tasks, but the frozen measurable behavior targets were never newly observed. The only discordant outcome occurred on the task with no retrieved Experience, so the aggregate decrease cannot be attributed to Experience."
+  }
+}

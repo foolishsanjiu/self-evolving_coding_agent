@@ -1,0 +1,21 @@
+{
+  "experiment_id": "exp-baseline-v2-validation-v1",
+  "total_attempts": 10,
+  "valid_evaluated_attempts": 10,
+  "resolved_attempts": 4,
+  "resolution_rate": 0.4,
+  "average_react_steps": 14.8,
+  "average_tool_calls": 22.2,
+  "average_tokens": 153274.8,
+  "average_latency_ms": 100855.9,
+  "search_before_edit_rate": 1.0,
+  "test_inspection_before_edit_rate": 1.0,
+  "average_patch_attempts": 6.2,
+  "failure_distribution": {
+    "PATCH_APPLY_FAILED": 2,
+    "RESOLVED": 4,
+    "TARGET_TEST_FAILED": 2,
+    "REGRESSION_FAILED": 1,
+    "AGENT_MAX_STEPS": 1
+  }
+}

@@ -30,3 +30,8 @@
 原始输出见 [retrieval-audit.json](retrieval-audit.json)，机器可读判定见
 [manifest.json](manifest.json)，审计前门槛见
 [`benchmark-v2-experience-validation-v2.yaml`](../../configs/experiments/benchmark-v2-experience-validation-v2.yaml)。
+
+后续状态：冻结的 20-call Baseline/Relevant 对照已完成，结果位于
+[`benchmark-v2-experience-validation-paid-v1`](../benchmark-v2-experience-validation-paid-v1/README.md)。
+Baseline 为 4/10、Relevant 为 3/10；检索命中 8/10，但行为利用为 0/2，未证明净收益。
+本 Gate 和 Retriever 继续保持锁定。

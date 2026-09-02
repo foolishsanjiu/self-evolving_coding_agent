@@ -512,6 +512,34 @@ Experience 改善了 Agent 成功率。
 Docker，也未访问 hidden tests、Gold Patch 或 Test split。若另行获得明确付费授权，后续固定为
 5 题 × 2 repetitions × Baseline/Relevant 两个 arms，共 20 次调用，禁止选择性补跑。
 
+### Benchmark v2 Experience 正式 Validation 对照
+
+用户明确授权后，执行条件、官方价格、2.00 USD 上限和两条命令先冻结于 Git `789f83a`。
+DeepSeek `/models` 确认 `deepseek-v4-flash` 可用，Docker Desktop 29.7.2 可用；Baseline 和
+Relevant preflight 均固定 5 题 × 2 次、`fixed-react-v1`、temperature 0.1、15 步、60,000
+字符上下文、相同 Tool Catalog、Sandbox Digest 和 Benchmark Hash。代码级
+`assert_controlled_conditions` 验证除 Experience 字段外没有差异。
+
+20/20 runs 均完成独立评测且全部有效，没有选择性补跑。Baseline 为 4/10 Resolved（40%），
+Relevant 为 3/10（30%），表面 delta 为 -10 pp。配对结果为 Baseline win 1、Relevant win 0、
+tie 9，双侧 exact McNemar p=1.0。唯一不一致是 task_110 r01，而该题恰好是 v003 未检索到
+Experience 的任务；四个检索命中任务共 8 对，Baseline 与 Relevant 都是 2/8，零个 discordant
+pair。因此没有证据证明 Experience 提升成功率，也不能把总体下降归因为 Experience。
+
+Relevant 的 Retrieval Hit 为 8/10，但只有 2 个 run 含 Trace Analyzer 可测的 behavior target，
+且相对 Baseline 的新增目标行为为 0/2，利用率 0%。这把瓶颈从 Retrieval Coverage 进一步定位到
+Behavioral Utilization：Train-only category 修复让经验能够被取回，但当前经验表示与 Prompt
+消费机制没有产生可观察的新行为。
+
+两组合计 2,773,058 input 和 279,610 output tokens。执行发生在 DeepSeek 非峰时段，按所有
+input 均为 cache miss 的公开单价保守估算 0.7946 USD，低于授权上限；该值不是供应商账单。
+冻结摘要、逐次结果、原始 Hash 和比较位于
+`experiments/benchmark-v2-experience-validation-paid-v1/`。完整轨迹与 Docker 输出仅在本地
+gitignored 目录保存；Test split 未运行，hidden tests 与 Gold Patch 未暴露给 Agent。
+
+本阶段不接受 Experience 净收益假设，也不依据 Validation 继续修改 Retriever、v003 或补跑。
+若继续研究，应只在 Train 创建新的可执行/可测经验消费机制，并使用新的实验版本重新立项。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

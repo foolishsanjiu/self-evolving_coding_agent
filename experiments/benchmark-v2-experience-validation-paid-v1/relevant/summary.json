@@ -1,0 +1,21 @@
+{
+  "experiment_id": "exp-experience-v2-validation-v2",
+  "total_attempts": 10,
+  "valid_evaluated_attempts": 10,
+  "resolved_attempts": 3,
+  "resolution_rate": 0.3,
+  "average_react_steps": 14.6,
+  "average_tool_calls": 21.3,
+  "average_tokens": 151992.0,
+  "average_latency_ms": 90739.5,
+  "search_before_edit_rate": 1.0,
+  "test_inspection_before_edit_rate": 1.0,
+  "average_patch_attempts": 5.5,
+  "failure_distribution": {
+    "PATCH_APPLY_FAILED": 2,
+    "AGENT_MAX_STEPS": 2,
+    "RESOLVED": 3,
+    "TARGET_TEST_FAILED": 1,
+    "REGRESSION_FAILED": 2
+  }
+}

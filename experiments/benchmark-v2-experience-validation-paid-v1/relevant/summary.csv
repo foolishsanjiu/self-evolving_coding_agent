@@ -1,0 +1,11 @@
+task_id,agent_run_id,resolved,valid_evaluation,failure_type,react_steps,tool_calls,tokens,latency_ms,searched_before_edit,inspected_tests_before_edit,patch_attempts
+task_109,run_task_109_r01,False,True,PATCH_APPLY_FAILED,11,17,76478,54073,True,True,4
+task_110,run_task_110_r01,False,True,AGENT_MAX_STEPS,15,21,118318,70064,True,True,9
+task_111,run_task_111_r01,True,True,RESOLVED,15,21,164263,93287,True,True,6
+task_112,run_task_112_r01,False,True,TARGET_TEST_FAILED,15,21,228130,134833,True,True,5
+task_113,run_task_113_r01,False,True,REGRESSION_FAILED,15,23,129219,72520,True,True,6
+task_109,run_task_109_r02,False,True,PATCH_APPLY_FAILED,15,23,171712,112711,True,True,5
+task_110,run_task_110_r02,True,True,RESOLVED,15,22,166246,95287,True,True,5
+task_111,run_task_111_r02,True,True,RESOLVED,15,22,170584,118022,True,True,8
+task_112,run_task_112_r02,False,True,AGENT_MAX_STEPS,15,19,161391,92949,True,True,3
+task_113,run_task_113_r02,False,True,REGRESSION_FAILED,15,24,133579,63649,True,True,4

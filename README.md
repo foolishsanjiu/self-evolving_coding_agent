@@ -89,8 +89,11 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 后续 Validation 对照实验验证。`experience-v002` 的首次公开元数据预检只命中 1/5，因此付费
 实验在 API 前阻断；随后仅用 Train 来源修复元数据契约并冻结 `experience-v003`。在审计门槛与
 Retriever 身份预先提交后，v003 的唯一一次 Validation 公开元数据审计命中 4/5、使用 6 条不同
-Experience，单题最大注入 1,913 字符，达到预设门槛。Retriever 与快照现已锁定；该结果只允许
-申请后续 20-call 付费对照授权，尚无 Validation 性能结论。
+Experience，单题最大注入 1,913 字符，达到预设门槛。随后冻结并执行 20-call 正式对照：Baseline
+为 4/10，Relevant 为 3/10；四个检索命中任务的配对成功分布完全相同，唯一差异出现在未命中
+经验的 task_110。检索命中率为 80%，但可测行为利用率为 0%，因此不能证明 Experience 带来
+净收益，也不能把总体 -10 pp 归因于 Experience。Retriever 与快照保持锁定，不从 Validation
+继续调参。
 
 ## 工程亮点
 
@@ -101,7 +104,7 @@ Experience，单题最大注入 1,913 字符，达到预设门槛。Retriever �
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：318 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：321 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -197,8 +200,8 @@ EvoDev/
 - Final Test Set 只有 3 个 Python 任务，不宣称统计显著性或通用 Coding 能力；
 - V2 Pilot 只有 4 题 × 2 Policy × 1 次重复，不能作为策略优劣或能力提升证据；
 - 成功率改善集中在 `task_010`，尚未完成 SWE-bench 或大型真实仓库评测；
-- v1 Final 使用的 Experience 快照只有一个 Train 来源；新 V2 快照含 7 条经验，但尚未通过
-  Validation 对照验证其净收益，Train 可验证的跨任务类别也只有一个；
+- v1 Final 使用的 Experience 快照只有一个 Train 来源；V2 的 20-call Validation 对照未证明
+  新快照带来净收益，80% 检索命中尚未转化为可测行为利用；
 - Policy Search Space 人工限制为三个字段，没有进行模型微调；
 - B、C、D 在 Primary Metric 上并列，尚无 Experience 与 Policy 额外互补增益的证据；
 - Docker Sandbox 面向受控 Coding Task，不应视为恶意代码的完整安全边界。
@@ -227,6 +230,7 @@ EvoDev/
 - [Benchmark v2 Train Experience 元数据修复](experiments/benchmark-v2-experience-metadata-v1/README.md)
 - [Benchmark v2 Experience v003 快照](experiences/experience-v003.json)
 - [Benchmark v2 Experience v003 Validation Gate](experiments/benchmark-v2-experience-validation-v2/README.md)
+- [Benchmark v2 Experience Validation 付费对照](experiments/benchmark-v2-experience-validation-paid-v1/README.md)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

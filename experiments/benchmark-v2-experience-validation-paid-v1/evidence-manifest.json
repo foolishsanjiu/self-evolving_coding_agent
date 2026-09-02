@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "execution_contract": "configs/experiments/benchmark-v2-experience-validation-paid-v1.yaml",
+  "execution_contract_commit": "789f83a",
+  "raw_evidence_retention": "local_only_gitignored",
+  "raw_artifacts": {
+    "baseline_manifest": {
+      "path": "evaluation_runs/exp-baseline-v2-validation-v1/manifest.json",
+      "sha256": "47a9cfdda5b8265703bf56fb7ff13f79585305279658cfcc37736a20234c1d2b"
+    },
+    "baseline_summary": {
+      "path": "evaluation_runs/exp-baseline-v2-validation-v1/summary.json",
+      "sha256": "97df1427965029fa34d451d83f027792774456651595c3b065365c10d9234824"
+    },
+    "baseline_csv": {
+      "path": "evaluation_runs/exp-baseline-v2-validation-v1/summary.csv",
+      "sha256": "ba771b58ebc3e45326cb14ef0dfa0d53871a8f657905af389fa8e90b0479e0ed"
+    },
+    "relevant_manifest": {
+      "path": "evaluation_runs/exp-experience-v2-validation-v2/manifest.json",
+      "sha256": "aaae75d7b46bd22aa7989687f483d2c05cfb937601d6d992e4ecee3e199f853f"
+    },
+    "relevant_summary": {
+      "path": "evaluation_runs/exp-experience-v2-validation-v2/summary.json",
+      "sha256": "73321436b7472cc46741872b5464870888698b2dc1da2d126fad53f4d2ae46e8"
+    },
+    "relevant_csv": {
+      "path": "evaluation_runs/exp-experience-v2-validation-v2/summary.csv",
+      "sha256": "30a80fecf01d56aa705b52bf2bdd716583bf9d4f861760c58a1da2403dc7fbf7"
+    },
+    "relevant_experience_metrics": {
+      "path": "evaluation_runs/exp-experience-v2-validation-v2/experience_metrics.json",
+      "sha256": "a62f7bdaeefc53c61d67051a06b64475461d532d538891b2cbb66885cf1c86fd"
+    }
+  },
+  "execution_window": {
+    "started_at": "2026-09-02T10:27:49.452363+00:00",
+    "finished_at": "2026-09-02T11:01:50.455758+00:00",
+    "pricing_period": "off_peak"
+  },
+  "boundaries": {
+    "benchmark_split": "validation",
+    "test_split_accessed": false,
+    "gold_patch_exposed_to_agent": false,
+    "hidden_tests_exposed_to_agent": false,
+    "independent_evaluator_used": true
+  }
+}
