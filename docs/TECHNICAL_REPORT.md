@@ -322,9 +322,9 @@ Test Repair/Compatibility 3。四道 Pilot 题统一迁入 Train 候选；正式
 全部使用无 Agent 历史运行的新 Repository Template。
 
 机器可读蓝图位于 `configs/benchmarks/v2-blueprint.yaml`，逐题固定故障机制、Hidden Target、
-Regression Focus 和 Gold Patch 最小范围。当前 task_101–108、task_109–113 和 task_114–118
-已分别完成 Train、Validation 与 Test QA；正式完整库存 QA 与 Manifest 冻结仍是独立收尾阶段。
-在收尾完成前不生成 `benchmarks-v2/manifest.json`，也不把蓝图状态表述为已冻结 Benchmark。见
+Regression Focus 和 Gold Patch 最小范围。task_101–108、task_109–113 和 task_114–118 已分别
+完成 Train、Validation 与 Test QA，并在后续完整库存 QA 通过后生成正式
+`benchmarks-v2/manifest.json`。最终蓝图状态为 `benchmark_frozen`，完整任务表见
 `docs/BENCHMARK_V2_BLUEPRINT.md`。
 
 ### Benchmark v2 Train 实现与离线 QA
@@ -368,8 +368,22 @@ QA 使用独立临时根重复 5 轮，5/5 轮均为 21/21 通过，其中包含
 失败和 Semaphore 释放路径。该阶段 Agent Runs 为 0，Paid Debugging 为 false；规范化任务树
 哈希和机器可读阶段结果位于 `benchmarks-v2/test-qa.json`。
 
-此时 18 道题均已完成各 Split 离线资格验证，但正式 Manifest 仍未生成；下一阶段需要执行完整
-库存、类别配额、跨 Split 模板隔离和全树哈希验证，再一次性冻结正式 V2。
+此时 18 道题均已完成各 Split 离线资格验证，随后进入完整库存冻结。
+
+### Benchmark v2 正式库存冻结
+
+`benchmarks-v2/benchmark.yaml` 固定 18 题、8/5/5 Split 和六类题目配额；通用
+`BenchmarkLoader` 验证 task_101–118 连续身份、18 个唯一 Repository Template、跨 Split 零
+泄漏，并按规范化 LF 内容计算逐题任务树 SHA-256。正式 `manifest.json` 的全局 Hash 为
+`c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6`。
+
+统一 `evodev-benchmark-qa --benchmark-root benchmarks-v2` 对 18/18 题再次确认原始 Hidden
+Evaluation 失败、Gold 后通过；完整库存测试还为每道题创建 Agent Workspace，确认私有评测资产
+不可见，并核对三份 Split QA 的 18 个 checksum 与 Manifest 完全一致。正式阶段证据位于
+`benchmarks-v2/formal-qa.json`。
+
+该阶段 Agent Runs 与付费调用均为 0，只能证明 Benchmark 的完整性、可判别性和隔离边界，不能
+证明 Baseline、Experience 或 Evolved Policy 在 V2 上的效果。
 
 ## Independent Evaluation 与 Baseline
 

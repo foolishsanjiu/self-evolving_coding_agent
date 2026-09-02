@@ -1,7 +1,7 @@
 schema_version: "1.0"
 benchmark_version: "2.0"
-status: blueprint_frozen
-implementation_stage: test_qualified
+status: benchmark_frozen
+implementation_stage: formal_frozen
 inventory:
   task_count: 18
   split_counts:

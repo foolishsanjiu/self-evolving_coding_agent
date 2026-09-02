@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "benchmark_version": "2.0",
+  "stage": "formal_frozen",
+  "formal_manifest_created": true,
+  "manifest_hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6",
+  "task_count": 18,
+  "split_counts": {
+    "train": 8,
+    "validation": 5,
+    "test": 5
+  },
+  "freeze_agent_runs": 0,
+  "freeze_paid_calls": 0,
+  "source_qa_records": [
+    "train-qa.json",
+    "validation-qa.json",
+    "test-qa.json"
+  ],
+  "qa": {
+    "split_records_verified": 3,
+    "task_checksums_verified": 18,
+    "public_original_passed": 18,
+    "hidden_original_failed": 18,
+    "hidden_gold_passed": 18,
+    "unified_benchmark_qa_rounds": 1,
+    "unified_hidden_original_failed": 18,
+    "unified_hidden_gold_passed": 18,
+    "repository_templates_unique": 18,
+    "cross_split_template_leaks": 0,
+    "incomplete_fix_rejections": {
+      "formal_split_records": 28,
+      "inherited_pilot_calibration": 8,
+      "total": 36
+    },
+    "independent_split_rounds": {
+      "train": 5,
+      "validation": 5,
+      "test": 5
+    }
+  }
+}

@@ -1,7 +1,8 @@
 # Benchmark v2 正式任务蓝图
 
-本蓝图冻结正式 Benchmark v2 的题目身份、Split、类别、难度和评测边界，但不代表 18 道题已经
-实现。机器可读规格位于 [`configs/benchmarks/v2-blueprint.yaml`](../configs/benchmarks/v2-blueprint.yaml)。
+本蓝图与正式 Manifest 共同冻结 Benchmark v2 的题目身份、Split、类别、难度、评测边界与任务树
+Checksum。18 道题均已实现并通过离线 QA。机器可读规格位于
+[`configs/benchmarks/v2-blueprint.yaml`](../configs/benchmarks/v2-blueprint.yaml)。
 
 ## 库存合同
 
@@ -51,12 +52,12 @@ Concurrency/Resource 2、Test Repair/Compatibility 3。全部题目为 Medium �
 5. Repository Template 不跨 Split，Hidden Tests 和 Gold Patch 不进入 Agent Workspace；
 6. Gold Patch 只覆盖蓝图声明的最小修改范围，不顺带重构相邻代码。
 
-正式 `benchmarks-v2/manifest.json` 只有在 18 道题全部实现并通过离线 QA 后才生成和冻结。
-在此之前，蓝图中的 `planned` 不得在 README 中写成已完成任务。
+18 道题已全部满足上述合同，正式 [`benchmarks-v2/manifest.json`](../benchmarks-v2/manifest.json)
+已经生成并冻结。后续任何题目内容变化都会导致 `BenchmarkLoader.verify_manifest()` 失败。
 
 ## 后续实施顺序
 
 1. **已完成**：构建并验证 Train task_105–108，同时把 task_101–104 迁入正式 Train；
 2. **已完成**：独立构建 Validation task_109–113，只做离线 Gold/Hidden QA；
 3. **已完成**：独立构建 Test task_114–118，只做离线 Gold/Hidden QA；
-4. 18 题完整库存 QA 通过后生成 Manifest，再讨论任何新的付费实验。
+4. **已完成**：18 题完整库存 QA 通过并生成 Manifest；任何新的付费实验仍需单独授权。

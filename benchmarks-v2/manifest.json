@@ -1,0 +1,146 @@
+{
+  "benchmark_version": "2.0",
+  "task_count": 18,
+  "split_counts": {
+    "train": 8,
+    "validation": 5,
+    "test": 5
+  },
+  "category_counts": {
+    "cross_module_bug": 4,
+    "state_data_flow": 3,
+    "error_resilience": 3,
+    "feature": 3,
+    "concurrency_resource": 2,
+    "test_repair_compatibility": 3
+  },
+  "tasks": [
+    {
+      "task_id": "task_101",
+      "split": "train",
+      "category": "cross_module_bug",
+      "repository_template": "product_view_cache_v2",
+      "checksum": "c81560bfe2c01c33a2bf4d8677cdd2a525213e67e0dc1ab302f5c48b08f1e2ea"
+    },
+    {
+      "task_id": "task_102",
+      "split": "train",
+      "category": "state_data_flow",
+      "repository_template": "opaque_cursor_paging_v2",
+      "checksum": "c5875d06b87e385de1a531b94c9c9dfe6c9d80c93c42cbac9611eb5cfee57040"
+    },
+    {
+      "task_id": "task_103",
+      "split": "train",
+      "category": "error_resilience",
+      "repository_template": "typed_config_precedence_v2",
+      "checksum": "da29262fa1bdcc6a7daeffca87f18b18e090bd530b4c239d3973b6dad08147e5"
+    },
+    {
+      "task_id": "task_104",
+      "split": "train",
+      "category": "state_data_flow",
+      "repository_template": "inventory_compensation_v2",
+      "checksum": "cd1e58af317aa85cec9334ab1039ae5133d8ce2e395af093d9fd6404eb81a09f"
+    },
+    {
+      "task_id": "task_105",
+      "split": "train",
+      "category": "feature",
+      "repository_template": "chunked_upload_assembler_v2",
+      "checksum": "87916285c0c70394f068a011e95cf0ae3051378f4b85364a18138b1fb35d4611"
+    },
+    {
+      "task_id": "task_106",
+      "split": "train",
+      "category": "cross_module_bug",
+      "repository_template": "subscription_proration_v2",
+      "checksum": "dc9b5a55bd62249ded64fbcc7be80765c16148845ef165bb32118a322c828966"
+    },
+    {
+      "task_id": "task_107",
+      "split": "train",
+      "category": "concurrency_resource",
+      "repository_template": "ordered_parallel_map_v2",
+      "checksum": "a046db4cdd6ed7c61093c94294805714304181830cad2caddeb042e0cc3de6eb"
+    },
+    {
+      "task_id": "task_108",
+      "split": "train",
+      "category": "test_repair_compatibility",
+      "repository_template": "transport_protocol_compat_v2",
+      "checksum": "2029620bbb6518827755b1752b8f7eec37e2cc6186968a62e2533354324e5f89"
+    },
+    {
+      "task_id": "task_109",
+      "split": "validation",
+      "category": "cross_module_bug",
+      "repository_template": "timezone_token_expiry_v2",
+      "checksum": "b0284c80139a3a9a28a4e693c1a2e2c0902a71243cc6cb0be9a992002b40c162"
+    },
+    {
+      "task_id": "task_110",
+      "split": "validation",
+      "category": "state_data_flow",
+      "repository_template": "contiguous_checkpoint_v2",
+      "checksum": "f4794c930a45911c28be317368641daec8e69544c0f3decef34f6f8efea63cf8"
+    },
+    {
+      "task_id": "task_111",
+      "split": "validation",
+      "category": "feature",
+      "repository_template": "conditional_http_cache_v2",
+      "checksum": "ff29a2f6275430e9ef39376d7d5b053b8faf735068cdf354c7417f30670884b0"
+    },
+    {
+      "task_id": "task_112",
+      "split": "validation",
+      "category": "error_resilience",
+      "repository_template": "cleanup_exception_chain_v2",
+      "checksum": "eda79dc2c4f50e48a669f8128a4d197924ec696f94c38fda6aaf8ffece93cb1b"
+    },
+    {
+      "task_id": "task_113",
+      "split": "validation",
+      "category": "test_repair_compatibility",
+      "repository_template": "versioned_serializer_compat_v2",
+      "checksum": "4ac19fc1ece643684dd85e6605996609ffaa2b2daad2f9da0c1b16b8f371076d"
+    },
+    {
+      "task_id": "task_114",
+      "split": "test",
+      "category": "cross_module_bug",
+      "repository_template": "hierarchical_permissions_v2",
+      "checksum": "a9e50351857e77b0131c0800acd60a321dec45ed76b1cd96cd7aea5f59113cb6"
+    },
+    {
+      "task_id": "task_115",
+      "split": "test",
+      "category": "feature",
+      "repository_template": "stable_dependency_order_v2",
+      "checksum": "5cea83ae6017f5954aa93fde9b87a33659facd82d7566f2b673f37ee5b4507c5"
+    },
+    {
+      "task_id": "task_116",
+      "split": "test",
+      "category": "error_resilience",
+      "repository_template": "transient_retry_policy_v2",
+      "checksum": "6a8b8efefde9e0233aef650404e0ec94dbf1e228de5e39facde52273a4bcafdf"
+    },
+    {
+      "task_id": "task_117",
+      "split": "test",
+      "category": "concurrency_resource",
+      "repository_template": "async_pool_cancellation_v2",
+      "checksum": "20200bc5acdd572aac00c0e9e2178c692ab6b57cbe3f0a74b6347c3822fba08d"
+    },
+    {
+      "task_id": "task_118",
+      "split": "test",
+      "category": "test_repair_compatibility",
+      "repository_template": "plugin_hook_compat_v2",
+      "checksum": "7dbd5673be03a9cb4434a3ea1570352146704320d3b2eff130970b44fe980d5a"
+    }
+  ],
+  "manifest_hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6"
+}

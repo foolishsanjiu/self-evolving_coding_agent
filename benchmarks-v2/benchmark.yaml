@@ -1,0 +1,13 @@
+benchmark_version: "2.0"
+task_count: 18
+split_counts:
+  train: 8
+  validation: 5
+  test: 5
+category_counts:
+  cross_module_bug: 4
+  state_data_flow: 3
+  feature: 3
+  error_resilience: 3
+  concurrency_resource: 2
+  test_repair_compatibility: 3

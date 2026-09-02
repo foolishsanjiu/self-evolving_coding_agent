@@ -1,8 +1,8 @@
 # Benchmark v2 Implementation Status
 
-该目录是正式 Benchmark v2 的分阶段实现目录。Train、Validation 与 Test 的 18 道题均已完成
-离线 QA；完整库存冻结尚未执行，因此这里暂不提供 `benchmark.yaml` 或 `manifest.json`，通用
-`BenchmarkLoader` 也不会把该目录误识别为完整 Benchmark。
+该目录是已冻结的正式 Benchmark v2：18 道题已完成分 Split QA 和统一库存 QA，
+`benchmark.yaml` 声明 8/5/5 Split 与类别配额，`manifest.json` 冻结每题任务树 checksum 和
+全局 Manifest Hash。通用 `BenchmarkLoader` 可直接加载和验证该版本。
 
 正式库存合同与逐题设计见：
 
@@ -23,4 +23,9 @@ Train 专项测试验证 8/8 Public 原始通过、8/8 Hidden 原始失败且 Go
 Gold 后通过，并拒绝 10/10 个不完整修复；完整专项 QA 独立重复 5/5 轮通过。该阶段未运行
 Agent、未使用付费调试，任务树哈希与阶段结果见 [`test-qa.json`](test-qa.json)。
 
-下一独立阶段将对 18 道题执行完整库存 QA，并在通过后生成和冻结正式 Manifest。
+统一 `evodev-benchmark-qa` 再次验证 18/18 原始 Hidden 失败且 Gold 后通过；18 个 Repository
+Template 唯一且无跨 Split 泄漏，逐题 Agent Workspace 不包含 `task.yaml`、Hidden Tests 或
+Gold Patch。正式冻结证据见 [`formal-qa.json`](formal-qa.json)，Manifest Hash 为
+`c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6`。
+
+本次冻结没有运行 Coding Agent 或产生付费调用，因此不提供新的策略效果结论。

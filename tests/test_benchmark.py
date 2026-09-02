@@ -94,8 +94,8 @@ def test_v2_blueprint_freezes_inventory_and_leakage_boundaries() -> None:
     split_counts = Counter(task["split"] for task in tasks)
     category_counts = Counter(task["category"] for task in tasks)
 
-    assert blueprint["status"] == "blueprint_frozen"
-    assert blueprint["implementation_stage"] == "test_qualified"
+    assert blueprint["status"] == "benchmark_frozen"
+    assert blueprint["implementation_stage"] == "formal_frozen"
     assert blueprint["inventory"]["task_count"] == len(tasks) == 18
     assert split_counts == blueprint["inventory"]["split_counts"]
     assert category_counts == blueprint["inventory"]["category_counts"]
