@@ -614,7 +614,7 @@ Train leave-one-task-out 仍为 1/8，task_101 选择与 v004 相同的两条 Ex
 最后一步 Patch；本阶段模型调用、Docker 与费用均为 0，不构成性能提升。完整归因和审计位于
 `experiments/benchmark-v2-experience-guardrails-v1/`。
 
-### Benchmark v2 Final Test 预案
+### Benchmark v2 Final Test
 
 在 v005 运行时机制验证与离线代码加固完成后，最终样本外评测冻结为两臂：无 Experience 的
 `fixed-react-v1` Baseline，以及 `experience-v005 + execution-contract-v2` 完整候选。两臂覆盖

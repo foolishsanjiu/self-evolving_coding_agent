@@ -263,7 +263,7 @@ EvoDev/
 - [Benchmark v2 Experience v005 Runtime Guardrails](experiments/benchmark-v2-experience-guardrails-v1/README.md)
 - [Benchmark v2 Experience v005 快照](experiences/experience-v005.json)
 - [Benchmark v2 Experience v004/v005 Runtime Guardrail Holdout](experiments/benchmark-v2-experience-guardrails-paid-v1/README.md)
-- [Benchmark v2 Final Test 冻结预案](experiments/benchmark-v2-final-test-v1/README.md)
+- [Benchmark v2 Final Test 终局结果](experiments/benchmark-v2-final-test-v1/README.md)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 
