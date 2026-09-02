@@ -38,6 +38,7 @@ Provenance 路径，不暴露本机目录；完整合格 Reflection 位于 [refl
 ## 结论边界
 
 本阶段证明了 Train failure → bounded evidence → structured Reflection → curated Experience →
-immutable snapshot 的链路可运行且可审计。它尚未证明 `experience-v002` 能提升解决率；下一步
-应先离线检查 V2 Validation 的检索覆盖，再以固定 Baseline/Relevant 对照运行 Validation。
-任何新模型调用仍需单独付费授权。
+immutable snapshot 的链路可运行且可审计。它尚未证明 `experience-v002` 能提升解决率。后续
+[Validation 离线预检](../benchmark-v2-experience-validation-plan-v1/README.md)只得到 1/5 检索命中，
+因此付费对照在 API 前被阻断；需先以 Train-only evidence 修复检索元数据契约。任何新模型调用
+仍需单独付费授权。

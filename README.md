@@ -86,7 +86,8 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 起点与失败证据，不构成演化收益或最终测试结论。9 个 eligible 失败已完成一次一 Run
 一调用的 Reflection：8 条通过安全校验，1 条因复制 evaluator-specific literals 被拒绝且
 未重试；经去重后冻结为 7 条 active Experience 的 `experience-v002`。其是否带来收益仍需
-后续 Validation 对照实验验证。
+后续 Validation 对照实验验证。公开元数据离线预检显示当前快照只命中 1/5 Validation 任务，
+因此付费对照实验已在 API 前阻断；下一阶段先用 Train-only evidence 修复检索元数据契约。
 
 ## 工程亮点
 
@@ -97,7 +98,7 @@ Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-ro
 - **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
 - **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
 - **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：310 项测试，Ruff 与依赖一致性检查通过。
+- **工程验证**：313 项测试，Ruff 与依赖一致性检查通过。
 
 ## 30 秒离线验证
 
@@ -143,6 +144,13 @@ evodev-baseline --project-root . --benchmark-root benchmarks-v2 `
 ```
 
 真实执行还必须增加 `--confirm-paid`，且只有收到单独的付费授权后才会进行。
+
+离线重放 V2 Experience 的 Validation 公共元数据检索，不调用模型或 Docker：
+
+```powershell
+evodev-experience-audit --project-root . --benchmark-root benchmarks-v2 `
+  --snapshot experiences/experience-v002.json
+```
 
 ## 项目结构
 
@@ -213,6 +221,7 @@ EvoDev/
 - [Benchmark v2 Train Failure Evidence](evolution/benchmark-v2/README.md)
 - [Benchmark v2 Train Reflection 结果](experiments/benchmark-v2-reflection-v1/README.md)
 - [Benchmark v2 Experience 快照](experiences/experience-v002.json)
+- [Benchmark v2 Experience Validation 预检](experiments/benchmark-v2-experience-validation-plan-v1/README.md)
 - [当前 Champion Policy](policies/policy-v003.yaml)
 - [Evolution State](evolution/evolution-v1/progress.json)
 

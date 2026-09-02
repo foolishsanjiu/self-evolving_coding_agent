@@ -459,6 +459,25 @@ V2 Reflection 入口在正式执行前补充 `--plan` 与 `--confirm-paid`：静
 完整调用记账与合格 Reflection 位于 `experiments/benchmark-v2-reflection-v1/`。本结果只证明
 Train→Reflection→Experience 链路完成，尚不代表 Validation 或 Test 性能提升。
 
+### Benchmark v2 Experience Validation 预检
+
+正式付费对照前，`evodev-experience-audit` 只使用 Validation 的公开 task metadata 和公开
+repository files 重放冻结检索，不读取 hidden tests、Gold Patch 或 Test split。`experience-v002`
+在 task_109–113 上只命中 task_113，覆盖率 1/5；该题注入 1 条 Experience、992 字符，其余
+四题 Relevant Prompt 与 Baseline 相同。完整确定性输出位于
+`experiments/benchmark-v2-experience-validation-plan-v1/retrieval-audit.json`。
+
+因此 5 题 × 2 repetitions × Baseline/Relevant 的 20-call 计划被标记为
+`blocked_before_paid_execution`，没有启动 Docker 或模型调用。现有
+`evodev-experience-experiment` 同时补齐 `--plan` 与 `--confirm-paid`，并去除 Experience
+Metrics 对 v1 Baseline 路径的硬编码；缺少确认时会在 Runner、Docker 和 API 之前退出。
+
+预检暴露的通用设计问题是 Experience 的 `task_types` 来自模型自由文本，而 Retriever 的类别
+强匹配依赖与 Benchmark category 完全一致。后续只能依据 Train source category 修复这一元数据
+契约，并以 Train leave-one-task-out 审计验证；不能根据本次 Validation 的具体题意修改关键词，
+否则会污染用于 Gate 的数据。机器可读计划位于
+`configs/experiments/benchmark-v2-experience-validation-v1.yaml`。
+
 ## Independent Evaluation 与 Baseline
 
 `IndependentEvaluator` 的 Agent 输入严格限制为 `task_id`、`final_patch` 和

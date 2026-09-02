@@ -1,0 +1,58 @@
+schema_version: "1.0"
+plan_id: benchmark-v2-experience-validation-v1
+status: blocked_before_paid_execution
+decision: do_not_execute_current_snapshot
+reason: >-
+  experience-v002 retrieves for only 1 of 5 Validation tasks. Four Relevant runs would have
+  identical prompts to Baseline, so a 20-call comparison would have weak treatment coverage.
+data_boundary:
+  benchmark_root: benchmarks-v2
+  benchmark_version: "2.0"
+  benchmark_hash: c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6
+  split: validation
+  public_metadata_only_for_offline_audit: true
+  hidden_tests_accessed: false
+  gold_patches_accessed: false
+  test_split_accessed: false
+experience:
+  snapshot: experiences/experience-v002.json
+  version: experience-v002
+  content_hash: 8eb3a05d7a1c7aa655688b74f050951234fb2133dc8183b1c2566c05aa1ae5dd
+  top_k: 3
+  max_chars: 2500
+offline_audit:
+  command: >-
+    evodev-experience-audit --project-root . --benchmark-root benchmarks-v2
+    --snapshot experiences/experience-v002.json
+  result: experiments/benchmark-v2-experience-validation-plan-v1/retrieval-audit.json
+  task_count: 5
+  hit_tasks: 1
+  hit_rate: 0.2
+future_controlled_design:
+  baseline_experiment_id: exp-baseline-v2-validation-v1
+  relevant_experiment_id: exp-experience-v2-validation-v1
+  repetitions_per_task: 2
+  tasks_per_arm: 5
+  baseline_paid_calls: 10
+  relevant_paid_calls: 10
+  total_paid_calls: 20
+  selective_reruns_allowed: false
+  baseline_plan_command: >-
+    evodev-baseline --project-root . --benchmark-root benchmarks-v2
+    --experiment-id exp-baseline-v2-validation-v1 --repetitions 2 --split validation --plan
+  relevant_plan_command: >-
+    evodev-experience-experiment --project-root . --benchmark-root benchmarks-v2
+    --snapshot experiences/experience-v002.json --mode relevant
+    --experiment-id exp-experience-v2-validation-v1 --repetitions 2
+    --baseline-manifest evaluation_runs/exp-baseline-v2-validation-v1/manifest.json --plan
+budget_projection_if_unblocked:
+  basis: experiments/benchmark-v2-train-baseline-v1/summary.json
+  projected_input_tokens: 2861891
+  projected_output_tokens: 282203
+  off_peak_all_cache_miss_usd: 0.8159
+  peak_all_cache_miss_usd: 1.6317
+  proposed_authorization_ceiling_usd: 2.0
+  note: Recheck official pricing and obtain new authorization before any execution.
+unblock_requirement: >-
+  Improve and freeze retrieval using Train-only evidence, then run this same public-metadata audit
+  once. Do not tune again from Validation results after paid execution begins.

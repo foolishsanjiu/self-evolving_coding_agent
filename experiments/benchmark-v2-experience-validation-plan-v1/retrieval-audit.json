@@ -1,0 +1,62 @@
+{
+  "benchmark_root": "benchmarks-v2",
+  "benchmark_version": "2.0",
+  "benchmark_hash": "c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6",
+  "snapshot_path": "experiences/experience-v002.json",
+  "experience_version": "experience-v002",
+  "experience_hash": "8eb3a05d7a1c7aa655688b74f050951234fb2133dc8183b1c2566c05aa1ae5dd",
+  "split": "validation",
+  "public_metadata_only": true,
+  "task_count": 5,
+  "hit_tasks": 1,
+  "hit_rate": 0.2,
+  "average_prompt_chars": 198.4,
+  "unique_selected_experiences": [
+    "exp_ea8b144e5c3f462a8b9e0f5c99a4772d"
+  ],
+  "tasks": [
+    {
+      "task_id": "task_109",
+      "category": "cross_module_bug",
+      "hit": false,
+      "prompt_chars": 0,
+      "selected": []
+    },
+    {
+      "task_id": "task_110",
+      "category": "state_data_flow",
+      "hit": false,
+      "prompt_chars": 0,
+      "selected": []
+    },
+    {
+      "task_id": "task_111",
+      "category": "feature",
+      "hit": false,
+      "prompt_chars": 0,
+      "selected": []
+    },
+    {
+      "task_id": "task_112",
+      "category": "error_resilience",
+      "hit": false,
+      "prompt_chars": 0,
+      "selected": []
+    },
+    {
+      "task_id": "task_113",
+      "category": "test_repair_compatibility",
+      "hit": true,
+      "prompt_chars": 992,
+      "selected": [
+        {
+          "experience_id": "exp_ea8b144e5c3f462a8b9e0f5c99a4772d",
+          "score": 1.79,
+          "task_type_match": 1.0,
+          "keyword_overlap": 0.0,
+          "trigger_match": 0.0
+        }
+      ]
+    }
+  ]
+}
