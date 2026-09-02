@@ -1,0 +1,71 @@
+schema_version: "1.0"
+execution_id: benchmark-v2-experience-validation-paid-v1
+status: authorized_before_execution
+authorization:
+  explicitly_authorized: true
+  authorized_scope: frozen_20_call_baseline_vs_relevant_validation_comparison
+  authorization_date: "2026-09-02"
+  maximum_projected_cost_usd: 2.0
+gate:
+  result: experiments/benchmark-v2-experience-validation-v2/manifest.json
+  decision: ready_for_paid_authorization
+  result_commit: 8d43b92b95069fe0b99f1352986c9e4db97bc415
+inputs:
+  benchmark_root: benchmarks-v2
+  benchmark_version: "2.0"
+  benchmark_hash: c5ad46d8963400db6f31eeee64a0abe5029eeb1a4cee8e308af6a3e5f6c92ee6
+  split: validation
+  tasks:
+    - task_109
+    - task_110
+    - task_111
+    - task_112
+    - task_113
+  repetitions_per_task: 2
+  selective_reruns_allowed: false
+controlled_conditions:
+  model: deepseek-v4-flash
+  model_version_at_preflight: DeepSeek-V4-Flash-0731
+  temperature: 0.1
+  policy_version: fixed-react-v1
+  policy_hash: 45cc1142fee0fc096d587dcb265bec789687b63242bc979aa341ca23a3762947
+  max_steps: 15
+  context_budget: 60000
+  baseline_experience_mode: disabled
+  relevant_experience_mode: relevant
+  relevant_snapshot: experiences/experience-v003.json
+  relevant_experience_hash: 53f8ce05c569b94f2969aacff64c43a799b19adec52cdad07a1f59611f1006e9
+pricing_preflight:
+  checked_at: "2026-09-02T10:25:22Z"
+  source: https://api-docs.deepseek.com/quick_start/pricing
+  period_at_check: off_peak
+  off_peak_cache_miss_input_usd_per_million: 0.22
+  off_peak_output_usd_per_million: 0.66
+  peak_cache_miss_input_usd_per_million: 0.44
+  peak_output_usd_per_million: 1.32
+  projected_input_tokens: 2861891
+  projected_output_tokens: 282203
+  projected_off_peak_all_cache_miss_usd: 0.8159
+  projected_peak_all_cache_miss_usd: 1.6317
+  projection_basis: experiments/benchmark-v2-train-baseline-v1/summary.json
+runtime_preflight:
+  docker_desktop_ready: true
+  docker_engine_version: 29.7.2
+  api_key_present: true
+  model_listed_by_provider: true
+execution:
+  baseline_experiment_id: exp-baseline-v2-validation-v1
+  relevant_experiment_id: exp-experience-v2-validation-v2
+  baseline_calls: 10
+  relevant_calls: 10
+  total_calls: 20
+  baseline_command: >-
+    evodev-baseline --project-root . --benchmark-root benchmarks-v2
+    --experiment-id exp-baseline-v2-validation-v1 --repetitions 2
+    --split validation --confirm-paid
+  relevant_command: >-
+    evodev-experience-experiment --project-root . --benchmark-root benchmarks-v2
+    --snapshot experiences/experience-v003.json --mode relevant
+    --experiment-id exp-experience-v2-validation-v2 --repetitions 2
+    --baseline-manifest evaluation_runs/exp-baseline-v2-validation-v1/manifest.json
+    --confirm-paid
