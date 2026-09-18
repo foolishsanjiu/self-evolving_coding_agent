@@ -1,270 +1,165 @@
-# EvoDev
+# 自进化代码修复 Agent / Self-Evolving Coding Agent
 
-**An Evaluation-Driven Self-Evolving ReAct Coding Agent**
+> **EvoDev** 是一个面向 Python 代码修复的 ReAct Coding Agent：它可以自主检索代码、生成补丁并运行测试；项目研究的重点不是训练模型，而是能否从历史失败轨迹中沉淀经验，再用独立评测判断这些经验是否真正改善后续行为。
 
-EvoDev 是一个面向软件开发任务的单 Agent 研究型项目。它在底层 LLM 固定、
-不进行模型微调的前提下，从失败轨迹中提取可复用 Experience，并在受约束的 Policy
-空间内通过独立评测完成候选生成、验证、晋升与回滚。
+[技术报告](docs/TECHNICAL_REPORT.md) · [V2 评测复盘](docs/evaluation_v2.md) · [环境与运行指南](docs/setup.md) · [V1 冻结结果](results/final-v1/summary.json)
 
-> 核心问题：Coding Agent 能否通过可审计的评测闭环改进自身行为，而不只是增加 Prompt 技巧？
+## 为什么做这个项目
 
-项目已完成 Final v3.0 的 14 项任务，包含可安装 Python 包、MCP 工具服务、Docker
-Sandbox、12 题受控 Benchmark、独立 Evaluator、Experience/Policy 演化，以及冻结的
-36-run A/B/C/D 最终实验。
+许多 Coding Agent Demo 只证明“模型会调用工具”，但没有回答三个更难的问题：代码是否真的修对、失败能否转化为后续经验、所谓改进能否经受样本外评测。EvoDev 围绕这三个问题构建了完整闭环：
 
-[完整技术报告](docs/TECHNICAL_REPORT.md) ·
-[最终实验数据](results/final-v1/summary.json) ·
-[冻结实验清单](results/final-v1/experiment_manifest.json)
+- **隔离代码执行**：ReAct Agent 通过 MCP / Native Tools 操作一次性 Git Workspace，测试在禁网、限资源的 Docker Sandbox 中运行。
+- **独立结果评测**：Evaluator 在全新 Workspace 中重新应用最终 Patch，并依次检查语法、隐藏目标测试和回归测试，避免 Agent 自己评自己。
+- **评测驱动演进**：只从 Train 失败中生成 Experience 或受约束 Policy Candidate，由 Validation Gate 决定接受、拒绝或回滚，Test 不参与调参。
 
-## 核心结果
+| 可核验结果 | 结论 |
+|---|---|
+| **V1 冻结实验** | 3 个 Test 任务，每题重复 3 次；Baseline 6/9，Experience、Policy、Combined 均为 8/9 |
+| **V2 更严格验证** | 5 个 Test 任务，每臂每题重复 2 次；Baseline 与 Candidate 均为 3/10，未观察到净成功率提升 |
+| **Runtime Guardrail** | Train-only 定向实验中，Patch 失败后未重读目标文件就实际继续 Patch 的次数由 9 降至 0 |
+| **工程验证** | 当前测试套件实际收集 **367 tests**；冻结的 V1 结果可离线复验 36 Runs、36 Evaluations 和 4 Figures |
 
-在冻结 Test Set 上，每个 Variant 对 3 个任务各运行 3 次：
+## 关键结果
+
+### V1：小规模探索性结果
+
+V1 Benchmark 共 12 个任务，按 6 Train / 3 Validation / 3 Test 划分。冻结 Test Set 包含 **3 个任务**，每个 Variant 对每题重复 **3 次**，因此每组共 **9 次运行**：
 
 | Variant | Experience | Evolved Policy | Resolved | Resolution Rate |
 |---|:---:|:---:|---:|---:|
-| A · Baseline | No | No | 6 / 9 | 66.67% |
-| B · Experience | Yes | No | 8 / 9 | 88.89% |
-| C · Policy | No | Yes | 8 / 9 | 88.89% |
-| D · Combined | Yes | Yes | 8 / 9 | 88.89% |
+| Baseline | No | No | 6 / 9 | 66.67% |
+| Experience | Yes | No | 8 / 9 | 88.89% |
+| Policy | No | Yes | 8 / 9 | 88.89% |
+| Combined | Yes | Yes | 8 / 9 | 88.89% |
 
-Experience 与 Policy 分别比 Baseline 提高 **22.22 个百分点**。B、C、D 在 Primary
-Metric 上并列，因此当前结果支持二者各自有效，但不足以证明额外的组合增益。
+V1 的组间结果支持 Experience 和 Policy **各自可能带来收益**，但没有证明组合使用存在额外增益。该结果只有 3 个独立 Test 任务，差异集中在 `task_010`，因此只能作为探索性信号，不能表述为统计显著或通用编码能力提升。
 
-![Final resolution rate](results/final-v1/figures/resolution_rate.png)
+![V1 frozen resolution rate](results/final-v1/figures/resolution_rate.png)
+
+### V2：更严格的验证与失败分析
+
+V2 将任务扩展为 18 个，按 8 Train / 5 Validation / 5 Test 划分，并加强隐藏测试、数据冻结和预注册运行约束。主要结论是：
+
+1. 更严格的 Validation 与 Final Test 中，没有观察到 Experience 对最终任务成功率的稳定净收益；V2 Final 的 Baseline 与 Candidate 均为 **3/10**。
+2. Failure Analysis 发现 Agent 会在 Patch 失败后，不重新读取当前文件就继续重复修改，并可能在最后编辑后没有留下测试步骤。
+3. 项目因此加入 Runtime Guard：Patch 失败后必须重新读取对应目标文件，最终修改后必须运行测试，并为固定步数预算保留验证窗口。
+4. 在预先冻结的 Train-only 定向实验中，实际执行的该类无效重复 Patch 从 **9 次降至 0 次**。
+5. 该结果证明的是 Guardrail 的阻断机制真实生效；由于样本很小、exact McNemar `p=1.0`，且成本没有改善，不能声称总体成功率得到因果提升。
+
+完整实验阶段、对照条件和证据索引见 [V2 评测复盘](docs/evaluation_v2.md)。
 
 ## 系统架构
 
 ```mermaid
 flowchart LR
-    subgraph Execution["Coding Execution"]
-        Task["Coding Task"] --> Agent["ReAct Agent"]
-        LLM["OpenAI-compatible LLM"] <--> Agent
-        Agent --> Provider["Tool Provider"]
-        Provider --> Native["Native Tools"]
-        Provider --> MCP["DevTools MCP Server"]
-        MCP --> Workspace["Disposable Git Workspace"]
-        MCP --> Sandbox["Docker Test Sandbox"]
-        Sandbox --> Workspace
-        Agent --> Trace["Versioned Trajectory"]
-    end
-
-    subgraph Research["Evaluation-Driven Evolution"]
-        Trace --> Evaluator["Independent Evaluator"]
-        Evaluator --> Evidence["Train Failure Evidence"]
-        Evidence --> Experience["Frozen Experience Snapshot"]
-        Evidence --> Proposal["Single-Field Policy Mutation"]
-        Proposal --> Gates["Schema + Smoke + Pairwise Gates"]
-        Validation["Validation Split"] --> Gates
-        Gates -->|Accept| Champion["Versioned Champion Policy"]
-        Gates -->|Reject| Archive["Auditable Rejection"]
-    end
-
-    Experience -.->|Experience context| Agent
-    Champion -.->|Runtime policy| Agent
-    Test["Frozen Test Split"] --> Final["A/B/C/D Final Experiment"]
-    Final --> Agent
-    Final --> Evaluator
-    Evaluator --> Results["Immutable Results + Hash Chain"]
+    Task["Coding Task"] --> Agent["ReAct Agent"]
+    Agent --> Tools["MCP / Native Tools"]
+    Tools --> Runtime["Git Workspace + Docker Sandbox"]
+    Runtime --> Eval["Independent Evaluator"]
+    Eval -->|Failure evidence| Improve["Experience / Policy Update"]
+    Improve --> Next["Next Task"]
+    Next --> Agent
+    Eval -->|Resolved| Result["Verified Patch"]
 ```
 
-数据边界固定为：
+一条任务的实际路径是：Agent 读取公开问题与仓库，通过结构化工具完成搜索、修改和测试；Evaluator 不信任 Agent 的最终回答，而是在干净环境中重新验证 Patch；只有 Train 失败可以进入经验提取或策略候选生成，候选必须通过外部门禁后才能用于后续任务。
 
-- **Train（6题）**：失败轨迹、Reflection、Experience 与 Mutation Evidence；
-- **Validation（3题）**：Champion/Candidate 的 3×3 Pairwise Gate；
-- **Test（3题）**：冻结后仅用于最终 A/B/C/D 实验；
-- Repository Template 不跨 Split，Hidden Tests 与 Gold Patch 对 Agent 不可见。
+## 关键设计
 
-当前公开结果仍基于冻结的 Benchmark v1。Benchmark Loader 与 Baseline、Experience、
-Evolution、Single Task、Final Experiment 入口已支持通过 `--benchmark-root` 选择独立版本；
-每个新版本使用 `benchmark.yaml` 声明版本、任务总数、Split 和类别配额，不覆盖 v1 历史数据。
-另有 4 题 [Benchmark v2 Pilot](benchmarks-pilot-v2/README.md) 完成离线 QA 与 8-call 付费
-难度校准；总体 3/8 Accepted，没有题目被两种策略同时解决。基于该结论，正式 V2 的
-8 道 Train、5 道 Validation 与 5 道 Test 均已完成分 Split 和统一库存离线 QA，正式 Manifest
-已冻结。正式 Baseline 预案已固定为仅运行 8 道 Train、每题重复 2 次，共 16 次付费调用；
-该轮现已完整执行并独立评测，6/16 Resolved（37.5%）：task_101、102、104 均为 2/2，
-其余五题均为 0/2。Validation/Test 仍保持未暴露；该结果只表示固定 Baseline 的 Train
-起点与失败证据，不构成演化收益或最终测试结论。9 个 eligible 失败已完成一次一 Run
-一调用的 Reflection：8 条通过安全校验，1 条因复制 evaluator-specific literals 被拒绝且
-未重试；经去重后冻结为 7 条 active Experience 的 `experience-v002`。其是否带来收益仍需
-后续 Validation 对照实验验证。`experience-v002` 的首次公开元数据预检只命中 1/5，因此付费
-实验在 API 前阻断；随后仅用 Train 来源修复元数据契约并冻结 `experience-v003`。在审计门槛与
-Retriever 身份预先提交后，v003 的唯一一次 Validation 公开元数据审计命中 4/5、使用 6 条不同
-Experience，单题最大注入 1,913 字符，达到预设门槛。随后冻结并执行 20-call 正式对照：Baseline
-为 4/10，Relevant 为 3/10；四个检索命中任务的配对成功分布完全相同，唯一差异出现在未命中
-经验的 task_110。检索命中率为 80%，但可测行为利用率为 0%，因此不能证明 Experience 带来
-净收益，也不能把总体 -10 pp 归因于 Experience。Retriever 与快照保持锁定，不从 Validation
-继续调参。随后回到 Train-only 路径生成 `experience-v004`：为 7/7 经验加入
-`Inspect → Act → Verify` 执行合同与 16 个公共轨迹目标，并以独立 consumer 保留 v003 Retriever
-Hash；该阶段解决“如何执行和测量经验”的工程合同问题，尚未产生新的性能结论。
-随后将唯一具有跨任务检索命中的 Train holdout `task_101` 预先冻结，执行 v003/v004 各 2 次
-定向对照。两臂均为 1/2 Accepted，两个配对结果互换；按同一套 v004 合同重算，v003 为 2/2
-遵循、v004 为 1/2，增量利用仍为 0/2。v004 平均 Tokens 少 23.9%、延迟少 27.7%，但样本仅
-一题两次，只能作为描述性效率信号，不能证明成功率、合同遵循或利用率改善。
-对四条公开轨迹的后续离线归因发现，v004 两次运行共 16 次 Patch、11 次
-`PATCH_APPLY_FAILED`，其中 8 次没有重新读取文件就继续 Patch；一条 Accepted 轨迹甚至没有
-运行测试。由此冻结 `experience-v005` 与 `execution-contract-v2`：Patch 失败后必须先重新读取，
-最后成功编辑后必须测试，并为固定步数保留验证窗口。该机制默认关闭且不改变 v001–v004；目前
-先通过离线 FakeLLM 验证，随后冻结并执行 v004/v005 的 4-call Train-only 定向机制测试。v005
-两次目标违规尝试均被 Runtime Guard 阻断，实际执行的“Patch 失败后未重读就继续 Patch”从
-v004 的 9 次降为 0 次，证明门禁真实生效。v005 为 2/2 Accepted、v004 为 1/2，但只有一个
-不一致配对（exact McNemar p=1.0），且 v005 平均 Tokens 高 42.68%，因此不能宣称成功率或效率
-已得到因果改善。后续代码审计进一步将失败恢复绑定到 Diff 中的目标文件：读取无关文件不再
-解除门禁；归因器也分别报告违规尝试、运行时阻断和实际执行。该加固没有新增模型调用，也没有
-改写冻结实验结论。
+### 显式 ReAct Coding Loop
 
-Benchmark v2 Final Test 已完成：最终只比较未使用 Experience 的 Baseline 与
-`experience-v005 + execution-contract-v2` 完整候选，覆盖全部 5 个 Test 任务、每臂每题 2 次，
-共 20 次预注册调用；20/20 均进入独立评测且无补跑。Baseline 与 Candidate 均为 3/10 Resolved，
-逐 Run 配对各胜 2 次、平 6 次，exact McNemar p=1.0。Candidate 检索和可测遵循均为 10/10，
-但增量利用仍为 0/10，因此终局结果不支持成功率或因果效率提升；Test 已关闭，不用于后续调参。
+Agent 在每一轮根据真实 Tool Observation 决定下一步，支持文件检索、分段读取、Unified Diff Patch、Git Diff 和受限 pytest。状态、上下文裁剪、工具错误与终止条件均由项目代码显式管理，便于测试和审计。
 
-## 工程亮点
+### 有边界的工具与沙箱
 
-- **完整 Coding Loop**：读取、搜索、补丁、Git Diff、测试与多轮错误恢复；
-- **统一工具层**：Native/MCP Provider 使用同一 Canonical Tool Contract；
-- **隔离执行**：Disposable Workspace + Docker，默认禁网、只读 rootfs 和资源限制；
-- **独立评测**：在 Fresh Workspace 中应用 Patch，分层执行 Target/Regression Tests；
-- **可审计演化**：Train-only Evidence、单字段 Mutation、Schema/Smoke/Pairwise Gate；
-- **防结果漂移**：Manifest、Policy、Experience、Summary 和 Figure 均带版本或 Hash；
-- **失败不回填**：最终实验禁止选择性补跑，`AGENT_ERROR` 作为有效失败保留；
-- **工程验证**：367 项测试，Ruff 与依赖一致性检查通过。
+Native 与 MCP Provider 共用同一 Tool Contract。模型不能执行任意 Shell；文件路径必须位于当前 Workspace，测试容器默认禁网、只读 rootfs、移除 Linux Capabilities，并限制 CPU、内存、PID 和超时。
 
-## 30 秒离线验证
+### 独立 Evaluator
 
-要求 Python 3.11。验证已提交的最终实验不需要 API Key、Docker 或网络：
+Evaluator 从原始仓库创建 Fresh Workspace，只应用最终 Patch，然后按 `Patch → Syntax → Hidden Target Tests → Hidden Regression Tests` 分层判定。任务失败与环境失败分别统计，失败运行不会因影响指标而被删除或选择性补跑。
+
+### Experience 与 Policy 演进
+
+Experience 是从 Train 失败中提取的结构化长期行为记忆，使用任务类别、关键词和 Trigger 做轻量检索；当前实现不是向量数据库 RAG。Policy 只允许修改三个受控字段，并依次经过 Schema、Smoke 和 Pairwise Validation Gate。解决率优先于 Token、步骤和延迟，成本下降不能覆盖质量退化。
+
+### 可复验而不是只展示成功案例
+
+运行轨迹记录公开的模型用量、Tool Call/Result、错误与最终 Patch，不保存私有思维链。Manifest 固定代码、Benchmark、模型配置、Sandbox、Policy、Experience 和 Run ID；V1 的 Summary、CSV、独立评估报告与图表可以离线重算和校验。
+
+## 技术栈
+
+| 方向 | 技术 |
+|---|---|
+| Agent | Python 3.11、ReAct、Pydantic、OpenAI-compatible API / DeepSeek |
+| Tool Use | MCP Python SDK、Native Tool Provider、Function Calling |
+| Execution | Git Disposable Workspace、Docker Sandbox、pytest |
+| Evaluation | Hidden Target / Regression Tests、Pairwise Gate、Manifest / SHA-256 |
+| Experience | SQLite、冻结 JSON Snapshot、结构化与词法检索 |
+| Engineering | Conda、pip、Ruff、Matplotlib、Git |
+
+## Quick Start
+
+以下路径只复验仓库中已提交的 V1 结果，**不需要 API Key、Docker 或网络，也不会产生模型费用**：
 
 ```powershell
 conda env create -f environment.yml
 conda activate evodev
-python -m pip install -r requirements-dev.txt
-python -m pip install -e .
+python -m pip install -e ".[dev]"
 
 evodev-final --project-root . --config configs/experiments/final-v1.yaml verify
 ```
 
-预期输出：
+预期关键输出：
 
 ```json
 {
-  "experiment_id": "final-v1",
   "verified_runs": 36,
   "verified_instances": 36,
   "verified_figures": 4,
-  "summary_matches": true,
-  "csv_matches": true,
   "valid": true
 }
 ```
 
-运行自动化测试与静态检查：
+完整的 Windows、Docker、密钥配置、测试命令和真实 Agent 运行方式见 [环境与运行指南](docs/setup.md)。
 
-```powershell
-python -m pytest
-python -m ruff check .
-python -m pip check
-evodev-benchmark-qa --benchmark-root benchmarks-v2
-```
+## Evaluation / Benchmark
 
-无需 Docker 或 API Key 即可检查 V2 Train Baseline 的冻结运行矩阵：
+| 版本 | 数据划分 | 最终评测 | 主要用途 |
+|---|---|---|---|
+| V1 | 6 Train / 3 Validation / 3 Test | 4 Variants × 3 Tasks × 3 Runs = 36 Runs | 验证执行、评测与 Experience/Policy 演进闭环 |
+| V2 | 8 Train / 5 Validation / 5 Test | 2 Arms × 5 Tasks × 2 Runs = 20 Runs | 提高任务难度，检验 Experience 泛化与 Runtime Guardrail |
 
-```powershell
-evodev-baseline --project-root . --benchmark-root benchmarks-v2 `
-  --experiment-id exp-baseline-v2-train-v1 --repetitions 2 --split train --plan
-```
+两版 Benchmark 都遵循以下边界：Repository Template 不跨 Split；Agent 看不到 Task YAML、Gold Patch 和 Hidden Tests；Validation 只用于选择候选；Test 冻结后不再用于调参；所有预注册运行无论成功或失败都进入独立评测。
 
-真实执行还必须增加 `--confirm-paid`，且只有收到单独的付费授权后才会进行。
-
-查看已冻结的 v003 Validation 公开元数据审计，不调用模型或 Docker，也不要重复该决策审计：
-
-```powershell
-Get-Content experiments/benchmark-v2-experience-validation-v2/manifest.json
-```
+当前结论边界也很明确：V1 和 V2 都是自建的小型 Python 修复集，尚未覆盖 SWE-bench、大型真实仓库、多语言或线上服务；V2 Final 未证明 Candidate 优于 Baseline；Docker Sandbox 也不应视为恶意代码的完整安全边界。
 
 ## 项目结构
 
 ```text
 EvoDev/
-├── src/evodev/          # ReAct Agent、LLM、Policy、Experience、Evaluation
+├── src/evodev/          # Agent、LLM、Tools、Experience、Evaluation
 ├── mcp_servers/         # DevTools MCP stdio Server
-├── benchmarks/          # 6 Train + 3 Validation + 3 Test
-├── benchmarks-pilot-v2/ # 4 题 V2 离线校准集，非正式 Test
-├── benchmarks-v2/       # 已冻结正式 V2：18 题、完整 QA 与 Manifest
+├── benchmarks/          # V1：12 个任务
+├── benchmarks-v2/       # V2：18 个任务及冻结 QA
 ├── docker/sandbox/      # 隔离测试镜像
-├── policies/            # Candidate、Champion 与版本索引
-├── evolution/           # Proposal、Gate 与 Generation 状态
-├── experiences/         # 冻结 Experience 快照
-├── experiments/         # 开发实验与 Benchmark v2 运行审计摘要
-├── results/final-v1/    # 36-run 最终结果、实例证据与图表
-├── tests/               # 自动化测试
-└── docs/                # 完整技术报告
+├── policies/            # Policy 候选、Champion 与版本链
+├── experiences/         # 冻结 Experience Snapshot
+├── evolution/           # Failure Evidence 与 Gate 结果
+├── experiments/         # V2 公开实验摘要和证据清单
+├── results/final-v1/    # V1 冻结结果、评估实例与图表
+├── tests/               # 367 项自动化测试
+└── docs/                # 设计、评测与环境文档
 ```
 
-## 关键设计
+## 详细文档
 
-### Resolution-first Gate
+- [完整技术报告：Task 1–14 与实现细节](docs/TECHNICAL_REPORT.md)
+- [Benchmark V2：实验设计、结果与结论边界](docs/evaluation_v2.md)
+- [环境配置、Docker 与运行指南](docs/setup.md)
+- [V1 机器可读 Summary](results/final-v1/summary.json)
+- [V1 逐次运行结果](results/final-v1/summary.csv)
+- [V1 冻结实验 Manifest](results/final-v1/experiment_manifest.json)
+- [V2 Final Test 公开报告](experiments/benchmark-v2-final-test-v1/README.md)
+- [V2 Runtime Guardrail 定向实验](experiments/benchmark-v2-experience-guardrails-paid-v1/README.md)
 
-候选策略必须先通过 Schema 和 Smoke Gate。Pairwise Validation 要求 Champion/Candidate
-在相同条件下各完成 9 次有效运行：解决率优先于效率；成功率下降时，Token 节省不能推动晋升；
-成功率持平时，只有 Token 与至少一项辅助成本指标都显著改善才可接受。
-
-### Frozen Final Experiment
-
-最终实验固定模型、温度、Benchmark Hash、Sandbox Digest、工具目录、Policy/Experience Hash
-和 36 个唯一 Run ID。已有部分结果时拒绝续跑，必须升级 Experiment Version 后全量执行。
-所有已提交结果可由 `verify` 从原始产物重新计算。
-
-### Failure-aware Engineering
-
-`final-v1` 中一次模型工具参数 JSON 截断被保留为 `AGENT_ERROR`，没有人工补跑。后续代码为
-同类错误增加了一次有限重试并累计重试 Token；冻结历史数据不被修复后的行为改写。
-
-## 局限性
-
-- Final Test Set 只有 3 个 Python 任务，不宣称统计显著性或通用 Coding 能力；
-- V2 Pilot 只有 4 题 × 2 Policy × 1 次重复，不能作为策略优劣或能力提升证据；
-- 成功率改善集中在 `task_010`，尚未完成 SWE-bench 或大型真实仓库评测；
-- v1 Final 使用的 Experience 快照只有一个 Train 来源；V2 的 20-call Validation 对照未证明
-  v003 带来净收益；v004 已补齐可执行/可测合同，但单题 4-call Train holdout 对照也未证明
-  成功率、合同遵循或增量利用改善；v005 真实模型对照证明门禁生效，但单题两次重复不足以证明
-  成功率改善，且观察到更高 Tokens、Tool Calls 与延迟；
-- Benchmark v2 Final Test 只有 5 题×2 次；Baseline/Candidate 同为 30%，不支持净性能提升结论；
-- Policy Search Space 人工限制为三个字段，没有进行模型微调；
-- B、C、D 在 Primary Metric 上并列，尚无 Experience 与 Policy 额外互补增益的证据；
-- Docker Sandbox 面向受控 Coding Task，不应视为恶意代码的完整安全边界。
-
-## 进一步阅读
-
-- [完整 Task 1–14 技术报告](docs/TECHNICAL_REPORT.md)
-- [最终结果 Summary](results/final-v1/summary.json)
-- [逐次运行数据](results/final-v1/summary.csv)
-- [Benchmark Manifest](benchmarks/manifest.json)
-- [Benchmark v2 Pilot](benchmarks-pilot-v2/README.md)
-- [Benchmark v2 付费 Pilot 结果](experiments/benchmark-v2-pilot-v1/README.md)
-- [Benchmark v2 正式任务蓝图](docs/BENCHMARK_V2_BLUEPRINT.md)
-- [Benchmark v2 Train QA](benchmarks-v2/train-qa.json)
-- [Benchmark v2 Validation QA](benchmarks-v2/validation-qa.json)
-- [Benchmark v2 Test QA](benchmarks-v2/test-qa.json)
-- [Benchmark v2 正式 Manifest](benchmarks-v2/manifest.json)
-- [Benchmark v2 正式冻结 QA](benchmarks-v2/formal-qa.json)
-- [Benchmark v2 Train Baseline 预案](docs/BENCHMARK_V2_BASELINE_PLAN.md)
-- [Benchmark v2 Train Baseline 配置](configs/experiments/benchmark-v2-train-baseline-v1.yaml)
-- [Benchmark v2 Train Baseline 结果](experiments/benchmark-v2-train-baseline-v1/README.md)
-- [Benchmark v2 Train Failure Evidence](evolution/benchmark-v2/README.md)
-- [Benchmark v2 Train Reflection 结果](experiments/benchmark-v2-reflection-v1/README.md)
-- [Benchmark v2 Experience 快照](experiences/experience-v002.json)
-- [Benchmark v2 Experience Validation 预检](experiments/benchmark-v2-experience-validation-plan-v1/README.md)
-- [Benchmark v2 Train Experience 元数据修复](experiments/benchmark-v2-experience-metadata-v1/README.md)
-- [Benchmark v2 Experience v003 快照](experiences/experience-v003.json)
-- [Benchmark v2 Experience v003 Validation Gate](experiments/benchmark-v2-experience-validation-v2/README.md)
-- [Benchmark v2 Experience Validation 付费对照](experiments/benchmark-v2-experience-validation-paid-v1/README.md)
-- [Benchmark v2 Train-only Experience 消费合同](experiments/benchmark-v2-experience-consumption-v1/README.md)
-- [Benchmark v2 Experience v003/v004 Train Holdout](experiments/benchmark-v2-experience-train-holdout-paid-v1/README.md)
-- [Benchmark v2 Experience v004 快照](experiences/experience-v004.json)
-- [Benchmark v2 Experience v005 Runtime Guardrails](experiments/benchmark-v2-experience-guardrails-v1/README.md)
-- [Benchmark v2 Experience v005 快照](experiences/experience-v005.json)
-- [Benchmark v2 Experience v004/v005 Runtime Guardrail Holdout](experiments/benchmark-v2-experience-guardrails-paid-v1/README.md)
-- [Benchmark v2 Final Test 终局结果](experiments/benchmark-v2-final-test-v1/README.md)
-- [当前 Champion Policy](policies/policy-v003.yaml)
-- [Evolution State](evolution/evolution-v1/progress.json)
-
-真实模型运行会产生 API 费用，必须显式确认；默认测试和上述离线验证不会调用模型。
+真实模型运行会产生 API 费用，所有相关 CLI 都要求显式付费确认；默认测试和离线结果复验不会调用模型。
